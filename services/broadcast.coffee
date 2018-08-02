@@ -1,7 +1,6 @@
 _ = require 'lodash'
 Promise = require 'bluebird'
 
-r = require './rethinkdb'
 User = require '../models/user'
 Language = require '../models/language'
 CacheService = require './cache'

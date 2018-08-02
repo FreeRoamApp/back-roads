@@ -1,9 +1,7 @@
 _ = require 'lodash'
-uuid = require 'node-uuid'
-PcgRandom = require 'pcg-random'
 
-r = require '../services/rethinkdb'
 CacheService = require '../services/cache'
+cknex = require '../services/cknex'
 config = require '../config'
 
 tables = [
@@ -43,9 +41,8 @@ defaultUser = (user) ->
     return null
 
   _.defaults user, {
-    id: uuid.v4()
-    username: null
-    data: {}
+    id: cknex.getTimeUuid()
+    language: 'en'
   }
 
 defaultUserOutput = (user) ->
@@ -53,9 +50,9 @@ defaultUserOutput = (user) ->
     return null
 
   _.defaults user, {
-    id: uuid.v4()
+    id: "#{user.id}"
     username: null
-    data: {}
+    language: 'en'
   }
 
 class UserModel
@@ -66,32 +63,35 @@ class UserModel
     .from 'users_by_id'
     .where 'id', '=', id
     .run {isSingle: true}
-    .then defaultTokenOutput
+    .then defaultUserOutput
 
   getByUsername: (username) ->
     cknex().select '*'
     .from 'users_by_username'
     .where 'username', '=', username
     .run {isSingle: true}
-    .then defaultTokenOutput
+    .then defaultUserOutput
 
   getAllByUsername: (username, {limit} = {}) ->
     null # TODO: search using >= operator on username?
 
-  upsert: (id, user) ->
-    token = defaultToken token
+  upsert: (user) ->
+    user = defaultUser user
 
-    Promise.all [
+    Promise.all _.filter [
       cknex().update 'users_by_id'
       .set _.omit user, ['id']
-      .where 'id', '=', groupPage.id
+      .where 'id', '=', user.id
       .run()
 
-      cknex().update 'users_by_username'
-      .set _.omit user, ['username']
-      .where 'username', '=', groupPage.username
-      .run()
+      if user.username
+        cknex().update 'users_by_username'
+        .set _.omit user, ['username']
+        .where 'username', '=', user.username
+        .run()
     ]
+    .then ->
+      user
 
   getUniqueUsername: (baseUsername, appendedNumber = 0) =>
     username = "#{baseUsername}".toLowerCase()

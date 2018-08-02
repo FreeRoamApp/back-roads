@@ -13,13 +13,11 @@ User = require '../models/user'
 Notification = require '../models/notification'
 PushToken = require '../models/push_token'
 PushTopic = require '../models/push_topic'
-Event = require '../models/event'
-Group = require '../models/group'
-GroupUser = require '../models/group_user'
-GroupRole = require '../models/group_role'
+# Group = require '../models/group'
+# GroupUser = require '../models/group_user'
+# GroupRole = require '../models/group_role'
 Language = require '../models/language'
-UserBlock = require '../models/user_block'
-StatsService = require './stats'
+# UserBlock = require '../models/user_block'
 
 ONE_DAY_SECONDS = 3600 * 24
 RETRY_COUNT = 10
@@ -27,19 +25,10 @@ CONSECUTIVE_ERRORS_UNTIL_INACTIVE = 10
 MAX_INT_32 = 2147483647
 
 TYPES =
-  NEW_PROMOTION: 'sale'
-  NEWS: 'news'
-  DAILY_RECAP: 'dailyRecap'
-  EVENT: 'event'
   CHAT_MESSAGE: 'chatMessage'
   CHAT_MENTION: 'chatMention'
   PRIVATE_MESSAGE: 'privateMessage'
-  NEW_FRIEND: 'newFriend'
-  PRODUCT: 'product'
   GROUP: 'group'
-  STATUS: 'status'
-  TRADE: 'trade'
-  VIDEO: 'video'
 
 defaultUserEmbed = [
   EmbedService.TYPES.USER.GROUP_USER_SETTINGS
@@ -266,9 +255,6 @@ class PushNotificationService
 
   sendToGroupTopic: (group, message) =>
     @sendToPushTopic {groupId: group.id}, message, {language: group.language}
-
-  sendToEvent: (event, message, {skipMe, fromUserId, eventId} = {}) =>
-    @sendToUserIds event.userIds, message, {skipMe, fromUserId, eventId}
 
   sendToRoles: (roles, message, {groupId} = {}) ->
     Promise.map roles, (role) =>

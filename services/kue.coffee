@@ -2,6 +2,8 @@ kue = require 'kue'
 Redis = require 'ioredis'
 _ = require 'lodash'
 
+return module.exports = {} # TODO
+
 config = require '../config'
 
 KUE_SHUTDOWN_TIME_MS = 2000

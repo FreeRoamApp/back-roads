@@ -27,6 +27,7 @@ class AuthModel
 
   userIdFromAccessToken: (token) ->
     decodeAccessToken(token)
-    .then ({userId} = {}) -> userId
+    .then ({userId} = {}) ->
+      userId
 
 module.exports = new AuthModel()

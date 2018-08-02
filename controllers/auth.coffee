@@ -8,10 +8,6 @@ jwt = require 'jsonwebtoken'
 
 Auth = require '../models/auth'
 User = require '../models/user'
-Connection = require '../models/connection'
-GroupCtrl = require './group'
-TwitchService = require '../services/connection_twitch'
-schemas = require '../schemas'
 config = require '../config'
 
 BCRYPT_ROUNDS = 10
@@ -26,11 +22,8 @@ class AuthCtrl
       country = null
     else
       country = geoip.lookup(ip)?.country
-    User.create {ip, country, language: language?.toLowerCase?()}
-    .tap (user) ->
-      if language is 'pt'
-        # put all portuguese users in bruno's group
-        GroupCtrl.joinById {id: config.GROUPS.PLAY_HARD.ID}, {user}
+
+    User.upsert {language: language?.toLowerCase?()}
     .then (user) ->
       Auth.fromUserId user.id
 
@@ -40,8 +33,8 @@ class AuthCtrl
 
     valid = Joi.validate {password, email, username},
       password: Joi.string().min(6).max(1000)
-      email: schemas.user.email
-      username: schemas.user.username
+      email: Joi.string().email().allow('')
+      username: Joi.string().min(1).max(100).allow(null).regex /^[a-zA-Z0-9-_]+$/
     , {presence: 'required'}
 
     if valid.error
@@ -85,66 +78,13 @@ class AuthCtrl
       .then ->
         Auth.fromUserId user.id
 
-  loginTwitchExtension: ({token, language}, {user, headers, connection}) ->
-    ip = headers['x-forwarded-for'] or
-          connection.remoteAddress
-    country = geoip.lookup(ip)?.country
-
-    secret = new Buffer config.TWITCH.SECRET_KEY, 'base64'
-    decoded = jwt.verify token, secret
-
-    unless decoded.user_id
-      router.throw status: 400, info: 'need permissions'
-
-    Connection.getBySiteAndSourceId 'twitch', decoded.user_id
-    .then (connection) ->
-      if connection
-        Auth.fromUserId connection.userId
-      else
-        Promise.all [
-          Connection.upsert {
-            site: 'twitch', token: '', userId: user.id
-            sourceId: decoded.user_id
-            # TODO: store channelId so we can use that token to grab info
-          }
-          User.updateById user.id, {isMember: true}
-        ]
-        .then ->
-          Auth.fromUserId user.id
-
-  loginTwitch: ({code, idToken}, {user, headers, connection}) ->
-    ip = headers['x-forwarded-for'] or
-          connection.remoteAddress
-    country = geoip.lookup(ip)?.country
-
-    decodedIdToken = jwt.decode idToken
-    sourceId = decodedIdToken.sub
-
-    TwitchService.getInfoFromCode code
-    .then (info) ->
-      Connection.getBySiteAndSourceId 'twitch', sourceId
-      .then (connection) ->
-        if connection
-          Auth.fromUserId connection.userId
-        else
-          Promise.all [
-            Connection.upsert {
-              site: 'twitch', token: info.access_token
-              userId: user.id, sourceId: sourceId
-              data: {refreshToken: info.refresh_token}
-            }
-            User.updateById user.id, {isMember: true}
-          ]
-          .then ->
-            Auth.fromUserId user.id
-
   loginUsername: ({username, password}) ->
     insecurePassword = password
     username = username?.toLowerCase()
 
     valid = Joi.validate {password, username},
       password: Joi.string().min(6).max(1000)
-      username: schemas.user.username
+      username: Joi.string().min(1).max(100).allow(null).regex /^[a-zA-Z0-9-_]+$/
     , {presence: 'required'}
 
     if valid.error

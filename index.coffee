@@ -72,11 +72,11 @@ setup = ->
     console.log 'setup', err
   .tap ->
     CronService.start()
-    KueRunnerService.listen()
+    # KueRunnerService.listen() # TODO: child instance too
     null # don't block
 
 childSetup = ->
-  KueRunnerService.listen()
+  # KueRunnerService.listen()
   return Promise.resolve null # don't block
 
 app = express()
