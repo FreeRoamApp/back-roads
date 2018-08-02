@@ -2,7 +2,6 @@ Promise = require 'bluebird'
 moment = require 'moment'
 _ = require 'lodash'
 
-r = require './rethinkdb'
 KueCreateService = require './kue_create'
 CacheService = require './cache'
 config = require '../config'
@@ -30,10 +29,7 @@ class CleanupService
     console.log 'cleaning...'
     start = Date.now()
     Promise.all [
-      # @cleanPlayerRecords()
-      # @cleanClashRoyaleMatches()
-      # @cleanPlayerDecks()
-      @cleanKue()
+      # @cleanKue()
     ]
     .then ->
       console.log 'clean done', Date.now() - start

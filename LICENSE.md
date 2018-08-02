@@ -498,7 +498,7 @@ Attribution Phrase (not exceeding 10 words): Powered by FreeRoam
 Attribution URL: https://freeroam.app
 
 Graphic Image as provided in the Covered Code:
-https://cdn.wtf/d/images/free-roam/powered_by.png
+https://fdn.uno/d/images/powered_by.png
 
 Display of Attribution Information is required in Larger Works which are defined
 in the CPAL as a work which combines Covered Code or portions thereof with code

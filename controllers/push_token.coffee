@@ -8,7 +8,6 @@ PushToken = require '../models/push_token'
 PushTopic = require '../models/push_topic'
 User = require '../models/user'
 PushNotificationService = require '../services/push_notification'
-schemas = require '../schemas'
 config = require '../config'
 
 class PushTokensCtrl

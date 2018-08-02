@@ -3,7 +3,6 @@ router = require 'exoid-router'
 googleTranslate = require 'google-translate'
 
 EmailService = require '../services/email'
-StatsService = require '../services/stats'
 config = require '../config'
 
 googleTranslate = googleTranslate config.GOOGLE_API_KEY_MYSTIC
@@ -25,6 +24,5 @@ class NpsCtrl
           #{comment}
           """
         }
-    StatsService.sendEvent user?.id, 'nps', score
 
 module.exports = new NpsCtrl()

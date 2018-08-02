@@ -28,7 +28,7 @@ class UserCtrl
     if isServerSide then null else geoip.lookup(ip)?.country?.toLowerCase()
 
   getById: ({id}) ->
-    User.getById id, {preferCache: true}
+    User.getById id
     .then User.sanitizePublic(null)
 
   getByUsername: ({username}) ->

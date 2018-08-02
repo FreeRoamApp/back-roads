@@ -6,6 +6,8 @@ KueService = require './kue'
 CacheService = require './cache'
 config = require '../config'
 
+return module.exports = {JOB_TYPES: {}} # TODO
+
 DEFAULT_PRIORITY = 0
 DEFAULT_TTL_MS = 60 * 1000 * 9 # 9 minutes
 IDLE_PROCESS_KILL_TIME_MS = 300 * 1000 # 5 min

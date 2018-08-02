@@ -6,11 +6,18 @@ cknex = require '../services/cknex'
 
 EmbedClasses =
   user: require '../embeds/user'
+  item: require '../embeds/item'
+  product: require '../embeds/product'
 
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
   USER:
     DATA: 'user:data'
+  PRODUCT:
+    NAME_KEBAB: 'product:nameKebab'
+    ITEM: 'product:item'
+  ITEM:
+    FIRST_PRODUCT_ID: 'item:firstProductId'
 
 embedFn = _.curry (props, object) ->
   {embed, options} = props
@@ -21,7 +28,8 @@ embedFn = _.curry (props, object) ->
   embedded.embedded = embed
   _.forEach embed, (key) ->
     [embedClassKey, embedKey] = key.split ':'
-    embedded[embedKey] = EmbedClasses[embedClassKey][embedKey] options
+    console.log 'embed', embedKey
+    embedded[embedKey] = EmbedClasses[embedClassKey][embedKey] embedded, options
 
   return Promise.props embedded
 

@@ -3,7 +3,9 @@ _ = require 'lodash'
 
 config = require '../config'
 
-# separated from redis_back_roads since i expect that one to go oom more easily
+return module.exports = {} # TODO
+
+# separated from redis_cache since i expect that one to go oom more easily
 
 client = new Redis {
   port: config.REDIS.PORT

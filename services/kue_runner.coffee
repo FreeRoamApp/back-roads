@@ -4,14 +4,11 @@ kue = require 'kue'
 KueService = require './kue'
 KueCreateService = require './kue_create'
 BroadcastService = require './broadcast'
-ProductService = require './product'
 config = require '../config'
 
 TYPES =
   "#{KueCreateService.JOB_TYPES.BATCH_NOTIFICATION}":
     {fn: BroadcastService.batchNotify, concurrencyPerCpu: 1}
-  "#{KueCreateService.JOB_TYPES.PRODUCT_UNLOCKED}":
-    {fn: ProductService.productUnlocked, concurrencyPerCpu: 10}
 
 class KueRunnerService
   listen: ->

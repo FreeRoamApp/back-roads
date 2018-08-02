@@ -8,13 +8,11 @@ class AuthService
   middleware: (req, res, next) =>
     # set req.user if authed
     accessToken = req.query?.accessToken
-
     userAgent = req.headers?['user-agent'] or req.query?.userAgent
-    appKey = @getAppKeyFromUserAgent userAgent
-    req.appKey = appKey or config.GROUPS.MAIN.APP_KEY
 
     unless accessToken?
       return next()
+
 
     Auth.userIdFromAccessToken accessToken
     .then User.getById, {preferCache: true}
@@ -30,9 +28,6 @@ class AuthService
       next()
 
   exoidMiddleware: ({accessToken, userAgent}, req) =>
-    appKey = @getAppKeyFromUserAgent userAgent
-    req.appKey = appKey
-
     if accessToken
       Auth.userIdFromAccessToken accessToken
       .then User.getById, {preferCache: true}

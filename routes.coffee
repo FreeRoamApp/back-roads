@@ -1,8 +1,10 @@
 router = require 'exoid-router'
 
 AuthCtrl = require './controllers/auth'
+ItemCtrl = require './controllers/item'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
+ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 UserCtrl = require './controllers/user'
 
@@ -31,6 +33,12 @@ module.exports = router
 .on 'users.getById', authed UserCtrl.getById
 .on 'users.getByUsername', authed UserCtrl.getByUsername
 .on 'users.getCountry', authed UserCtrl.getCountry
+
+.on 'items.getById', authed ItemCtrl.getById
+.on 'items.getAll', authed ItemCtrl.getAll
+
+.on 'products.getById', authed ProductCtrl.getById
+.on 'products.getAllByItemId', authed ProductCtrl.getAllByItemId
 
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert
 .on 'pushTokens.subscribeToTopic', authed PushTokenCtrl.subscribeToTopic

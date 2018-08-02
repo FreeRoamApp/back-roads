@@ -1,7 +1,6 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-Group = require '../models/group'
 Notification = require '../models/notification'
 config = require '../config'
 
