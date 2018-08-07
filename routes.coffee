@@ -1,6 +1,7 @@
 router = require 'exoid-router'
 
 AuthCtrl = require './controllers/auth'
+CategoryCtrl = require './controllers/category'
 ItemCtrl = require './controllers/item'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
@@ -34,8 +35,11 @@ module.exports = router
 .on 'users.getByUsername', authed UserCtrl.getByUsername
 .on 'users.getCountry', authed UserCtrl.getCountry
 
+.on 'categories.getAll', authed CategoryCtrl.getAll
+
 .on 'items.getById', authed ItemCtrl.getById
 .on 'items.getAll', authed ItemCtrl.getAll
+.on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
 
 .on 'products.getById', authed ProductCtrl.getById
 .on 'products.getAllByItemId', authed ProductCtrl.getAllByItemId

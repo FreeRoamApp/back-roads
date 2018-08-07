@@ -16,5 +16,9 @@ class ItemCtrl
     Item.getAll()
     .map EmbedService.embed {embed: defaultEmbed}
 
+  getAllByCategory: ({category}, {user}) ->
+    Item.getAllByCategory category
+    .map EmbedService.embed {embed: defaultEmbed}
+
 
 module.exports = new ItemCtrl()

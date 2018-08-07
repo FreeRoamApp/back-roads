@@ -5,9 +5,11 @@ Promise = require 'bluebird'
 CacheService = require './cache'
 CleanupService = require './cleanup'
 # Thread = require '../models/thread'
-Product = require '../models/product'
+Category = require '../models/category'
 Item = require '../models/item'
+Product = require '../models/product'
 AmazonService = require '../services/amazon'
+allCategories = require '../resources/data/categories'
 allItems = require '../resources/data/items'
 allProducts = require '../resources/data/products'
 config = require '../config'
@@ -23,14 +25,20 @@ class CronService
       console.log 'qmin'
       CleanupService.clean()
       # Thread.updateScores 'stale'
-      Product.batchUpsert allProducts
-      Item.batchUpsert allItems
+      # FIXME: running these every minute seems to cause memory leak?
+      # Item.batchUpsert allItems
+      # Product.batchUpsert allProducts
+      # Category.batchUpsert allCategories
 
     @addCron 'tenMin', '0 */10 * * * *', ->
       # Thread.updateScores 'time'
 
+
     @addCron 'oneHour', '0 0 * * * *', ->
       CleanupService.trimLeaderboards()
+      Category.batchUpsert allCategories
+      Product.batchUpsert allProducts
+      Item.batchUpsert allItems
 
 
   addCron: (key, time, fn) =>
