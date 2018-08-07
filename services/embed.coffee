@@ -6,6 +6,7 @@ cknex = require '../services/cknex'
 
 EmbedClasses =
   user: require '../embeds/user'
+  category: require '../embeds/category'
   item: require '../embeds/item'
   product: require '../embeds/product'
 
@@ -13,11 +14,13 @@ TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
   USER:
     DATA: 'user:data'
+  CATEGORY:
+    FIRST_ITEM_PRODUCT_ID: 'category:firstItemFirstProductId'
+  ITEM:
+    FIRST_PRODUCT_ID: 'item:firstProductId'
   PRODUCT:
     NAME_KEBAB: 'product:nameKebab'
     ITEM: 'product:item'
-  ITEM:
-    FIRST_PRODUCT_ID: 'item:firstProductId'
 
 embedFn = _.curry (props, object) ->
   {embed, options} = props

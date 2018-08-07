@@ -16,6 +16,8 @@ tables = [
       name: 'text'
       description: 'text'
       sellers: 'text' # [{seller: 'amazon', sellerId: 'amazon-id'}]
+      reviewersLiked: {type: 'set', subType: 'text'}
+      reviewersDisliked: {type: 'set', subType: 'text'}
       data: 'text'
     primaryKey:
       partitionKey: ['id']
@@ -30,6 +32,8 @@ tables = [
       sourceId: 'text' # eg amazon
       name: 'text'
       description: 'text'
+      reviewersLiked: {type: 'set', subType: 'text'}
+      reviewersDisliked: {type: 'set', subType: 'text'}
       data: 'text'
     primaryKey:
       partitionKey: ['itemId']
@@ -64,14 +68,11 @@ class Product
   SCYLLA_TABLES: tables
 
   batchUpsert: (products) =>
-    console.log 'batch prod'
     Promise.map products, (product) =>
       @upsert product
 
   upsert: (product) ->
     product = defaultProduct product
-
-    console.log 'upsitem', product
 
     Promise.all [
       cknex().update 'products_by_id'
