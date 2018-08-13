@@ -3,9 +3,11 @@ _ = require 'lodash'
 
 config = require '../../config'
 
-# TODO: our take?
-# What reviewers say: summary positive and negative
-
+# TODO:
+# parameters: [{name: 'name', value: 'value'}]
+# eg: parameters: [{name: 'watts', value: 100}, {name: 'type', value: 'monocrystalline'}]
+# eg2: parameters: [{name: 'type', value: 'roof-caulk'}]
+# eg3: water pressure regulator parameters: [{name: 'hasGauge', value: true}] / [{name: 'hasGauge', value: false}]
 
 products =
   "camco-heavy-duty-dogbone-rv-surge-protector":
@@ -63,6 +65,32 @@ products =
     reviewersDisliked: ['Not great around curves / rounded areas']
     data:
       countryOfOrigin: 'Unknown'
+
+  "uni-t-clamp-multimeter":
+    name: 'Uni-T AC/DC Current Mini Clamp Capacitance Tester'
+    description: '''
+- 100A AC and DC current measurement with 1mA resolution, V.F.C function for measuring signal at varia
+- 600V ac and dc voltage measurement, resistance, diode, continuity and capacitance functions
+- Non-contact voltage detection with led indication, display backlight
+'''
+    itemId: 'multimeter'
+    source: 'amazon'
+    sourceId: 'B00O1Q2HOQ'
+    reviewersLiked: []
+    reviewersDisliked: []
+    data:
+      countryOfOrigin: 'China'
+
+  "astroai-multimeter":
+    name: 'AstroAI Digital Multimeter with Ohm Volt Amp and Diode Voltage Tester'
+    description: 'Accurately measures voltage, DC current, resistance, diode, continuity and more'
+    itemId: 'multimeter'
+    source: 'amazon'
+    sourceId: 'B01ISAMUA6'
+    reviewersLiked: []
+    reviewersDisliked: []
+    data:
+      countryOfOrigin: 'China'
 
   "camco-tastepure-with-hose":
     name: 'Camco TastePURE with Flexible Host'
@@ -172,10 +200,11 @@ The levelers can also be used as a support base for other stabilizing equipment"
 
   "camco-inline-water-pressure-regulator":
     name: 'Camco Inline Water Pressure Regulator'
-    description: """Helps protect RV plumbing and hoses from high-pressure city water.
-Attaches easily with 3/4" garden hose threads.
-Durable brass construction that is drinking water safe.
-Reduces water pressure to a safe and consistent 40-50 lbs of pressure"""
+    description: """
+- Helps protect RV plumbing and hoses from high-pressure city water.
+- Attaches easily with 3/4" garden hose threads.
+- Durable brass construction that is drinking water safe.
+- Reduces water pressure to a safe and consistent 40-50 lbs of pressure"""
     itemId: 'water-pressure-regulator'
     source: 'amazon'
     sourceId: 'B003BZD08U'
@@ -183,13 +212,142 @@ Reduces water pressure to a safe and consistent 40-50 lbs of pressure"""
       countryOfOrigin: 'Unknown'
 
   "renator-adjustable-water-pressure-regulator":
-    name: 'Renator Adjustable Water Pressure Regulator '
+    name: 'Renator Adjustable Water Pressure Regulator'
     description: """Adjustable up to 160 PSI with gauge to monitor current pressure."""
     itemId: 'water-pressure-regulator'
     source: 'amazon'
     sourceId: 'B01N7JZTYX'
     data:
       countryOfOrigin: 'Unknown'
+
+  "renogy-100w-solar-panel-mono":
+    name: 'Renogy 100W Monocrystalline Solar Panel'
+    description: '''
+- Withstands high wind (2400Pa) and snow loads (5400Pa); resistant aluminum frame which allows the panels to last for decades.
+- Ideal output: 500 watt hours per day (depends on sunlight availability)
+- 47" x 1.4" x 21.3" (6.95sqft)
+'''
+    itemId: 'solar-panel'
+    source: 'amazon'
+    sourceId: 'B009Z6CW7O'
+    data:
+      countryOfOrigin: 'USA'
+
+  "newpowa-100w-solar-panel-poly":
+    name: 'Newpowa 100W Polycrystalline Solar Panel'
+    description: '''
+- Diodes are pre-installed in junction box, with a pair of pre-attached 3ft MC4 Cable
+- 41.8" x 1.2" x 26.6" (7.72sqft)
+'''
+    itemId: 'solar-panel'
+    source: 'amazon'
+    sourceId: 'B00L6LZRXM'
+    data:
+      countryOfOrigin: 'China'
+
+  "power-techon-3000w-pure-sine-inverter":
+    name: 'Power TechON 3000W Pure Sine Wave Power Inverter'
+    description: '''
+- 6000W Surge power, 3000 Continuous Power; Inverter comes with Black and Red Cables w/ Ring Terminals, Remote Switch and 3 AC sockets and 1 USB Port 5V, 2000mA and a detailed instruction manual for set-up.
+- 5 Protection systems: Thermal protection, Overload protection, Over Voltage protection, Under Voltage protection, Low Voltage protection alarm. Inverter comes with an LED light to indicate the problem.
+'''
+    itemId: 'inverter'
+    source: 'amazon'
+    sourceId: 'B0131PZ9J2'
+    data:
+      countryOfOrigin: 'China'
+
+  "giandel-2000w-modified-sine-inverter":
+    name: 'GIANDEL 2000Watt Power Inverter'
+    description: '''
+- This is a 2000W modified sine wave power inverter provides 2000W continuous power,4000W peak power,Dual AC outlets and 1x2.4A USB port,with LED display for input voltage/output power
+- Isolated Input/Output design and Multi Protections: over voltage, overload, over-current, under-voltage, overheating, short circuit protection
+'''
+    itemId: 'inverter'
+    source: 'amazon'
+    sourceId: 'B077HHFDZV'
+    data:
+      countryOfOrigin: 'China'
+
+  "mighty-max-100ah-battery":
+    name: 'Mighty Max 100Ah Lead Acid Battery'
+    description: '''
+- AGM. Maintenance free. No adding water
+- 12.17" x 6.61" x 8.30"
+'''
+    itemId: 'batteries'
+    source: 'amazon'
+    sourceId: 'B077HHFDZV'
+    data:
+      countryOfOrigin: 'China'
+
+  "battle-born-100ah-lithium-battery":
+    name: 'Battle Born 100Ah Lithium battery'
+    description: '''
+- 12 volt Drop in Lead Acid Replacement
+- 12.75" x 6.875" x 9"
+'''
+    itemId: 'batteries'
+    source: 'amazon'
+    sourceId: 'B06XX197GJ'
+    reviewersLiked: ['Batteries charge fast', 'More usable amp hours', 'Reliable', 'Lightweight']
+    reviewersDisliked: ['Upfront cost']
+    data:
+      countryOfOrigin: 'USA'
+
+  "epever-30a-mppt-solar-charge-controller":
+    name: 'EPEVER Upgraded 30A MPPT Solar Charge Controller'
+    description: '''
+- 99.5% Efficiency MPPT Charge Controller 30A
+- Multi-function LCD displays system information intuitively
+- Negative ground
+'''
+    itemId: 'charge-controller'
+    source: 'amazon'
+    sourceId: 'B01GMUPH0O'
+    data:
+      countryOfOrigin: 'China'
+
+  "renogy-wanderer-30a-pwm-charge-controller":
+    name: 'Renogy Wanderer - 30A Advanced PWM'
+    description: '''
+- 4 Stage PWM charging (Bulk, Boost, Float, and Equalization) prevents batteries from over-charging and over-discharging. Protection against: overcharging, overload, short-circuit, and reverse polarity
+- Compensates for temperature, automatically corrects charging and discharging parameters, and improves battery longevity
+- Negative ground
+'''
+    itemId: 'charge-controller'
+    source: 'amazon'
+    sourceId: 'B00BCTLIHC'
+    data:
+      countryOfOrigin: 'China'
+
+  "honda-eu2200i-2200w-inverter-generator":
+    name: 'Honda EU2200i 2200W 120-Volt Super Quiet Portable Inverter Generator'
+    description: '''
+- Reliable Power is now at your fingertips with Honda's Inverted Generators
+- So quiet, your neighbors will thank you. The EU2200i operates at 48 to 57 dBA, which is less noise than a normal conversation
+- Runs 4.0 to 9.6 hours on a single tank, depending on the load
+- 47 lbs
+'''
+    itemId: 'generator'
+    source: 'amazon'
+    sourceId: 'B079YF1HF6'
+    data:
+      countryOfOrigin: 'Thailand'
+
+  "westinghouse-igen2500-2200w-inverter-generator":
+    name: 'Westinghouse iGen2500 2200W Portable Inverter Generator'
+    description: '''
+- Quiet Operation: the iGen2500 Utilizes a Double-Insulated Acoustic Enclosure, Asymmetrical Cooling Fans, and Low Tone Mufflers to Reduce Operating Noise (52 dBA)
+- Safe for Sensitive Electronics and Strong Enough to Power All Your Household Essentials
+- 48 lbs
+'''
+    itemId: 'generator'
+    source: 'amazon'
+    sourceId: 'B01MTGJGCN'
+    data:
+      countryOfOrigin: 'China'
+
 
 module.exports = _.map products, (value, id) -> _.defaults {id}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity

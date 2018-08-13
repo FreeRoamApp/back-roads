@@ -20,5 +20,10 @@ class ItemCtrl
     Item.getAllByCategory category
     .map EmbedService.embed {embed: defaultEmbed}
 
+  search: ({query}, {user}) ->
+    Item.search {query}
+    .then (results) ->
+      Promise.map results, EmbedService.embed {embed: defaultEmbed}
+
 
 module.exports = new ItemCtrl()

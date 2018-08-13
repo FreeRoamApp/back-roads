@@ -3,7 +3,6 @@ gm = require('gm').subClass({imageMagick: true})
 request = require 'request-promise'
 _ = require 'lodash'
 
-AWSService = require './aws'
 config = require '../config'
 
 DEFAULT_IMAGE_QUALITY = 85
@@ -51,6 +50,8 @@ class ImageService
   # Note: images are never removed from s3
   uploadImage: ({key, stream, contentType}) ->
     contentType ?= 'image/jpg'
+
+    # TODO: google cloud
 
     bucket = new AWSService.S3()
 

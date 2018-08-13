@@ -40,6 +40,7 @@ module.exports = router
 .on 'items.getById', authed ItemCtrl.getById
 .on 'items.getAll', authed ItemCtrl.getAll
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
+.on 'items.search', authed ItemCtrl.search
 
 .on 'products.getById', authed ProductCtrl.getById
 .on 'products.getAllByItemId', authed ProductCtrl.getAllByItemId
