@@ -14,6 +14,11 @@ categories =
     description: 'Products to keep your RV in tip-top shape'
     data:
       defaultProductId: 'bio-pak-digester'
+  'boondocking':
+    name: 'Boondocking'
+    description: 'Solar, generators, and everything you need to boondock'
+    data:
+      defaultProductId: 'renogy-100w-solar-panel-mono'
 
 module.exports = _.map categories, (value, id) -> _.defaults {id}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity

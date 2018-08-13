@@ -26,9 +26,10 @@ class CronService
       CleanupService.clean()
       # Thread.updateScores 'stale'
       # FIXME: running these every minute seems to cause memory leak?
-      # Item.batchUpsert allItems
-      # Product.batchUpsert allProducts
-      # Category.batchUpsert allCategories
+      if config.ENV is config.ENVS.DEV
+        Item.batchUpsert _.cloneDeep allItems
+        Product.batchUpsert _.cloneDeep allProducts
+        Category.batchUpsert _.cloneDeep allCategories
 
     @addCron 'tenMin', '0 */10 * * * *', ->
       # Thread.updateScores 'time'
@@ -36,9 +37,9 @@ class CronService
 
     @addCron 'oneHour', '0 0 * * * *', ->
       CleanupService.trimLeaderboards()
-      Category.batchUpsert allCategories
-      Product.batchUpsert allProducts
-      Item.batchUpsert allItems
+      Category.batchUpsert _.cloneDeep allCategories
+      Product.batchUpsert _.cloneDeep allProducts
+      Item.batchUpsert _.cloneDeep allItems
 
 
   addCron: (key, time, fn) =>

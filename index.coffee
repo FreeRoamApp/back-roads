@@ -41,6 +41,7 @@ config = require './config'
 routes = require './routes'
 cknex = require './services/cknex'
 ScyllaSetupService = require './services/scylla_setup'
+ElasticsearchSetupService = require './services/elasticsearch_setup'
 AuthService = require './services/auth'
 CronService = require './services/cron'
 KueRunnerService = require './services/kue_runner'
@@ -65,9 +66,17 @@ setup = ->
   scyllaTables = _.flatten _.map models, (modelFile) ->
     model = require('./models/' + modelFile)
     model?.SCYLLA_TABLES or []
+  elasticSearchIndices = _.flatten _.map models, (modelFile) ->
+    model = require('./models/' + modelFile)
+    model?.ELASTICSEARCH_INDICES or []
 
-  ScyllaSetupService.setup scyllaTables
-  .then -> console.log 'scylla setup'
+  Promise.all [
+    ScyllaSetupService.setup scyllaTables
+    .then -> console.log 'scylla setup'
+
+    ElasticsearchSetupService.setup elasticSearchIndices
+    .then -> console.log 'elasticsearch setup'
+  ]
   .catch (err) ->
     console.log 'setup', err
   .tap ->
