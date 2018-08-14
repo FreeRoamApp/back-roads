@@ -13,6 +13,7 @@ tables = [
       name: 'text'
       description: 'text'
       type: 'text'
+      priority: 'int'
       data: 'text'
     primaryKey:
       partitionKey: ['type']
@@ -69,6 +70,8 @@ class Category
     .from 'categories'
     .limit limit
     .run()
+    .then (categories) ->
+      _.orderBy categories, 'priority'
     .map defaultCategoryOutput
 
 module.exports = new Category()
