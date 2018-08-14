@@ -9,11 +9,12 @@ config = require '../config'
 
 class ElasticsearchSetupService
   setup: (indices) =>
-    CacheService.lock 'elasticsearch_setup6', =>
+    CacheService.lock 'elasticsearch_setup8', =>
       Promise.each indices, @createIndexIfNotExist
     , {expireSeconds: 300}
 
   createIndexIfNotExist: (index) ->
+    console.log 'create index', index
     elasticsearch.indices.create {
         index: index.name
         body:
@@ -25,6 +26,8 @@ class ElasticsearchSetupService
             number_of_shards: 3
             number_of_replicas: 2
       }
+      .catch (err) ->
+        console.log err
     # Promise.resolve null
 
 module.exports = new ElasticsearchSetupService()

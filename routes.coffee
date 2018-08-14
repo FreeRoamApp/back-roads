@@ -5,6 +5,7 @@ CategoryCtrl = require './controllers/category'
 ItemCtrl = require './controllers/item'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
+PlaceCtrl = require './controllers/place'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 UserCtrl = require './controllers/user'
@@ -41,6 +42,9 @@ module.exports = router
 .on 'items.getAll', authed ItemCtrl.getAll
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
 .on 'items.search', authed ItemCtrl.search
+
+.on 'places.getById', authed PlaceCtrl.getById
+.on 'places.search', authed PlaceCtrl.search
 
 .on 'products.getById', authed ProductCtrl.getById
 .on 'products.getAllByItemId', authed ProductCtrl.getAllByItemId

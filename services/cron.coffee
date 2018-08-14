@@ -7,10 +7,12 @@ CleanupService = require './cleanup'
 # Thread = require '../models/thread'
 Category = require '../models/category'
 Item = require '../models/item'
+Place = require '../models/place'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
 allCategories = require '../resources/data/categories'
 allItems = require '../resources/data/items'
+allPlaces = require '../resources/data/places'
 allProducts = require '../resources/data/products'
 config = require '../config'
 
@@ -28,6 +30,7 @@ class CronService
       # FIXME: running these every minute seems to cause memory leak?
       if config.ENV is config.ENVS.DEV
         Item.batchUpsert _.cloneDeep allItems
+        Place.batchUpsert _.cloneDeep allPlaces
         Product.batchUpsert _.cloneDeep allProducts
         Category.batchUpsert _.cloneDeep allCategories
 
@@ -35,7 +38,7 @@ class CronService
       # Thread.updateScores 'time'
 
 
-    @addCron 'oneHour', '0 0 * * * *', ->
+    @addCron 'oneHour', '0 20 * * * *', ->
       CleanupService.trimLeaderboards()
       Category.batchUpsert _.cloneDeep allCategories
       Product.batchUpsert _.cloneDeep allProducts
