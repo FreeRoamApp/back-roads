@@ -78,7 +78,6 @@ class Place
   ELASTICSEARCH_INDICES: elasticSearchIndices
 
   batchUpsert: (places) =>
-    console.log 'batch', places
     Promise.map places, (place) =>
       @upsert place
 
@@ -104,7 +103,6 @@ class Place
     }
 
   search: ({query}) ->
-    console.log query, query.geo_bounding_box.location
     elasticsearch.search {
       index: 'places'
       type: 'places'
@@ -114,7 +112,6 @@ class Place
         size : 250
     }
     .then ({hits}) ->
-      console.log 'response', arguments, hits
       _.map hits.hits, '_source'
 
   getById: (id) ->

@@ -118,6 +118,8 @@ products =
     itemId: 'black-tank-treatment'
     source: 'amazon'
     sourceId: 'B00157TGXY'
+    reviewersLiked: ['Super easy to use', 'Reduces odors', 'Breaks down solids and toilet paper well']
+    reviewersDisliked: ['Poop still smells bad']
     data:
       countryOfOrigin: 'Unknown'
 
@@ -132,6 +134,8 @@ The levelers can also be used as a support base for other stabilizing equipment"
     itemId: 'leveling-blocks'
     source: 'amazon'
     sourceId: 'B0028PJ10K'
+    reviewersLiked: ['Lightweight', 'Very strong', 'Convenient carrying bag']
+    reviewersDisliked: ['Some wished the were wider', 'Not strong enough for a 30,000lb motorhome']
     data:
       countryOfOrigin: 'USA'
 
@@ -141,6 +145,8 @@ The levelers can also be used as a support base for other stabilizing equipment"
     itemId: 'chocks'
     source: 'amazon'
     sourceId: 'B00K1C1WC2'
+    reviewersLiked: ['Cheap', 'Sturdy', 'Lightweight']
+    reviewersDisliked: ['Crushed under steep grades and heavy weight', 'Not as good of traction on concrete']
     data:
       countryOfOrigin: 'Unknown'
 
@@ -150,24 +156,36 @@ The levelers can also be used as a support base for other stabilizing equipment"
     itemId: 'chocks'
     source: 'amazon'
     sourceId: 'B002XLHUQG'
+    reviewersLiked: ['Much less movement when people are walking inside', 'High quality']
+    reviewersDisliked: ['Still need normal chocks in addition to these', 'Somewhat heavy']
     data:
       countryOfOrigin: 'USA'
 
   "camco-25-drinking-water-hose":
     name: 'Camco 25\' TastePURE Drinking Water Hose'
-    description: "Reinforced for maximum kink resistance. 25' long x 5/8\"ID. Hose is made of PVC and is BPA free"
+    description: '''
+- Reinforced for maximum kink resistance
+- 25' long x 5/8\"ID
+- Hose is made of PVC and is BPA free'''
     itemId: 'fresh-water-hose'
     source: 'amazon'
     sourceId: 'B004ME11FS'
+    reviewersLiked: ['Cheap', 'For the most part, it doesn\'t kink']
+    reviewersDisliked: ['Not fully kink-proof', 'Leaked for a small percentage of users']
     data:
       countryOfOrigin: 'Unknown'
 
   "apex-teknor-neverkink-50":
     name: 'Apek Teknor NeverKink 50\' Drinking Water Hose'
-    description: "Rigid sleeve prevents kinking at the faucet. Drinking Water Safe - Manufactured with FDA sanctioned materials. 50' long, 5/8\"ID"
+    description: '''
+- Rigid sleeve prevents kinking at the faucet
+- Drinking Water Safe - Manufactured with FDA sanctioned materials
+- 50' long, 5/8\"ID'''
     itemId: 'fresh-water-hose'
     source: 'amazon'
     sourceId: 'B0001MII88'
+    reviewersLiked: ['Durable', 'For the most part, it doesn\'t kink']
+    reviewersDisliked: ['Not fully kink-proof', 'Leaked for a small percentage of users']
     data:
       countryOfOrigin: 'Unknown'
 
