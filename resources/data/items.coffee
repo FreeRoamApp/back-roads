@@ -17,6 +17,7 @@ config = require '../../config'
 # this will translate to campsites too... which will have a lot more than items. need to be efficient.
 
 items =
+  # TODO: showerhead. either starting-out or a comfort category?
   'surge-protector':
     name: 'Surge Protector'
     categories: ['starting-out']

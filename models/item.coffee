@@ -105,7 +105,6 @@ class Item
     ]
 
   search: ({query}) ->
-    console.log query
     elasticsearch.search {
       index: 'items'
       type: 'items'
