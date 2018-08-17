@@ -20,7 +20,7 @@ TYPES =
   USER:
     DATA: 'user:data'
   CATEGORY:
-    FIRST_ITEM_PRODUCT_ID: 'category:firstItemFirstProductId'
+    FIRST_ITEM_PRODUCT_SLUG: 'category:firstItemFirstProductSlug'
   CONVERSATION_MESSAGE:
     USER: 'conversationMessage:user'
     MENTIONED_USERS: 'conversationMessage:mentionedUsers'
@@ -42,7 +42,7 @@ TYPES =
     KARMA: 'groupUser:karma'
     USER: 'groupUser:user'
   ITEM:
-    FIRST_PRODUCT_ID: 'item:firstProductId'
+    FIRST_PRODUCT_SLUG: 'item:firstProductSlug'
   PRODUCT:
     NAME_KEBAB: 'product:nameKebab'
     ITEM: 'product:item'

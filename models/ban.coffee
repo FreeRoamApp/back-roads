@@ -14,7 +14,7 @@ defaultBan = (ban) ->
 
   _.defaults ban, {
     ip: ''
-    uuid: cknex.getTimeUuid()
+    id: cknex.getTimeUuid()
   }
 
 ONE_DAY_SECONDS = 3600 * 24
@@ -22,47 +22,47 @@ ONE_MONTH_SECONDS = 3600 * 24 * 31
 
 tables = [
   {
-    name: 'bans_by_userUuid'
+    name: 'bans_by_userId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
-      bannedByUuid: 'uuid'
+      id: 'timeuuid'
+      groupId: 'uuid'
+      userId: 'uuid'
+      bannedById: 'uuid'
       duration: 'text'
       ip: 'text'
     primaryKey:
-      partitionKey: ['groupUuid']
-      clusteringColumns: ['userUuid']
+      partitionKey: ['groupId']
+      clusteringColumns: ['userId']
   }
   {
     name: 'bans_by_ip'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
-      bannedByUuid: 'uuid'
+      id: 'timeuuid'
+      groupId: 'uuid'
+      userId: 'uuid'
+      bannedById: 'uuid'
       duration: 'text'
       ip: 'text'
     primaryKey:
-      partitionKey: ['groupUuid']
+      partitionKey: ['groupId']
       clusteringColumns: ['ip']
   }
   {
-    name: 'bans_by_duration_and_uuid'
+    name: 'bans_by_duration_and_id'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
-      bannedByUuid: 'uuid'
+      id: 'timeuuid'
+      groupId: 'uuid'
+      userId: 'uuid'
+      bannedById: 'uuid'
       duration: 'text'
       ip: 'text'
     primaryKey:
-      partitionKey: ['groupUuid', 'duration']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['groupId', 'duration']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
 ]
 
@@ -73,27 +73,27 @@ class BanModel
     ban = defaultBan ban
 
     queries = [
-      cknex().update 'bans_by_userUuid'
+      cknex().update 'bans_by_userId'
       .set _.omit ban, [
-        'groupUuid', 'userUuid'
+        'groupId', 'userId'
       ]
-      .where 'groupUuid', '=', ban.groupUuid
-      .andWhere 'userUuid', '=', ban.userUuid
+      .where 'groupId', '=', ban.groupId
+      .andWhere 'userId', '=', ban.userId
 
       cknex().update 'bans_by_ip'
       .set _.omit ban, [
-        'groupUuid', 'ip'
+        'groupId', 'ip'
       ]
-      .where 'groupUuid', '=', ban.groupUuid
+      .where 'groupId', '=', ban.groupId
       .andWhere 'ip', '=', ban.ip
 
-      cknex().update 'bans_by_duration_and_uuid'
+      cknex().update 'bans_by_duration_and_id'
       .set _.omit ban, [
-        'groupUuid', 'duration', 'uuid'
+        'groupId', 'duration', 'id'
       ]
-      .where 'groupUuid', '=', ban.groupUuid
+      .where 'groupId', '=', ban.groupId
       .andWhere 'duration', '=', ban.duration
-      .andWhere 'uuid', '=', ban.uuid
+      .andWhere 'id', '=', ban.id
     ]
 
     if ttl
@@ -103,13 +103,13 @@ class BanModel
     Promise.all _.map queries, (query) ->
       query.run()
     .then ->
-      if ban.userUuid
+      if ban.userId
         prefix = CacheService.PREFIXES.BAN_USER_ID
-        key = "#{prefix}:#{ban.groupUuid}:#{ban.userUuid}"
+        key = "#{prefix}:#{ban.groupId}:#{ban.userId}"
         CacheService.deleteByKey key
       if ban.ip
         prefix = CacheService.PREFIXES.BAN_IP
-        key = "#{prefix}:#{ban.groupUuid}:#{ban.ip}"
+        key = "#{prefix}:#{ban.groupId}:#{ban.ip}"
         CacheService.deleteByKey key
       ban
 
@@ -132,43 +132,43 @@ class BanModel
     else
       get()
 
-  getAllByGroupUuidAndDuration: (groupUuid, duration) ->
+  getAllByGroupIdAndDuration: (groupId, duration) ->
     cknex().select '*'
-    .from 'bans_by_duration_and_uuid'
-    .where 'groupUuid', '=', groupUuid
+    .from 'bans_by_duration_and_id'
+    .where 'groupId', '=', groupId
     .andWhere 'duration', '=', duration
     .limit 100
     .run()
     .map defaultBan
 
-  getByGroupUuidAndIp: (groupUuid, ip, {scope, preferCache} = {}) ->
+  getByGroupIdAndIp: (groupId, ip, {scope, preferCache} = {}) ->
     scope ?= 'chat'
 
     get = ->
       cknex().select '*'
       .from 'bans_by_ip'
-      .where 'groupUuid', '=', groupUuid
+      .where 'groupId', '=', groupId
       .andWhere 'ip', '=', ip
       .run {isSingle: true}
       .then defaultBan
 
     if preferCache
-      key = "#{CacheService.PREFIXES.BAN_IP}:#{groupUuid}:#{ip}"
+      key = "#{CacheService.PREFIXES.BAN_IP}:#{groupId}:#{ip}"
       CacheService.preferCache key, get, {expireSeconds: ONE_DAY_SECONDS}
     else
       get()
 
-  getByGroupUuidAndUserUuid: (groupUuid, userUuid, {preferCache} = {}) ->
+  getByGroupIdAndUserId: (groupId, userId, {preferCache} = {}) ->
     get = ->
       cknex().select '*'
-      .from 'bans_by_userUuid'
-      .where 'groupUuid', '=', groupUuid
-      .andWhere 'userUuid', '=', userUuid
+      .from 'bans_by_userId'
+      .where 'groupId', '=', groupId
+      .andWhere 'userId', '=', userId
       .run {isSingle: true}
       .then defaultBan
 
     if preferCache
-      key = "#{CacheService.PREFIXES.BAN_USER_ID}:#{groupUuid}:#{userUuid}"
+      key = "#{CacheService.PREFIXES.BAN_USER_ID}:#{groupId}:#{userId}"
       CacheService.preferCache key, get, {expireSeconds: ONE_DAY_SECONDS}
     else
       get()
@@ -176,47 +176,47 @@ class BanModel
   deleteByBan: (ban) ->
     Promise.all _.filter [
       cknex().delete()
-      .from 'bans_by_userUuid'
-      .where 'groupUuid', '=', ban.groupUuid
-      .andWhere 'userUuid', '=', ban.userUuid
+      .from 'bans_by_userId'
+      .where 'groupId', '=', ban.groupId
+      .andWhere 'userId', '=', ban.userId
       .run()
 
       if ban.ip
         cknex().delete()
         .from 'bans_by_ip'
-        .where 'groupUuid', '=', ban.groupUuid
+        .where 'groupId', '=', ban.groupId
         .andWhere 'ip', '=', ban.ip
         .run()
 
       cknex().delete()
-      .from 'bans_by_duration_and_uuid'
-      .where 'groupUuid', '=', ban.groupUuid
+      .from 'bans_by_duration_and_id'
+      .where 'groupId', '=', ban.groupId
       .andWhere 'duration', '=', ban.duration
-      .andWhere 'uuid', '=', ban.uuid
+      .andWhere 'id', '=', ban.id
       .run()
     ]
 
-  deleteAllByGroupUuidAndIp: (groupUuid, ip) =>
+  deleteAllByGroupIdAndIp: (groupId, ip) =>
     cknex().select '*'
-    .from 'bans_by_userUuid'
-    .where 'groupUuid', '=', groupUuid
+    .from 'bans_by_userId'
+    .where 'groupId', '=', groupId
     .andWhere 'ip', '=', ip
     .run()
     .map @deleteByBan
     .then ->
-      key = "#{CacheService.PREFIXES.BAN_IP}:#{groupUuid}:#{ip}"
+      key = "#{CacheService.PREFIXES.BAN_IP}:#{groupId}:#{ip}"
       CacheService.deleteByKey key
     .then -> null
 
-  deleteAllByGroupUuidAndUserUuid: (groupUuid, userUuid) =>
+  deleteAllByGroupIdAndUserId: (groupId, userId) =>
     cknex().select '*'
-    .from 'bans_by_userUuid'
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'userUuid', '=', userUuid
+    .from 'bans_by_userId'
+    .where 'groupId', '=', groupId
+    .andWhere 'userId', '=', userId
     .run()
     .map @deleteByBan
     .then ->
-      key = "#{CacheService.PREFIXES.BAN_USER_ID}:#{groupUuid}:#{userUuid}"
+      key = "#{CacheService.PREFIXES.BAN_USER_ID}:#{groupId}:#{userId}"
       CacheService.deleteByKey key
     .then -> null
 

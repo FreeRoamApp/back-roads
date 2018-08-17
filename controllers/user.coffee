@@ -27,8 +27,8 @@ class UserCtrl
     isServerSide = ip?.indexOf('::ffff:10.') isnt -1
     if isServerSide then null else geoip.lookup(ip)?.country?.toLowerCase()
 
-  getByUuid: ({uuid}) ->
-    User.getByUuid uuid
+  getById: ({id}) ->
+    User.getById id
     .then User.sanitizePublic(null)
 
   getByUsername: ({username}) ->
@@ -36,7 +36,7 @@ class UserCtrl
     .then User.sanitizePublic(null)
 
   upsert: ({newUser}, {user}) ->
-    User.upsert _.defaults newUser, {uuid: user.uuid}
+    User.upsert _.defaults newUser, {id: user.id}
 
   #
   # setAvatarImage: ({}, {user, file}) ->
@@ -45,7 +45,7 @@ class UserCtrl
   #   }
   #
   #   # bust cache
-  #   keyPrefix = "images/freeroam/u/#{user.uuid}/avatar_#{Date.now()}"
+  #   keyPrefix = "images/freeroam/u/#{user.id}/avatar_#{Date.now()}"
   #
   #   Promise.all [
   #     ImageService.uploadImage
@@ -88,11 +88,11 @@ class UserCtrl
   #       ]
   #     User.updateByUser user, {avatarImage: avatarImage}
   #   .then (response) ->
-  #     key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.uuid}"
+  #     key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.id}"
   #     CacheService.deleteByKey key
   #     response
   #   .then ->
-  #     User.getByUuid user.uuid
-  #   .then User.sanitize(user.uuid)
+  #     User.getById user.id
+  #   .then User.sanitize(user.id)
 
 module.exports = new UserCtrl()

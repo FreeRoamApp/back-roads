@@ -5,19 +5,19 @@ User = require '../models/user'
 
 class GroupEmbed
   userCount: (group) ->
-    if group.type isnt 'public' and group.userUuids?.then
-      group.userUuids.then (userUuids) ->
-        userUuids.length
-    else if group.type isnt 'public' and group.userUuids
-      group.userUuids.length
+    if group.type isnt 'public' and group.userIds?.then
+      group.userIds.then (userIds) ->
+        userIds.length
+    else if group.type isnt 'public' and group.userIds
+      group.userIds.length
     else
-      GroupUser.getCountByGroupUuid group.uuid, {
+      GroupUser.getCountByGroupId group.id, {
         preferCache: true
       }
 
   users: (group) ->
-    Promise.map group.userUuids, (userUuid) ->
-      User.getByUuid userUuid, {preferCache: true}
+    Promise.map group.userIds, (userId) ->
+      User.getById userId, {preferCache: true}
     .map embedFn {embed: [TYPES.USER.IS_ONLINE]}
     .map User.sanitizePublic null
 

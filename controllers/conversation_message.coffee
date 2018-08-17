@@ -57,13 +57,13 @@ class ConversationMessageCtrl
   constructor: ->
     @cardBuilder = new cardBuilder {api: config.DEALER_API_URL}
 
-  _checkRateLimit: (userUuid, isMedia, router) ->
+  _checkRateLimit: (userId, isMedia, router) ->
     if isMedia
-      key = "#{CacheService.PREFIXES.RATE_LIMIT_CONVERSATION_MESSAGES_MEDIA}:#{userUuid}"
+      key = "#{CacheService.PREFIXES.RATE_LIMIT_CONVERSATION_MESSAGES_MEDIA}:#{userId}"
       rateLimit = RATE_LIMIT_CONVERSATION_MESSAGES_MEDIA
       rateLimitExpireS = RATE_LIMIT_CONVERSATION_MESSAGES_MEDIA_EXPIRE_S
     else
-      key = "#{CacheService.PREFIXES.RATE_LIMIT_CONVERSATION_MESSAGES_TEXT}:#{userUuid}"
+      key = "#{CacheService.PREFIXES.RATE_LIMIT_CONVERSATION_MESSAGES_TEXT}:#{userId}"
       rateLimit = RATE_LIMIT_CONVERSATION_MESSAGES_TEXT
       rateLimitExpireS = RATE_LIMIT_CONVERSATION_MESSAGES_TEXT_EXPIRE_S
 
@@ -76,24 +76,24 @@ class ConversationMessageCtrl
         expireSeconds: rateLimitExpireS
       }
 
-  _checkIfBanned: (groupUuid, ipAddr, userUuid, router) ->
+  _checkIfBanned: (groupId, ipAddr, userId, router) ->
     ipAddr ?= 'n/a'
     Promise.all [
-      Ban.getByGroupUuidAndIp groupUuid, ipAddr, {preferCache: true}
-      Ban.getByGroupUuidAndUserUuid groupUuid, userUuid, {preferCache: true}
+      Ban.getByGroupIdAndIp groupId, ipAddr, {preferCache: true}
+      Ban.getByGroupIdAndUserId groupId, userId, {preferCache: true}
       Ban.isHoneypotBanned ipAddr, {preferCache: true}
     ]
-    .then ([bannedIp, bannedUserUuid, isHoneypotBanned]) ->
-      if bannedIp?.ip or bannedUserUuid?.userUuid or isHoneypotBanned
+    .then ([bannedIp, bannedUserId, isHoneypotBanned]) ->
+      if bannedIp?.ip or bannedUserId?.userId or isHoneypotBanned
         router.throw
           status: 403
-          info: "unable to post, banned #{userUuid}, #{ipAddr}"
+          info: "unable to post, banned #{userId}, #{ipAddr}"
 
-  _checkSlowMode: (conversation, userUuid, router) ->
+  _checkSlowMode: (conversation, userId, router) ->
     isSlowMode = conversation?.data?.isSlowMode
     slowModeCooldownSeconds = conversation?.data?.slowModeCooldown
     if isSlowMode and slowModeCooldownSeconds
-      ConversationMessage.getLastTimeByUserUuidAndConversationUuid userUuid, conversation.uuid
+      ConversationMessage.getLastTimeByUserIdAndConversationId userId, conversation.id
       .then (lastMeMessageTime) ->
         msSinceLastMessage = Date.now() - lastMeMessageTime
         cooldownSecondsLeft = slowModeCooldownSeconds -
@@ -109,8 +109,8 @@ class ConversationMessageCtrl
     mentions = _.take mentions, 5 # so people don't abuse
     hasMentions = not _.isEmpty mentions
 
-    (if hasMentions and conversation.groupUuid
-      GroupRole.getAllByGroupUuid conversation.groupUuid, {preferCache: true}
+    (if hasMentions and conversation.groupId
+      GroupRole.getAllByGroupId conversation.groupId, {preferCache: true}
     else
       Promise.resolve(null)
     )
@@ -131,8 +131,8 @@ class ConversationMessageCtrl
     pushBody = if isImage then '[image]' else body
 
     Promise.all [
-      (if conversation.groupUuid
-        Group.getByUuid conversation.groupUuid, {preferCache: true}
+      (if conversation.groupId
+        Group.getById conversation.groupId, {preferCache: true}
       else
         Promise.resolve null
       )
@@ -140,21 +140,21 @@ class ConversationMessageCtrl
       Promise.map userMentions, (username) ->
         User.getByUsername username, {preferCache: true}
         .then (user) ->
-          user?.uuid
+          user?.id
     ]
-    .then ([group, mentionUserUuids]) ->
-      mentionUserUuids = _.filter mentionUserUuids
+    .then ([group, mentionUserIds]) ->
+      mentionUserIds = _.filter mentionUserIds
       PushNotificationService.sendToConversation(
         conversation, {
           skipMe: true
           meUser: user
           text: pushBody
-          mentionUserUuids: mentionUserUuids
+          mentionUserIds: mentionUserIds
           mentionRoles: roleMentions
           conversationMessage: conversationMessage
         }).catch -> null
 
-  _createCards: (body, isImage, conversationMessageUuid) =>
+  _createCards: (body, isImage, conversationMessageId) =>
     urls = not isImage and body.match(URL_REGEX)
 
     (if _.isEmpty urls
@@ -163,13 +163,13 @@ class ConversationMessageCtrl
       @cardBuilder.create {
         url: urls[0]
         callbackUrl:
-          "#{config.RADIOACTIVE_API_URL}/conversationMessage/#{conversationMessageUuid}/card"
+          "#{config.RADIOACTIVE_API_URL}/conversationMessage/#{conversationMessageId}/card"
       }
       .timeout CARD_BUILDER_TIMEOUT_MS
       .catch -> null
     )
 
-  create: ({body, conversationUuid, clientUuid}, {user, headers, connection}) =>
+  create: ({body, conversationId, clientId}, {user, headers, connection}) =>
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
@@ -186,22 +186,22 @@ class ConversationMessageCtrl
     isMedia = isImage
     isLink = body.match URL_REGEX
 
-    @_checkRateLimit user.uuid, isMedia, router
+    @_checkRateLimit user.id, isMedia, router
     .then ->
-      Conversation.getByUuid conversationUuid
+      Conversation.getById conversationId
       .catch (err) ->
-        console.log 'err getting conversation', conversationUuid, body
+        console.log 'err getting conversation', conversationId, body
         throw err
     .then EmbedService.embed {embed: defaultConversationEmbed}
     .then (conversation) =>
-      (if conversation.groupUuid
-        groupUuid = conversation.groupUuid
+      (if conversation.groupId
+        groupId = conversation.groupId
 
-        GroupUsersOnline.upsert {userUuid: user.uuid, groupUuid}
+        GroupUsersOnline.upsert {userId: user.id, groupId}
 
         Promise.all [
-          @_checkIfBanned groupUuid, ip, user.uuid, router
-          @_checkSlowMode conversation, user.uuid, router
+          @_checkIfBanned groupId, ip, user.id, router
+          @_checkSlowMode conversation, user.id, router
         ]
         .then ->
           permissions = [GroupUser.PERMISSIONS.SEND_MESSAGE]
@@ -209,38 +209,38 @@ class ConversationMessageCtrl
             permissions = permissions.concat GroupUser.PERMISSIONS.SEND_IMAGE
           if isLink
             permissions = permissions.concat GroupUser.PERMISSIONS.SEND_LINK
-          GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, permissions, {
-            channelUuid: conversationUuid
+          GroupUser.hasPermissionByGroupIdAndUser groupId, user, permissions, {
+            channelId: conversationId
           }
           .then (hasPermission) ->
             unless hasPermission
               router.throw status: 400, info: 'no permission'
         .then ->
-          if groupUuid
-            Group.getByUuid groupUuid, {preferCache: true}
+          if groupId
+            Group.getById groupId, {preferCache: true}
           else
             Promise.resolve null
 
 
       else Promise.resolve null)
       .then (group) =>
-        Conversation.hasPermission conversation, user.uuid
+        Conversation.hasPermission conversation, user.id
         .then (hasPermission) =>
           unless hasPermission
             router.throw status: 401, info: 'unauthorized'
 
-          conversationMessageUuid = uuid.v4()
+          conversationMessageId = uuid.v4()
 
-          @_createCards body, isImage, conversationMessageUuid
+          @_createCards body, isImage, conversationMessageId
           .then ({card} = {}) ->
-            groupUuid = conversation.groupUuid or 'private'
+            groupId = conversation.groupId or 'private'
             ConversationMessage.upsert {
-              uuid: conversationMessageUuid
-              userUuid: user.uuid
+              id: conversationMessageId
+              userId: user.id
               body: body
-              clientUuid: clientUuid
-              conversationUuid: conversationUuid
-              groupUuid: conversation?.groupUuid
+              clientId: clientId
+              conversationId: conversationId
+              groupId: conversation?.groupId
               card: card
             }, {
               prepareFn: (item) ->
@@ -249,13 +249,13 @@ class ConversationMessageCtrl
       .tap ->
         if conversation.data?.isSlowMode
           ConversationMessage.upsertSlowModeLog {
-            userUuid: user.uuid, conversationUuid: conversation.uuid
+            userId: user.id, conversationId: conversation.id
           }
       .tap  ->
-        (if conversation.groupUuid
-          EarnAction.completeActionByGroupUuidAndUserUuid(
-            conversation.groupUuid
-            user.uuid
+        (if conversation.groupId
+          EarnAction.completeActionByGroupIdAndUserId(
+            conversation.groupId
+            user.id
             'conversationMessage'
           )
           .catch -> null
@@ -265,14 +265,14 @@ class ConversationMessageCtrl
         .then (rewards) ->
           {rewards}
       .then (conversationMessage) =>
-        userUuids = conversation.userUuids
+        userIds = conversation.userIds
         pickedConversation = _.pick conversation, [
-          'userUuid', 'userUuids', 'groupUuid', 'uuid'
+          'userId', 'userIds', 'groupId', 'id'
         ]
         Conversation.upsert _.defaults(pickedConversation, {
           lastUpdateTime: new Date()
           isRead: false
-        }), {userUuid: user.uuid}
+        }), {userId: user.id}
 
         @_getMentions conversation, body
         .then ({userMentions, roleMentions}) =>
@@ -282,13 +282,13 @@ class ConversationMessageCtrl
           }
         null # don't block
 
-  deleteByUuid: ({uuid}, {user}) ->
-    ConversationMessage.getByUuid uuid
+  deleteById: ({id}, {user}) ->
+    ConversationMessage.getById id
     .then (conversationMessage) ->
-      Conversation.getByUuid conversationMessage.conversationUuid
+      Conversation.getById conversationMessage.conversationId
       .then (conversation) ->
-        if conversation.groupUuid
-          GroupUser.getByGroupUuidAndUserUuid conversation.groupUuid, user.uuid
+        if conversation.groupId
+          GroupUser.getByGroupIdAndUserId conversation.groupId, user.id
           .then EmbedService.embed {
             embed: [EmbedService.TYPES.GROUP_USER.ROLES]
           }
@@ -303,11 +303,11 @@ class ConversationMessageCtrl
               router.throw
                 status: 400, info: 'You don\'t have permission to do that'
           .then ->
-            User.getByUuid conversationMessage.userUuid
+            User.getById conversationMessage.userId
             .then (otherUser) ->
               GroupAuditLog.upsert {
-                groupUuid: conversation.groupUuid
-                userUuid: user.uuid
+                groupId: conversation.groupId
+                userId: user.id
                 actionText: Language.get 'audit.deleteMessage', {
                   replacements:
                     name: User.getDisplayName otherUser
@@ -316,9 +316,9 @@ class ConversationMessageCtrl
               }
             ConversationMessage.deleteByConversationMessage conversationMessage
 
-  deleteAllByGroupUuidAndUserUuid: ({groupUuid, userUuid, duration}, {user}) ->
-    if groupUuid
-      GroupUser.getByGroupUuidAndUserUuid groupUuid, user.uuid
+  deleteAllByGroupIdAndUserId: ({groupId, userId, duration}, {user}) ->
+    if groupId
+      GroupUser.getByGroupIdAndUserId groupId, user.id
       .then EmbedService.embed {embed: [EmbedService.TYPES.GROUP_USER.ROLES]}
       .then (groupUser) ->
         permission = 'deleteMessage'
@@ -332,52 +332,52 @@ class ConversationMessageCtrl
           router.throw
             status: 400, info: 'You don\'t have permission to do that'
       .then ->
-        User.getByUuid userUuid
+        User.getById userId
         .then (otherUser) ->
           GroupAuditLog.upsert {
-            groupUuid
-            userUuid: user.uuid
+            groupId
+            userId: user.id
             actionText: Language.get 'audit.deleteMessagesLast7d', {
               replacements:
                 name: User.getDisplayName otherUser
               language: user.language
             }
           }
-        ConversationMessage.deleteAllByGroupUuidAndUserUuid groupUuid, userUuid, {duration}
+        ConversationMessage.deleteAllByGroupIdAndUserId groupId, userId, {duration}
 
   updateCard: ({body, params, headers}) ->
     radioactiveHost = config.RADIOACTIVE_API_URL.replace /https?:\/\//i, ''
     isPrivate = headers.host is radioactiveHost
     if isPrivate and body.secret is config.DEALER_SECRET
-      ConversationMessage.updateByUuid params.uuid, {card: body.card}, {prepareFn}
+      ConversationMessage.updateById params.id, {card: body.card}, {prepareFn}
 
-  unsubscribeByConversationUuid: ({conversationUuid}, {user}, {socket}) ->
-    ConversationMessage.unsubscribeByConversationUuid conversationUuid, {socket}
+  unsubscribeByConversationId: ({conversationId}, {user}, {socket}) ->
+    ConversationMessage.unsubscribeByConversationId conversationId, {socket}
 
-  getLastTimeByMeAndConversationUuid: ({conversationUuid}, {user}, {socket}) ->
-    ConversationMessage.getLastTimeByUserUuidAndConversationUuid user.uuid, conversationUuid
+  getLastTimeByMeAndConversationId: ({conversationId}, {user}, {socket}) ->
+    ConversationMessage.getLastTimeByUserIdAndConversationId user.id, conversationId
 
-  getAllByConversationUuid: (options, {user}, socketInfo) =>
-    {conversationUuid, minUuid, maxUuid, isStreamed} = options
+  getAllByConversationId: (options, {user}, socketInfo) =>
+    {conversationId, minId, maxId, isStreamed} = options
     {emit, socket, route} = socketInfo
 
-    Conversation.getByUuid conversationUuid, {preferCache: true}
+    Conversation.getById conversationId, {preferCache: true}
     .then (conversation) =>
 
       Promise.all [
-        if conversation.groupUuid
-          Group.getByUuid conversation.groupUuid, {preferCache: true}
+        if conversation.groupId
+          Group.getById conversation.groupId, {preferCache: true}
         else
           Promise.resolve null
 
-        (if conversation.groupUuid
-          groupUuid = conversation.groupUuid
+        (if conversation.groupId
+          groupId = conversation.groupId
           permissions = [GroupUser.PERMISSIONS.READ_MESSAGE]
-          GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, permissions, {
-            channelUuid: conversationUuid
+          GroupUser.hasPermissionByGroupIdAndUser groupId, user, permissions, {
+            channelId: conversationId
           }
         else
-          Conversation.hasPermission conversation, user.uuid)
+          Conversation.hasPermission conversation, user.id)
       ]
       .then ([group, hasPermission]) =>
         unless hasPermission
@@ -385,10 +385,10 @@ class ConversationMessageCtrl
 
         limit = 25
 
-        ConversationMessage.getAllByConversationUuid conversationUuid, {
+        ConversationMessage.getAllByConversationId conversationId, {
           limit: limit
-          minUuid: minUuid
-          maxUuid: maxUuid
+          minId: minId
+          maxId: maxId
           isStreamed: isStreamed
           emit: emit
           socket: socket
@@ -405,7 +405,7 @@ class ConversationMessageCtrl
     }
     ImageService.getSizeByBuffer (file.buffer)
     .then (size) ->
-      key = "#{user.uuid}_#{uuid.v4()}"
+      key = "#{user.id}_#{uuid.v4()}"
       keyPrefix = "images/fam/cm/#{key}"
 
       aspectRatio = size.width / size.height

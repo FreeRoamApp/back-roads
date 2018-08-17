@@ -20,15 +20,15 @@ defaultThread = (thread) ->
   thread.data = JSON.stringify thread.data
 
   _.defaults thread, {
-    uuid: cknex.getTimeUuid()
-    userUuid: null
+    id: cknex.getTimeUuid()
+    userId: null
     category: 'general'
     data: {}
     timeBucket: 'MONTH-' + moment().format 'YYYY-MM'
   }
 
 defaultThreadOutput = (thread) ->
-  unless thread?.uuid
+  unless thread?.id
     return null
 
   thread.data = try
@@ -36,21 +36,21 @@ defaultThreadOutput = (thread) ->
   catch error
     {}
 
-  thread.userUuid = "#{thread.userUuid}"
-  thread.time = thread.uuid.getDate()
+  thread.userId = "#{thread.userId}"
+  thread.time = thread.id.getDate()
 
   thread
 
 
 tables = [
   {
-    name: 'threads_counter_by_uuid'
+    name: 'threads_counter_by_id'
     fields:
-      uuid: 'timeuuid'
+      id: 'timeuuid'
       upvotes: 'counter'
       downvotes: 'counter'
     primaryKey:
-      partitionKey: ['uuid']
+      partitionKey: ['id']
       clusteringColumns: null
   }
   {
@@ -58,176 +58,176 @@ tables = [
     keyspace: 'free_roam'
     fields:
       partition: 'int' # always 1
-      uuid: 'timeuuid'
-      groupUuid: 'uuid'
+      id: 'timeuuid'
+      groupId: 'uuid'
       category: 'text'
     primaryKey:
       partitionKey: ['partition']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   {
-    name: 'threads_by_groupUuid'
+    name: 'threads_by_groupId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      id: 'text'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
+      id: 'timeuuid'
+      slug: 'text'
+      groupId: 'uuid'
+      userId: 'uuid'
       category: 'text'
       data: 'text'
       timeBucket: 'text'
     primaryKey:
-      partitionKey: ['groupUuid', 'timeBucket']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['groupId', 'timeBucket']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   {
-    name: 'threads_by_groupUuid_and_category'
+    name: 'threads_by_groupId_and_category'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      id: 'text'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
+      id: 'timeuuid'
+      slug: 'text'
+      groupId: 'uuid'
+      userId: 'uuid'
       category: 'text'
       data: 'text'
       timeBucket: 'text'
     primaryKey:
-      partitionKey: ['groupUuid', 'category', 'timeBucket']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['groupId', 'category', 'timeBucket']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   {
-    name: 'threads_by_userUuid'
+    name: 'threads_by_userId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      id: 'text'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
+      id: 'timeuuid'
+      slug: 'text'
+      groupId: 'uuid'
+      userId: 'uuid'
       category: 'text'
       data: 'text' # title, body, type, attachmentIds/attachments?, lastUpdateTime
       timeBucket: 'text'
     primaryKey:
-      partitionKey: ['userUuid'] # may want to restructure with timeBucket
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
-  }
-  {
-    name: 'threads_by_uuid'
-    keyspace: 'free_roam'
-    fields:
-      uuid: 'timeuuid'
-      id: 'text'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
-      category: 'text'
-      data: 'text' # title, body, type, attachmentIds/attachments?
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['uuid']
+      partitionKey: ['userId'] # may want to restructure with timeBucket
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   {
     name: 'threads_by_id'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      id: 'text'
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
+      id: 'timeuuid'
+      slug: 'text'
+      groupId: 'uuid'
+      userId: 'uuid'
       category: 'text'
       data: 'text' # title, body, type, attachmentIds/attachments?
       timeBucket: 'text'
     primaryKey:
       partitionKey: ['id']
   }
+  {
+    name: 'threads_by_slug'
+    keyspace: 'free_roam'
+    fields:
+      id: 'timeuuid'
+      slug: 'text'
+      groupId: 'uuid'
+      userId: 'uuid'
+      category: 'text'
+      data: 'text' # title, body, type, attachmentIds/attachments?
+      timeBucket: 'text'
+    primaryKey:
+      partitionKey: ['slug']
+  }
 ]
 
 class ThreadModel
   SCYLLA_TABLES: tables
 
-  getUniqueId: (baseId, suffix, attempts = 0) =>
+  getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
     if suffix is 1
       suffix = parseInt(Math.random() * 10000) # random # between 0 and 9999
 
     id = if suffix \
-         then "#{baseId}-#{suffix}"
-         else baseId
-    @getById baseId
+         then "#{baseSlug}-#{suffix}"
+         else baseSlug
+    @getBySlug baseSlug
     .then (existingThread) =>
       if attempts > MAX_UNIQUE_ID_ATTEMPTS
         return uuid.v4()
       if existingThread
-        @getUniqueId baseId, (suffix or 0) + 1, attempts  + 1
+        @getUniqueSlug baseSlug, (suffix or 0) + 1, attempts  + 1
       else
-        baseId
+        baseSlug
 
   upsert: (thread) ->
-    id = _.kebabCase(thread.data.title)
+    slug = _.kebabCase(thread.data.title)
     thread = defaultThread thread
 
-    (if thread.id
-      Promise.resolve thread.id
+    (if thread.slug
+      Promise.resolve thread.slug
     else
-      @getUniqueId id)
-    .then (id) ->
-      thread.id = id
+      @getUniqueSlug slug)
+    .then (slug) ->
+      thread.slug = slug
 
       Promise.all [
         cknex().insert {
           partition: 1
-          uuid: thread.uuid
-          groupUuid: thread.groupUuid
+          id: thread.id
+          groupId: thread.groupId
           category: thread.category
         }
         .into 'threads_recent'
         .usingTTL SCORE_UPDATE_TIME_RANGE_S
         .run()
 
-        cknex().update 'threads_by_groupUuid'
-        .set _.omit thread, ['groupUuid', 'timeBucket', 'uuid']
-        .where 'groupUuid', '=', thread.groupUuid
+        cknex().update 'threads_by_groupId'
+        .set _.omit thread, ['groupId', 'timeBucket', 'id']
+        .where 'groupId', '=', thread.groupId
         .andWhere 'timeBucket', '=', thread.timeBucket
-        .andWhere 'uuid', '=', thread.uuid
+        .andWhere 'id', '=', thread.id
         .run()
 
-        cknex().update 'threads_by_groupUuid_and_category'
-        .set _.omit thread, ['groupUuid', 'category', 'timeBucket', 'uuid']
-        .where 'groupUuid', '=', thread.groupUuid
+        cknex().update 'threads_by_groupId_and_category'
+        .set _.omit thread, ['groupId', 'category', 'timeBucket', 'id']
+        .where 'groupId', '=', thread.groupId
         .andWhere 'category', '=', thread.category
         .andWhere 'timeBucket', '=', thread.timeBucket
-        .andWhere 'uuid', '=', thread.uuid
+        .andWhere 'id', '=', thread.id
         .run()
 
-        cknex().update 'threads_by_userUuid'
-        .set _.omit thread, ['userUuid', 'uuid']
-        .where 'userUuid', '=', thread.userUuid
-        .andWhere 'uuid', '=', thread.uuid
-        .run()
-
-        cknex().update 'threads_by_uuid'
-        .set _.omit thread, ['uuid']
-        .where 'uuid', '=', thread.uuid
+        cknex().update 'threads_by_userId'
+        .set _.omit thread, ['userId', 'id']
+        .where 'userId', '=', thread.userId
+        .andWhere 'id', '=', thread.id
         .run()
 
         cknex().update 'threads_by_id'
         .set _.omit thread, ['id']
         .where 'id', '=', thread.id
         .run()
+
+        cknex().update 'threads_by_slug'
+        .set _.omit thread, ['slug']
+        .where 'slug', '=', thread.slug
+        .run()
       ]
     .then ->
       defaultThreadOutput thread
 
-  getByUuid: (uuid, {preferCache, omitCounter} = {}) =>
+  getById: (id, {preferCache, omitCounter} = {}) =>
     get = =>
       Promise.all [
         cknex().select '*'
-        .from 'threads_by_uuid'
-        .where 'uuid', '=', uuid
+        .from 'threads_by_id'
+        .where 'id', '=', id
         .run {isSingle: true}
 
-        if omitCounter then Promise.resolve(null) else @getCounterByUuid uuid
+        if omitCounter then Promise.resolve(null) else @getCounterById id
       ]
       .then ([thread, threadCounter]) ->
         if omitCounter
@@ -238,29 +238,29 @@ class ThreadModel
       .then defaultThreadOutput
 
     if preferCache
-      key = "#{CacheService.PREFIXES.THREAD_BY_UUID}:#{uuid}:#{Boolean omitCounter}"
+      key = "#{CacheService.PREFIXES.THREAD_BY_ID}:#{id}:#{Boolean omitCounter}"
       CacheService.preferCache key, get, {expireSeconds: ONE_HOUR_SECONDS}
     else
       get()
 
-  getById: (id, {preferCache, omitCounter} = {}) =>
+  getBySlug: (slug, {preferCache, omitCounter} = {}) =>
     get = =>
       cknex().select '*'
-      .from 'threads_by_id'
-      .where 'id', '=', id
+      .from 'threads_by_slug'
+      .where 'slug', '=', slug
       .run {isSingle: true}
       .then (thread) =>
         if omitCounter
           thread
         else if thread
-          @getCounterByUuid thread.uuid
+          @getCounterById thread.id
           .then (threadCounter) ->
             threadCounter or= {upvotes: 0, downvotes: 0}
             _.defaults thread, threadCounter
       .then defaultThreadOutput
 
     if preferCache
-      key = "#{CacheService.PREFIXES.THREAD_BY_ID}:#{id}:#{Boolean omitCounter}"
+      key = "#{CacheService.PREFIXES.THREAD_BY_SLUG}:#{slug}:#{Boolean omitCounter}"
       CacheService.preferCache key, get, {expireSeconds: ONE_HOUR_SECONDS}
     else
       get()
@@ -269,11 +269,11 @@ class ThreadModel
     CacheService.tempSetGetAll CacheService.KEYS.STALE_THREAD_IDS
     .map (value) ->
       arr = value.split '|'
-      {groupUuid: arr[0], category: arr[1], uuid: arr[2]}
+      {groupId: arr[0], category: arr[1], id: arr[2]}
 
-  setStaleByThread: ({groupUuid, category, uuid}) ->
+  setStaleByThread: ({groupId, category, id}) ->
     key = CacheService.KEYS.STALE_THREAD_IDS
-    CacheService.tempSetAdd key, "#{groupUuid}|#{category}|#{uuid}"
+    CacheService.tempSetAdd key, "#{groupId}|#{category}|#{id}"
 
   getAllNewish: (limit) ->
     q = cknex().select '*'
@@ -285,53 +285,53 @@ class ThreadModel
 
     q.run()
 
-  getCounterByUuid: (uuid) ->
+  getCounterById: (id) ->
     cknex().select '*'
-    .from 'threads_counter_by_uuid'
-    .where 'uuid', '=', uuid
+    .from 'threads_counter_by_id'
+    .where 'id', '=', id
     .run {isSingle: true}
 
-  getAllPinnedThreadUuids: ->
+  getAllPinnedThreadIds: ->
     # TODO: this may get very large. when that happens, probably should
     # move to scylla with each key having a 1 month expiry. or figure out
     # a different solution for updatescores
     key = CacheService.STATIC_PREFIXES.PINNED_THREAD_IDS
     CacheService.setGetAll key
 
-  setPinnedThreadUuid: (threadUuid) ->
+  setPinnedThreadId: (threadId) ->
     key = CacheService.STATIC_PREFIXES.PINNED_THREAD_IDS
-    CacheService.setAdd key, threadUuid
+    CacheService.setAdd key, threadId
 
-  deletePinnedThreadUuid: (threadUuid) ->
+  deletePinnedThreadId: (threadId) ->
     key = CacheService.STATIC_PREFIXES.PINNED_THREAD_IDS
-    CacheService.setRemove key, threadUuid
+    CacheService.setRemove key, threadId
 
-  updateScores: (type, groupUuids) =>
+  updateScores: (type, groupIds) =>
     # FIXME: also need to factor in time when grabbing threads. Even without
     # an upvote, threads need to eventually be updated for time increasing.
     # maybe do it by addTime up until 3 days, and run not as freq?
     Promise.all [
-      @getAllPinnedThreadUuids()
+      @getAllPinnedThreadIds()
 
       (if type is 'time' then @getAllNewish() else @getStale())
-      .map ({uuid, groupUuid, category}) =>
-        @getCounterByUuid uuid
+      .map ({id, groupId, category}) =>
+        @getCounterById id
         .then (threadCount) ->
           threadCount or= {upvotes: 0, downvotes: 0}
-          _.defaults {uuid, groupUuid, category}, threadCount
+          _.defaults {id, groupId, category}, threadCount
     ]
-    .then ([pinnedThreadUuids, threadCounts]) =>
+    .then ([pinnedThreadIds, threadCounts]) =>
       Promise.map threadCounts, (thread) =>
         # https://medium.com/hacking-and-gonzo/how-reddit-ranking-algorithms-work-ef111e33d0d9
         # ^ simplification in comments
 
-        unless thread.uuid
+        unless thread.id
           return
 
-        uuid = if typeof thread.uuid is 'string' \
-                   then cknex.getTimeUuidFromString thread.uuid
-                   else thread.uuid
-        addTime = uuid.getDate()
+        id = if typeof thread.id is 'string' \
+                   then cknex.getTimeUuidFromString thread.id
+                   else thread.id
+        addTime = id.getDate()
 
         # people heavily downvote, so offset it a bit...
         thread.upvotes += 1 # for the initial user vote
@@ -339,7 +339,7 @@ class ThreadModel
         order = Math.log10(Math.max(Math.abs(rawScore), 1))
         sign = if rawScore > 0 then 1 else if rawScore < 0 then -1 else 0
         postAgeHours = (Date.now() - addTime.getTime()) / (3600 * 1000)
-        if "#{thread.uuid}" in pinnedThreadUuids
+        if "#{thread.id}" in pinnedThreadIds
           postAgeHours = 1
           sign = 1
           order = Math.log10(Math.max(Math.abs(9999), 1))
@@ -348,76 +348,76 @@ class ThreadModel
         @setScoreByThread thread, score
       , {concurrency: 50}
 
-  setScoreByThread: ({groupUuid, category, uuid}, score) ->
+  setScoreByThread: ({groupId, category, id}, score) ->
     groupAllPrefix = CacheService.STATIC_PREFIXES
                     .THREAD_GROUP_LEADERBOARD_ALL
-    groupAllKey = "#{groupAllPrefix}:#{groupUuid}"
-    CacheService.leaderboardUpdate groupAllKey, uuid, score
+    groupAllKey = "#{groupAllPrefix}:#{groupId}"
+    CacheService.leaderboardUpdate groupAllKey, id, score
 
     groupCategoryPrefix = CacheService.STATIC_PREFIXES
                           .THREAD_GROUP_LEADERBOARD_BY_CATEGORY
-    groupCategoryKey = "#{groupCategoryPrefix}:#{groupUuid}:#{category}"
-    CacheService.leaderboardUpdate groupCategoryKey, uuid, score
+    groupCategoryKey = "#{groupCategoryPrefix}:#{groupId}:#{category}"
+    CacheService.leaderboardUpdate groupCategoryKey, id, score
 
   getAll: (options = {}) =>
-    {category, groupUuid, sort, skip, maxUuid, limit} = options
+    {category, groupId, sort, skip, maxId, limit} = options
     limit ?= 20
     skip ?= 0
     (if sort is 'new'
-      @getAllTimeSorted {category, groupUuid, maxUuid, limit}
+      @getAllTimeSorted {category, groupId, maxId, limit}
     else
-      @getAllScoreSorted {category, groupUuid, skip, limit})
+      @getAllScoreSorted {category, groupId, skip, limit})
     .map (thread) =>
       unless thread
         return
-      @getCounterByUuid thread.uuid
+      @getCounterById thread.id
       .then (threadCounter) ->
         threadCounter or= {upvotes: 0, downvotes: 0}
         _.defaults thread, threadCounter
     .map defaultThreadOutput
 
-  # need skip for redis-style (score), maxUuid for scylla-style (time)
-  getAllScoreSorted: ({category, groupUuid, skip, limit} = {}) ->
+  # need skip for redis-style (score), maxId for scylla-style (time)
+  getAllScoreSorted: ({category, groupId, skip, limit} = {}) ->
     (if category
       prefix = CacheService.STATIC_PREFIXES.THREAD_GROUP_LEADERBOARD_BY_CATEGORY
-      CacheService.leaderboardGet "#{prefix}:#{groupUuid}:#{category}", {
+      CacheService.leaderboardGet "#{prefix}:#{groupId}:#{category}", {
         skip, limit
       }
     else
       prefix = CacheService.STATIC_PREFIXES.THREAD_GROUP_LEADERBOARD_ALL
-      CacheService.leaderboardGet "#{prefix}:#{groupUuid}", {skip, limit}
+      CacheService.leaderboardGet "#{prefix}:#{groupId}", {skip, limit}
     )
     .then (results) ->
-      Promise.map _.chunk(results, 2), ([threadUuid, score]) ->
+      Promise.map _.chunk(results, 2), ([threadId, score]) ->
         cknex().select '*'
-        .from 'threads_by_uuid'
-        .where 'uuid', '=', threadUuid
+        .from 'threads_by_id'
+        .where 'id', '=', threadId
         .run {isSingle: true}
       .filter (thread) ->
         thread
 
-  getAllTimeSorted: ({category, groupUuid, maxUuid, limit} = {}) ->
+  getAllTimeSorted: ({category, groupId, maxId, limit} = {}) ->
     get = (timeBucket) ->
       if category
         q = cknex().select '*'
-        .from 'threads_by_groupUuid_and_category'
-        .where 'groupUuid', '=', groupUuid
+        .from 'threads_by_groupId_and_category'
+        .where 'groupId', '=', groupId
         .andWhere 'category', '=', category
         .andWhere 'timeBucket', '=', timeBucket
       else
         q = cknex().select '*'
-        .from 'threads_by_groupUuid'
-        .where 'groupUuid', '=', groupUuid
+        .from 'threads_by_groupId'
+        .where 'groupId', '=', groupId
         .andWhere 'timeBucket', '=', timeBucket
 
-      if maxUuid
-        q = q.andWhere 'uuid', '<', maxUuid
+      if maxId
+        q = q.andWhere 'id', '<', maxId
 
       q.limit limit
       .run()
 
-    maxTime = if maxUuid \
-              then cknex.getTimeUuidFromString(maxUuid).getDate()
+    maxTime = if maxId \
+              then cknex.getTimeUuidFromString(maxId).getDate()
               else undefined
 
     get 'MONTH-' + moment(maxTime).format 'YYYY-MM'
@@ -432,60 +432,55 @@ class ThreadModel
       else
         results
 
-  incrementByUuid: (uuid, diff) =>
-    @getByUuid uuid, {preferCache: true, omitCounter: true}
+  incrementById: (id, diff) =>
+    @getById id, {preferCache: true, omitCounter: true}
     .then @setStaleByThrea
 
-    q = cknex().update 'threads_counter_by_uuid'
+    q = cknex().update 'threads_counter_by_id'
     _.forEach diff, (amount, key) ->
       q = q.increment key, amount
-    q.where 'uuid', '=', uuid
+    q.where 'id', '=', id
     .run()
 
   deleteByThread: (thread) ->
     groupAllPrefix = CacheService.STATIC_PREFIXES
                     .THREAD_GROUP_LEADERBOARD_ALL
-    groupAllKey = "#{groupAllPrefix}:#{thread.groupUuid}"
+    groupAllKey = "#{groupAllPrefix}:#{thread.groupId}"
 
     groupCategoryPrefix = CacheService.STATIC_PREFIXES
                           .THREAD_GROUP_LEADERBOARD_BY_CATEGORY
     groupCategoryKey = "#{groupCategoryPrefix}:" +
-                        "#{thread.groupUuid}:#{thread.category}"
+                        "#{thread.groupId}:#{thread.category}"
 
     Promise.all [
-      CacheService.leaderboardDelete groupAllKey, thread.uuid
-      CacheService.leaderboardDelete groupCategoryKey, thread.uuid
+      CacheService.leaderboardDelete groupAllKey, thread.id
+      CacheService.leaderboardDelete groupCategoryKey, thread.id
 
       cknex().delete()
       .from 'threads_recent'
       .where 'partition', '=', 1
-      .andWhere 'uuid', '=', thread.uuid
+      .andWhere 'id', '=', thread.id
       .run()
 
       cknex().delete()
-      .from 'threads_by_groupUuid'
-      .where 'groupUuid', '=', thread.groupUuid
+      .from 'threads_by_groupId'
+      .where 'groupId', '=', thread.groupId
       .andWhere 'timeBucket', '=', thread.timeBucket
-      .andWhere 'uuid', '=', thread.uuid
+      .andWhere 'id', '=', thread.id
       .run()
 
       cknex().delete()
-      .from 'threads_by_groupUuid_and_category'
-      .where 'groupUuid', '=', thread.groupUuid
+      .from 'threads_by_groupId_and_category'
+      .where 'groupId', '=', thread.groupId
       .andWhere 'category', '=', thread.category
       .andWhere 'timeBucket', '=', thread.timeBucket
-      .andWhere 'uuid', '=', thread.uuid
+      .andWhere 'id', '=', thread.id
       .run()
 
       cknex().delete()
-      .from 'threads_by_userUuid'
-      .where 'userUuid', '=', thread.userUuid
-      .andWhere 'uuid', '=', thread.uuid
-      .run()
-
-      cknex().delete()
-      .from 'threads_by_uuid'
-      .where 'uuid', '=', thread.uuid
+      .from 'threads_by_userId'
+      .where 'userId', '=', thread.userId
+      .andWhere 'id', '=', thread.id
       .run()
 
       cknex().delete()
@@ -494,30 +489,35 @@ class ThreadModel
       .run()
 
       cknex().delete()
-      .from 'threads_counter_by_uuid'
-      .where 'uuid', '=', thread.uuid
+      .from 'threads_by_slug'
+      .where 'slug', '=', thread.slug
+      .run()
+
+      cknex().delete()
+      .from 'threads_counter_by_id'
+      .where 'id', '=', thread.id
       .run()
     ]
 
-  deleteByUuid: (id) =>
-    @getByUuid id
+  deleteById: (id) =>
+    @getById id
     .then @deleteByThread
 
-  getAllByUserUuid: (userUuid) ->
+  getAllByUserId: (userId) ->
     cknex().select '*'
-    .from 'threads_by_userUuid'
-    .where 'userUuid', '=', userUuid
+    .from 'threads_by_userId'
+    .where 'userId', '=', userId
     .run()
 
-  deleteAllByUserUuid: (userUuid) =>
-    @getAllByUserUuid userUuid
+  deleteAllByUserId: (userId) =>
+    @getAllByUserId userId
     .map @deleteByThread
 
-  hasPermissionByUuidAndUser: (uuid, user, {level} = {}) =>
+  hasPermissionByIdAndUser: (id, user, {level} = {}) =>
     unless user
       return Promise.resolve false
 
-    @getByUuid uuid, {preferCache: true, omitCounter: true}
+    @getById id, {preferCache: true, omitCounter: true}
     .then (thread) =>
       @hasPermission thread, user, {level}
 
@@ -525,17 +525,17 @@ class ThreadModel
     unless thread and user
       return false
 
-    return user?.username is 'austin' or thread.userUuid is user.uuid
+    return user?.username is 'austin' or thread.userId is user.id
 
   sanitize: _.curry (requesterId, thread) ->
     _.pick thread, [
-      'uuid'
       'id'
+      'slug'
       'category'
-      'userUuid'
+      'userId'
       'user'
       'data'
-      'groupUuid'
+      'groupId'
       'comments'
       'commentCount'
       'myVote'

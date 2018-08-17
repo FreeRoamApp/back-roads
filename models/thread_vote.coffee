@@ -6,7 +6,7 @@ cknex = require '../services/cknex'
 User = require './user'
 CacheService = require '../services/cache'
 
-DEFAULT_UUID = '00000000-0000-0000-0000-000000000000'
+DEFAULT_ID = '00000000-0000-0000-0000-000000000000'
 
 defaultThreadVote = (threadVote) ->
   unless threadVote?
@@ -17,65 +17,65 @@ defaultThreadVote = (threadVote) ->
     time: new Date()
   }
 
-# with this structure we'd need another table to get votes by parentUuid
+# with this structure we'd need another table to get votes by parentId
 tables = [
   {
-    name: 'thread_votes_by_userUuid'
+    name: 'thread_votes_by_userId'
     keyspace: 'free_roam'
     fields:
-      userUuid: 'uuid'
-      parentTopUuid: 'uuid' # eg threadUuid for threadComments
+      userId: 'uuid'
+      parentTopId: 'uuid' # eg threadId for threadComments
       parentType: 'text'
-      parentUuid: 'uuid'
+      parentId: 'uuid'
       vote: 'int'
       time: 'timestamp'
     primaryKey:
       # a little uneven since some users will vote a lot, but small data overall
-      partitionKey: ['userUuid', 'parentTopUuid', 'parentType']
-      clusteringColumns: ['parentUuid']
+      partitionKey: ['userId', 'parentTopId', 'parentType']
+      clusteringColumns: ['parentId']
   }
 ]
 
 class ThreadVoteModel
   SCYLLA_TABLES: tables
 
-  upsertByUserUuidAndParent: (userUuid, parent, threadVote) ->
+  upsertByUserIdAndParent: (userId, parent, threadVote) ->
     threadVote = defaultThreadVote threadVote
 
-    cknex().update 'thread_votes_by_userUuid'
+    cknex().update 'thread_votes_by_userId'
     .set threadVote
-    .where 'userUuid', '=', userUuid
-    .andWhere 'parentTopUuid', '=', parent.topUuid or DEFAULT_UUID
+    .where 'userId', '=', userId
+    .andWhere 'parentTopId', '=', parent.topId or DEFAULT_ID
     .andWhere 'parentType', '=', parent.type
-    .andWhere 'parentUuid', '=', parent.uuid
+    .andWhere 'parentId', '=', parent.id
     .run()
     .then ->
       threadVote
 
-  getByUserUuidAndParent: (userUuid, parent) ->
+  getByUserIdAndParent: (userId, parent) ->
     cknex().select '*'
-    .from 'thread_votes_by_userUuid'
-    .where 'userUuid', '=', userUuid
+    .from 'thread_votes_by_userId'
+    .where 'userId', '=', userId
     .andWhere 'parentType', '=', parent.type
-    .andWhere 'parentTopUuid', '=', parent.topUuid or DEFAULT_UUID
-    .andWhere 'parentUuid', '=', parent.uuid
+    .andWhere 'parentTopId', '=', parent.topId or DEFAULT_ID
+    .andWhere 'parentId', '=', parent.id
     .run {isSingle: true}
 
-  getAllByUserUuidAndParentTopUuid: (userUuid, parentTopUuid) ->
+  getAllByUserIdAndParentTopId: (userId, parentTopId) ->
     cknex().select '*'
-    .from 'thread_votes_by_userUuid'
-    .where 'userUuid', '=', userUuid
-    .where 'parentTopUuid', '=', parentTopUuid
+    .from 'thread_votes_by_userId'
+    .where 'userId', '=', userId
+    .where 'parentTopId', '=', parentTopId
     .where 'parentType', '=', 'threadComment'
     .run()
 
-  getAllByUserUuidAndParents: (userUuid, parents) ->
+  getAllByUserIdAndParents: (userId, parents) ->
     cknex().select '*'
-    .from 'thread_votes_by_userUuid'
-    .where 'userUuid', '=', userUuid
-    .andWhere 'parentTopUuid', '=', parents[0].topUuid or DEFAULT_UUID
+    .from 'thread_votes_by_userId'
+    .where 'userId', '=', userId
+    .andWhere 'parentTopId', '=', parents[0].topId or DEFAULT_ID
     .andWhere 'parentType', '=', parents[0].type
-    .andWhere 'parentUuid', 'in', _.map(parents, 'uuid')
+    .andWhere 'parentId', 'in', _.map(parents, 'id')
     .run()
 
 

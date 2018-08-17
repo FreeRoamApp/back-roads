@@ -6,8 +6,8 @@ EmbedService = require '../services/embed'
 config = require '../config'
 
 class PlaceCtrl
-  getById: ({id}, {user}) ->
-    Place.getById id
+  getBySlug: ({slug}, {user}) ->
+    Place.getBySlug slug
     # .then EmbedService.embed {embed: defaultEmbed}
 
   search: ({query}, {user}) ->

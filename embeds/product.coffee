@@ -7,6 +7,6 @@ class ProductEmbed
     _.kebabCase product.name
 
   item: (product) ->
-    Item.getById product.itemId
+    Item.getBySlug product.itemSlug
 
 module.exports = new ProductEmbed()

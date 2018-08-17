@@ -7,25 +7,25 @@ elasticsearch = require '../services/elasticsearch'
 
 tables = [
   {
-    name: 'items_by_id'
+    name: 'items_by_slug'
     keyspace: 'free_roam'
     fields:
-      id: 'text' # eg: surge-protector
-      uuid: 'timeuuid'
+      slug: 'text' # eg: surge-protector
+      id: 'timeuuid'
       categories: 'text'
       name: 'text'
       why: 'text'
       what: 'text'
       videos: 'text' # json (array of video objects)
     primaryKey:
-      partitionKey: ['id']
+      partitionKey: ['slug']
   }
   {
     name: 'items_by_category'
     keyspace: 'free_roam'
     fields:
-      id: 'text' # eg: surge-protector
-      uuid: 'timeuuid'
+      slug: 'text' # eg: surge-protector
+      id: 'timeuuid'
       category: 'text'
       name: 'text'
       why: 'text'
@@ -33,7 +33,7 @@ tables = [
       videos: 'text' # json (array of video objects)
     primaryKey:
       partitionKey: ['category']
-      clusteringColumns: ['id']
+      clusteringColumns: ['slug']
   }
 ]
 
@@ -85,7 +85,7 @@ class Item
     elasticsearch.index {
       index: 'items'
       type: 'items'
-      id: item.id
+      id: item.slug
       body: item
     }
 
@@ -93,16 +93,16 @@ class Item
     item = defaultItem item
 
     Promise.all _.flatten [
-      cknex().update 'items_by_id'
-      .set _.omit item, ['id']
-      .where 'id', '=', item.id
+      cknex().update 'items_by_slug'
+      .set _.omit item, ['slug']
+      .where 'slug', '=', item.slug
       .run()
 
       _.map JSON.parse(item.categories), (category) ->
         cknex().update 'items_by_category'
-        .set _.omit item, ['categories', 'id']
+        .set _.omit item, ['categories', 'slug']
         .where 'category', '=', category
-        .andWhere 'id', '=', item.id
+        .andWhere 'slug', '=', item.slug
         .run()
     ]
 
@@ -116,10 +116,10 @@ class Item
     .then ({hits}) ->
       _.map hits.hits, '_source'
 
-  getByUuid: (id) ->
+  getBySlug: (slug) ->
     cknex().select '*'
-    .from 'items_by_id'
-    .where 'id', '=', id
+    .from 'items_by_slug'
+    .where 'slug', '=', slug
     .run {isSingle: true}
     .then defaultItemOutput
 
@@ -134,7 +134,7 @@ class Item
     limit ?= 30
 
     cknex().select '*'
-    .from 'items_by_id'
+    .from 'items_by_slug'
     .limit limit
     .run()
     .map defaultItemOutput

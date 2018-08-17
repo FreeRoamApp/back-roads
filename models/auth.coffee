@@ -4,14 +4,14 @@ jwt = require 'jsonwebtoken'
 
 config = require '../config'
 
-generateAccessToken = (userUuid) ->
+generateAccessToken = (userId) ->
   jwt.sign {
-    userUuid: userUuid
+    userId: userId
     scopes: ['*']
   }, config.JWT_ES256_PRIVATE_KEY, {
     algorithm: 'ES256'
     issuer: config.JWT_ISSUER
-    subject: userUuid
+    subject: userId
   }
 
 decodeAccessToken = (token) ->
@@ -22,12 +22,12 @@ decodeAccessToken = (token) ->
   )
 
 class AuthModel
-  fromUserUuid: (userUuid) ->
-    {accessToken: generateAccessToken(userUuid)}
+  fromUserId: (userId) ->
+    {accessToken: generateAccessToken(userId)}
 
-  userUuidFromAccessToken: (token) ->
+  userIdFromAccessToken: (token) ->
     decodeAccessToken(token)
-    .then ({userUuid} = {}) ->
-      userUuid
+    .then ({userId} = {}) ->
+      userId
 
 module.exports = new AuthModel()

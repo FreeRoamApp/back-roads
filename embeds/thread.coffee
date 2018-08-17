@@ -9,23 +9,23 @@ FIVE_MINUTES_SECONDS = 60 * 5
 
 class ThreadEmbed
   comments: (thread) ->
-    key = CacheService.PREFIXES.THREAD_COMMENTS + ':' + thread.uuid
+    key = CacheService.PREFIXES.THREAD_COMMENTS + ':' + thread.id
     thread.comments = CacheService.preferCache key, ->
-      ThreadComment.getAllByThreadUuid thread.uuid
+      ThreadComment.getAllByThreadId thread.id
       .map embedFn {embed: [TYPES.THREAD_COMMENT.USER]}
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
   commentCount: (thread) ->
-    key = CacheService.PREFIXES.THREAD_COMMENT_COUNT + ':' + thread.uuid
+    key = CacheService.PREFIXES.THREAD_COMMENT_COUNT + ':' + thread.id
     thread.commentCount = CacheService.preferCache key, ->
-      ThreadComment.getCountByThreadUuid thread.uuid
+      ThreadComment.getCountByThreadId thread.id
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
-  user: (thread, {groupUuid}) ->
-    if thread.userUuid
+  user: (thread, {groupId}) ->
+    if thread.userId
       thread.user = BaseMessage.user {
-        userUuid: thread.userUuid
-        groupUuid: groupUuid
+        userId: thread.userId
+        groupId: groupId
       }
     else
       thread.user = null

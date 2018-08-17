@@ -10,15 +10,15 @@ defaultEmbed = [
 ]
 
 class GroupAuditLogCtrl
-  getAllByGroupUuid: ({groupUuid}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  getAllByGroupId: ({groupId}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.READ_AUDIT_LOG
     ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      GroupAuditLog.getAllByGroupUuid groupUuid
+      GroupAuditLog.getAllByGroupId groupId
       .map EmbedService.embed {embed: defaultEmbed}
 
 module.exports = new GroupAuditLogCtrl()

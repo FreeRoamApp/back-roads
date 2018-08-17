@@ -4,8 +4,8 @@ Item = require '../models/item'
 ItemEmbed = require '../embeds/item'
 
 class CategoryEmbed
-  firstItemFirstProductId: (category) ->
-    Item.getFirstByCategory category.id
-    .then ItemEmbed.firstProductId
+  firstItemFirstProductSlug: (category) ->
+    Item.getFirstByCategory category.slug
+    .then ItemEmbed.firstProductSlug
 
 module.exports = new CategoryEmbed()

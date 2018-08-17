@@ -6,27 +6,27 @@ StreamService = require '../services/stream'
 class Stream
   streamCreate: (obj) =>
     channels = _.map @streamChannelsBy, (channelBy) =>
-      channelByUuid = obj[channelBy]
-      "#{@streamChannelKey}:#{channelBy}:#{channelByUuid}"
+      channelById = obj[channelBy]
+      "#{@streamChannelKey}:#{channelBy}:#{channelById}"
     StreamService.create obj, channels
 
-  streamUpdateByUuid: (id, obj) =>
+  streamUpdateById: (id, obj) =>
     channels = _.map @streamChannelsBy, (channelBy) =>
-      channelByUuid = obj?[channelBy]
-      "#{@streamChannelKey}:#{channelBy}:#{channelByUuid}"
-    StreamService.updateByUuid id, obj, channels
+      channelById = obj?[channelBy]
+      "#{@streamChannelKey}:#{channelBy}:#{channelById}"
+    StreamService.updateById id, obj, channels
 
-  streamDeleteByUuid: (id, obj) =>
+  streamDeleteById: (id, obj) =>
     channels = _.map @streamChannelsBy, (channelBy) =>
-      channelByUuid = obj?[channelBy]
-      "#{@streamChannelKey}:#{channelBy}:#{channelByUuid}"
-    StreamService.deleteByUuid id, channels
+      channelById = obj?[channelBy]
+      "#{@streamChannelKey}:#{channelBy}:#{channelById}"
+    StreamService.deleteById id, channels
 
   stream: (options) =>
-    {emit, socket, route, channelBy, channelByUuid,
+    {emit, socket, route, channelBy, channelById,
       initial, initialPostFn, postFn} = options
     StreamService.stream {
-      channel: "#{@streamChannelKey}:#{channelBy}:#{channelByUuid}"
+      channel: "#{@streamChannelKey}:#{channelBy}:#{channelById}"
       emit
       socket
       route
@@ -34,9 +34,9 @@ class Stream
       postFn
     }
 
-  unsubscribe: ({socket, channelBy, channelByUuid}) =>
+  unsubscribe: ({socket, channelBy, channelById}) =>
     StreamService.unsubscribe {
-      channel: "#{@streamChannelKey}:#{channelBy}:#{channelByUuid}"
+      channel: "#{@streamChannelKey}:#{channelBy}:#{channelById}"
       socket
     }
 

@@ -8,8 +8,8 @@ CacheService = require '../services/cache'
 TimeService = require '../services/time'
 User = require './user'
 
-# TODO: add groupUuid and thread_comments_by_groupUuid_by_userUuid to allow
-# deleteAllByGroupUuidAndUserUuid. should also rename userUuid to userUuid
+# TODO: add groupId and thread_comments_by_groupId_by_userId to allow
+# deleteAllByGroupIdAndUserId. should also rename userId to userId
 
 tables = [
   # sorting done in node
@@ -17,66 +17,66 @@ tables = [
   # needs to have at least the keys that are partition keys from
   # other by_x tables (for updating all counters)
   {
-    name: 'thread_comments_by_threadUuid'
+    name: 'thread_comments_by_threadId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      threadUuid: 'uuid'
+      id: 'timeuuid'
+      threadId: 'uuid'
       parentType: 'text'
-      parentUuid: 'uuid'
-      userUuid: 'uuid'
+      parentId: 'uuid'
+      userId: 'uuid'
       body: 'text'
       timeBucket: 'text'
     primaryKey:
-      partitionKey: ['threadUuid']
-      clusteringColumns: [ 'parentType', 'parentUuid', 'uuid']
+      partitionKey: ['threadId']
+      clusteringColumns: [ 'parentType', 'parentId', 'id']
   }
   {
-    name: 'thread_comments_counter_by_threadUuid'
+    name: 'thread_comments_counter_by_threadId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      threadUuid: 'uuid'
+      id: 'timeuuid'
+      threadId: 'uuid'
       parentType: 'text'
-      parentUuid: 'uuid'
+      parentId: 'uuid'
       upvotes: 'counter'
       downvotes: 'counter'
     primaryKey:
-      partitionKey: ['threadUuid']
-      clusteringColumns: [ 'parentType', 'parentUuid', 'uuid']
+      partitionKey: ['threadId']
+      clusteringColumns: [ 'parentType', 'parentId', 'id']
   }
 
 
   {
-    name: 'thread_comments_by_userUuid'
+    name: 'thread_comments_by_userId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'uuid'
-      threadUuid: 'uuid'
+      id: 'uuid'
+      threadId: 'uuid'
       parentType: 'text'
-      parentUuid: 'uuid'
-      userUuid: 'uuid'
+      parentId: 'uuid'
+      userId: 'uuid'
       body: 'text'
       timeBucket: 'text'
     primaryKey:
-      partitionKey: ['userUuid', 'timeBucket']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['userId', 'timeBucket']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   # do we even need this?
   {
-    name: 'thread_comments_counter_by_userUuid'
+    name: 'thread_comments_counter_by_userId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      userUuid: 'uuid'
+      id: 'timeuuid'
+      userId: 'uuid'
       timeBucket: 'text'
       upvotes: 'counter'
       downvotes: 'counter'
     primaryKey:
-      partitionKey: ['userUuid', 'timeBucket']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['userId', 'timeBucket']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
 ]
 
@@ -87,7 +87,7 @@ defaultThreadComment = (threadComment) ->
     return null
 
   _.defaults threadComment, {
-    uuid: cknex.getTimeUuid()
+    id: cknex.getTimeUuid()
     timeBucket: TimeService.getScaledTimeByTimeScale 'month'
   }
 
@@ -98,136 +98,136 @@ class ThreadCommentModel
     threadComment = defaultThreadComment threadComment
 
     Promise.all [
-      cknex().update 'thread_comments_by_userUuid'
+      cknex().update 'thread_comments_by_userId'
       .set _.omit threadComment, [
-        'userUuid', 'timeBucket', 'uuid'
+        'userId', 'timeBucket', 'id'
       ]
-      .where 'userUuid', '=', threadComment.userUuid
+      .where 'userId', '=', threadComment.userId
       .andWhere 'timeBucket', '=', threadComment.timeBucket
-      .andWhere 'uuid', '=', threadComment.uuid
+      .andWhere 'id', '=', threadComment.id
       .run()
 
-      cknex().update 'thread_comments_by_threadUuid'
+      cknex().update 'thread_comments_by_threadId'
       .set _.omit threadComment, [
-        'threadUuid', 'parentType', 'parentUuid', 'uuid'
+        'threadId', 'parentType', 'parentId', 'id'
       ]
-      .where 'threadUuid', '=', threadComment.threadUuid
+      .where 'threadId', '=', threadComment.threadId
       .andWhere 'parentType', '=', threadComment.parentType
-      .andWhere 'parentUuid', '=', threadComment.parentUuid
-      .andWhere 'uuid', '=', threadComment.uuid
+      .andWhere 'parentId', '=', threadComment.parentId
+      .andWhere 'id', '=', threadComment.id
       .run()
     ]
     .then ->
-      threadUuid = threadComment.threadUuid
-      key = "#{CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID}:#{threadUuid}"
+      threadId = threadComment.threadId
+      key = "#{CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID}:#{threadId}"
       CacheService.deleteByKey key
     .then ->
       threadComment
 
   voteByThreadComment: (threadComment, values) ->
-    qByUserUuid = cknex().update 'thread_comments_counter_by_userUuid'
+    qByUserId = cknex().update 'thread_comments_counter_by_userId'
     _.forEach values, (value, key) ->
-      qByUserUuid = qByUserUuid.increment key, value
-    qByUserUuid = qByUserUuid.where 'userUuid', '=', threadComment.userUuid
+      qByUserId = qByUserId.increment key, value
+    qByUserId = qByUserId.where 'userId', '=', threadComment.userId
     .andWhere 'timeBucket', '=', threadComment.timeBucket
-    .andWhere 'uuid', '=', threadComment.uuid
+    .andWhere 'id', '=', threadComment.id
     .run()
 
-    qByThreadUuid = cknex().update 'thread_comments_counter_by_threadUuid'
+    qByThreadId = cknex().update 'thread_comments_counter_by_threadId'
     _.forEach values, (value, key) ->
-      qByThreadUuid = qByThreadUuid.increment key, value
-    qByThreadUuid = qByThreadUuid.where 'threadUuid', '=', threadComment.threadUuid
+      qByThreadId = qByThreadId.increment key, value
+    qByThreadId = qByThreadId.where 'threadId', '=', threadComment.threadId
     .andWhere 'parentType', '=', threadComment.parentType
-    .andWhere 'parentUuid', '=', threadComment.parentUuid
-    .andWhere 'uuid', '=', threadComment.uuid
+    .andWhere 'parentId', '=', threadComment.parentId
+    .andWhere 'id', '=', threadComment.id
     .run()
 
     Promise.all [
-      qByUserUuid
-      qByThreadUuid
+      qByUserId
+      qByThreadId
     ]
 
-  getAllByThreadUuid: (threadUuid) ->
+  getAllByThreadId: (threadId) ->
     # legacy. rm in mid feb 2018
-    if threadUuid is 'b3d49e6f-3193-417e-a584-beb082196a2c' # cr-es
-      threadUuid = '7a39b079-e6ce-11e7-9642-4b5962cd09d3'
-    else if threadUuid is 'fcb35890-f40e-11e7-9af5-920aa1303bef' # bruno
-      threadUuid = '90c06cb0-86ce-4ed6-9257-f36633db59c2'
+    if threadId is 'b3d49e6f-3193-417e-a584-beb082196a2c' # cr-es
+      threadId = '7a39b079-e6ce-11e7-9642-4b5962cd09d3'
+    else if threadId is 'fcb35890-f40e-11e7-9af5-920aa1303bef' # bruno
+      threadId = '90c06cb0-86ce-4ed6-9257-f36633db59c2'
 
     Promise.all [
       cknex().select '*'
-      .from 'thread_comments_by_threadUuid'
-      .where 'threadUuid', '=', threadUuid
+      .from 'thread_comments_by_threadId'
+      .where 'threadId', '=', threadId
       .run()
 
       cknex().select '*'
-      .from 'thread_comments_counter_by_threadUuid'
-      .where 'threadUuid', '=', threadUuid
+      .from 'thread_comments_counter_by_threadId'
+      .where 'threadId', '=', threadId
       .run()
     ]
     .then ([allComments, voteCounts]) ->
       allComments = _.map allComments, (comment) ->
-        voteCount = _.find voteCounts, {uuid: comment.uuid}
+        voteCount = _.find voteCounts, {id: comment.id}
         voteCount ?= {upvotes: 0, downvotes: 0}
         _.merge comment, voteCount
 
-  getCountByThreadUuid: (threadUuid) ->
+  getCountByThreadId: (threadId) ->
     # legacy. rm in mid feb 2018
-    if "#{threadUuid}" is 'b3d49e6f-3193-417e-a584-beb082196a2c' # cr-es
-      threadUuid = '7a39b079-e6ce-11e7-9642-4b5962cd09d3'
-    else if "#{threadUuid}" is 'fcb35890-f40e-11e7-9af5-920aa1303bef' # bruno
-      threadUuid = '90c06cb0-86ce-4ed6-9257-f36633db59c2'
+    if "#{threadId}" is 'b3d49e6f-3193-417e-a584-beb082196a2c' # cr-es
+      threadId = '7a39b079-e6ce-11e7-9642-4b5962cd09d3'
+    else if "#{threadId}" is 'fcb35890-f40e-11e7-9af5-920aa1303bef' # bruno
+      threadId = '90c06cb0-86ce-4ed6-9257-f36633db59c2'
 
     cknex().select '*'
-    .from 'thread_comments_by_threadUuid'
-    .where 'threadUuid', '=', threadUuid
+    .from 'thread_comments_by_threadId'
+    .where 'threadId', '=', threadId
     .run()
     .then (threads) -> threads.length
 
-  getAllByUserUuidAndTimeBucket: (userUuid, timeBucket) ->
+  getAllByUserIdAndTimeBucket: (userId, timeBucket) ->
     cknex().select '*'
-    .from 'thread_comments_by_userUuid'
-    .where 'userUuid', '=', userUuid
+    .from 'thread_comments_by_userId'
+    .where 'userId', '=', userId
     .andWhere 'timeBucket', '=', timeBucket
     .run()
 
   deleteByThreadComment: (threadComment) ->
     Promise.all [
       cknex().delete()
-      .from 'thread_comments_by_threadUuid'
-      .where 'threadUuid', '=', threadComment.threadUuid
+      .from 'thread_comments_by_threadId'
+      .where 'threadId', '=', threadComment.threadId
       .andWhere 'parentType', '=', threadComment.parentType
-      .andWhere 'parentUuid', '=', threadComment.parentUuid
-      .andWhere 'uuid', '=', threadComment.uuid
+      .andWhere 'parentId', '=', threadComment.parentId
+      .andWhere 'id', '=', threadComment.id
       .run()
 
       cknex().delete()
-      .from 'thread_comments_counter_by_threadUuid'
-      .where 'threadUuid', '=', threadComment.threadUuid
+      .from 'thread_comments_counter_by_threadId'
+      .where 'threadId', '=', threadComment.threadId
       .andWhere 'parentType', '=', threadComment.parentType
-      .andWhere 'parentUuid', '=', threadComment.parentUuid
-      .andWhere 'uuid', '=', threadComment.uuid
+      .andWhere 'parentId', '=', threadComment.parentId
+      .andWhere 'id', '=', threadComment.id
       .run()
 
       cknex().delete()
-      .from 'thread_comments_by_userUuid'
-      .where 'userUuid', '=', threadComment.userUuid
+      .from 'thread_comments_by_userId'
+      .where 'userId', '=', threadComment.userId
       .andWhere 'timeBucket', '=', threadComment.timeBucket
-      .andWhere 'uuid', '=', threadComment.uuid
+      .andWhere 'id', '=', threadComment.id
       .run()
 
       cknex().delete()
-      .from 'thread_comments_counter_by_userUuid'
-      .where 'userUuid', '=', threadComment.userUuid
+      .from 'thread_comments_counter_by_userId'
+      .where 'userId', '=', threadComment.userId
       .andWhere 'timeBucket', '=', threadComment.timeBucket
-      .andWhere 'uuid', '=', threadComment.uuid
+      .andWhere 'id', '=', threadComment.id
       .run()
     ]
 
 
-  deleteAllByUserUuid: (userUuid, {duration} = {}) =>
+  deleteAllByUserId: (userId, {duration} = {}) =>
     del = (timeBucket) =>
-      @getAllByUserUuidAndTimeBucket userUuid, timeBucket
+      @getAllByUserIdAndTimeBucket userId, timeBucket
       .map @deleteByThreadComment
 
     del TimeService.getScaledTimeByTimeScale 'month'
@@ -237,10 +237,10 @@ class ThreadCommentModel
     )
 
   # would need another table to grab by id
-  # getByUuid: (id) ->
+  # getById: (id) ->
   #   cknex().select '*'
-  #   .from 'thread_comments_by_threadUuid'
-  #   .where 'uuid', '=', uuid
+  #   .from 'thread_comments_by_threadId'
+  #   .where 'id', '=', id
   #   .run {isSingle: true}
 
 module.exports = new ThreadCommentModel()

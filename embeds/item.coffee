@@ -3,11 +3,11 @@ _ = require 'lodash'
 Product = require '../models/product'
 
 class ItemEmbed
-  firstProductId: (item) ->
+  firstProductSlug: (item) ->
     unless item
       return null
-    Product.getFirstByItemId item.id
+    Product.getFirstByItemSlug item.slug
     .then (product) ->
-      product?.id
+      product?.slug
 
 module.exports = new ItemEmbed()

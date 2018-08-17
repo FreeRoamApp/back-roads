@@ -12,7 +12,7 @@ config = require '../config'
 
 class PushTokensCtrl
   upsert: ({token, sourceType, language, deviceId}, {user, appKey}) =>
-    userUuid = user.uuid
+    userId = user.id
 
     Promise.all [
       User.updateByUser user, {
@@ -25,7 +25,7 @@ class PushTokensCtrl
         _.map pushTokens, PushToken.deleteByPushToken
         # delete any pushTopics
         _.map pushTokens, (pushToken) =>
-          PushTopic.getAllByUserUuidAndToken pushToken.userUuid, pushToken.token
+          PushTopic.getAllByUserIdAndToken pushToken.userId, pushToken.token
           .map (pushTopic) =>
             Promise.all [
               PushTopic.deleteByPushTopic pushTopic
@@ -34,12 +34,12 @@ class PushTokensCtrl
 
         PushToken.upsert {
           token, deviceId, appKey
-          userUuid: user.uuid
+          userId: user.id
           sourceType: sourceType or pushTokens?[0]?.sourceType or 'android'
         }
       .then ->
         PushNotificationService.subscribeToAllUserTopics {
-          userUuid
+          userId
           token
           appKey
           deviceId

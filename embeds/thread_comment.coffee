@@ -3,24 +3,24 @@ _ = require 'lodash'
 BaseMessage = require './base_message'
 
 class ThreadCommentEmbed
-  user: (threadComment, {groupUuid}) ->
-    if groupUuid and threadComment.userUuid
+  user: (threadComment, {groupId}) ->
+    if groupId and threadComment.userId
       BaseMessage.user {
-        userUuid: threadComment.userUuid
-        groupUuid: groupUuid
+        userId: threadComment.userId
+        groupId: groupId
       }
 
-  groupUser: (threadComment, {groupUuid}) ->
-    if groupUuid and threadComment.userUuid
+  groupUser: (threadComment, {groupId}) ->
+    if groupId and threadComment.userId
       threadComment.groupUser = BaseMessage.groupUser {
-        userUuid: threadComment.userUuid, groupUuid: groupUuid
+        userId: threadComment.userId, groupId: groupId
       }
 
   time: (threadComment) ->
-    uuid = if typeof threadComment.uuid is 'string' \
-               then cknex.getTimeUuidFromString threadComment.uuid
-               else threadComment.uuid
-    threadComment.time = uuid.getDate()
+    id = if typeof threadComment.id is 'string' \
+               then cknex.getTimeUuidFromString threadComment.id
+               else threadComment.id
+    threadComment.time = id.getDate()
 
 
 module.exports = new ThreadCommentEmbed()

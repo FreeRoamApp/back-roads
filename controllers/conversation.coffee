@@ -20,15 +20,15 @@ lastMessageEmbed = [
 ]
 
 class ConversationCtrl
-  create: ({userUuids, groupUuid, name, description}, {user}) ->
-    userUuids ?= []
-    userUuids = _.uniq userUuids.concat [user.uuid]
+  create: ({userIds, groupId, name, description}, {user}) ->
+    userIds ?= []
+    userIds = _.uniq userIds.concat [user.id]
 
     name = name and _.kebabCase(name.toLowerCase()).replace(/[^0-9a-z-]/gi, '')
 
-    if groupUuid
-      conversation = Conversation.getByGroupUuidAndName groupUuid, name
-      hasPermission = GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+    if groupId
+      conversation = Conversation.getByGroupIdAndName groupId, name
+      hasPermission = GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
         GroupUser.PERMISSIONS.MANAGE_INFO
       ]
       .then (hasPermission) ->
@@ -36,15 +36,15 @@ class ConversationCtrl
           router.throw {status: 400, info: 'You don\'t have permission'}
         hasPermission
     else
-      conversation = Conversation.getByUserUuids userUuids
+      conversation = Conversation.getByUserIds userIds
       hasPermission = Promise.resolve true
 
     Promise.all [conversation, hasPermission]
     .then ([conversation, hasPermission]) ->
-      if groupUuid
+      if groupId
         GroupAuditLog.upsert {
-          groupUuid
-          userUuid: user.uuid
+          groupId
+          userId: user.id
           actionText: Language.get 'audit.addChannel', {
             replacements:
               channel: name
@@ -52,19 +52,19 @@ class ConversationCtrl
           }
         }
       return conversation or Conversation.upsert({
-        userUuids
-        groupUuid
+        userIds
+        groupId
         data: {name, description}
-        type: if groupUuid then 'channel' else 'pm'
-      }, {userUuid: user.uuid})
+        type: if groupId then 'channel' else 'pm'
+      }, {userId: user.id})
 
-  updateByUuid: ({uuid, name, description}, {user}) ->
+  updateById: ({id, name, description}, {user}) ->
     name = name and _.kebabCase(name.toLowerCase()).replace(/[^0-9a-z-]/gi, '')
 
-    Conversation.getByUuid uuid
+    Conversation.getById id
     .tap (conversation) ->
-      groupUuid = conversation.groupUuid
-      GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+      groupId = conversation.groupId
+      GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
         GroupUser.PERMISSIONS.MANAGE_INFO
       ]
       .then (hasPermission) ->
@@ -72,8 +72,8 @@ class ConversationCtrl
           router.throw {status: 400, info: 'You don\'t have permission'}
       .then ->
         GroupAuditLog.upsert {
-          groupUuid: conversation.groupUuid
-          userUuid: user.uuid
+          groupId: conversation.groupId
+          userId: user.id
           actionText: Language.get 'audit.updateChannel', {
             replacements:
               channel: name or conversation.name
@@ -81,78 +81,78 @@ class ConversationCtrl
           }
         }
         Conversation.upsert {
-          uuid: conversation.uuid
-          userUuid: conversation.userUuid
-          groupUuid: conversation.groupUuid
+          id: conversation.id
+          userId: conversation.userId
+          groupId: conversation.groupId
           data: _.defaults {
             name, description
           }, conversation.data
         }
 
   getAll: ({}, {user}) ->
-    Conversation.getAllByUserUuid user.uuid
+    Conversation.getAllByUserId user.id
     .map EmbedService.embed {embed: lastMessageEmbed}
     .map Conversation.sanitize null
 
-  getAllByGroupUuid: ({groupUuid}, {user}) ->
+  getAllByGroupId: ({groupId}, {user}) ->
     Promise.all [
-      GroupUser.getByGroupUuidAndUserUuid groupUuid, user.uuid
+      GroupUser.getByGroupIdAndUserId groupId, user.id
       .then EmbedService.embed {embed: [EmbedService.TYPES.GROUP_USER.ROLES]}
 
-      Conversation.getAllByGroupUuid groupUuid
+      Conversation.getAllByGroupId groupId
 
-      Notification.getAllByUserUuidAndGroupUuid user.uuid, groupUuid
+      Notification.getAllByUserIdAndGroupId user.id, groupId
     ]
     .then ([meGroupUser, conversations, notifications]) ->
       conversations = _.filter conversations, (conversation) ->
         GroupUser.hasPermission {
           meGroupUser
           permissions: [GroupUser.PERMISSIONS.READ_MESSAGE]
-          channelUuid: conversation.uuid
+          channelId: conversation.id
         }
 
       # TODO: more efficient solution?
       _.map conversations, (conversation) ->
         conversation = Conversation.sanitize null, conversation
         notificationCount = _.filter(notifications, ({data, isRead}) ->
-          data?.conversationUuid is conversation.uuid and not isRead
+          data?.conversationId is conversation.id and not isRead
         )?.length or 0
         _.defaults {notificationCount}, conversation
 
-  markReadByUuid: ({uuid, groupUuid}, {user}) ->
-    Notification.getAllByUserUuidAndGroupUuid user.uuid, groupUuid
+  markReadById: ({id, groupId}, {user}) ->
+    Notification.getAllByUserIdAndGroupId user.id, groupId
     .then (notifications) ->
       conversationNotifications = _.filter notifications, ({data, isRead}) ->
-        data?.conversationUuid is uuid and not isRead
+        data?.conversationId is id and not isRead
       Promise.map conversationNotifications, (notification) ->
         Notification.upsert Object.assign notification, {isRead: true}
 
 
-  getByUuid: ({uuid}, {user}) ->
-    Conversation.getByUuid uuid
+  getById: ({id}, {user}) ->
+    Conversation.getById id
     .then EmbedService.embed {embed: defaultEmbed}
     .tap (conversation) ->
       Promise.all [
-        if conversation.groupUuid
-          groupUuid = conversation.groupUuid
-          GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+        if conversation.groupId
+          groupId = conversation.groupId
+          GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
             GroupUser.PERMISSIONS.READ_MESSAGE
-          ], {channelUuid: uuid}
+          ], {channelId: id}
           .then (hasPermission) ->
             unless hasPermission
               router.throw status: 400, info: 'no permission'
-        else if not _.find(conversation.userUuids, (userUuid) ->
-          "#{userUuid}" is "#{user.uuid}"
+        else if not _.find(conversation.userIds, (userId) ->
+          "#{userId}" is "#{user.id}"
         )
           router.throw status: 400, info: 'no permission'
           Promise.resolve null
 
         # TODO: different way to track if read (groups get too large)
         # should store lastReadTime on user for each group
-        if conversation.groupUuid
+        if conversation.groupId
           Promise.resolve null
         else
-          Conversation.markRead conversation, user.uuid
+          Conversation.markRead conversation, user.id
       ]
     .then Conversation.sanitize null
 
