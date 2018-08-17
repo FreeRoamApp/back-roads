@@ -25,7 +25,7 @@ CONSECUTIVE_ERRORS_UNTIL_INACTIVE = 10
 MAX_INT_32 = 2147483647
 
 TYPES =
-  CHAT_MESSAGE: 'chatMessage'
+  CONVERSATION_MESSAGE: 'conversationMessage'
   CHAT_MENTION: 'chatMention'
   PRIVATE_MESSAGE: 'privateMessage'
   GROUP: 'group'
@@ -98,7 +98,7 @@ class PushNotificationService
           priority: 1
           actions: _.filter [
             if type in [
-              @TYPES.CHAT_MESSAGE
+              @TYPES.CONVERSATION_MESSAGE
               @TYPES.PRIVATE_MESSAGE
             ]
               {
@@ -130,52 +130,39 @@ class PushNotificationService
           resolve true
 
   sendToConversation: (conversation, options = {}) =>
-    {skipMe, meUser, text, mentionUserIds, mentionRoles, chatMessage} = options
+    {skipMe, meUser, text, mentionUserUuids, mentionRoles, conversationMessage} = options
 
-    mentionUserIds ?= []
-    (if conversation.groupId
-      Group.getById "#{conversation.groupId}"
+    mentionUserUuids ?= []
+    (if conversation.groupUuid
+      Group.getByUuid "#{conversation.groupUuid}"
       .then (group) -> {group}
-    else if conversation.eventId
-      Event.getById conversation.eventId
-      .then (event) -> {event}
     else
-      Promise.resolve {userIds: conversation.userIds}
-    ).then ({group, event, userIds}) =>
-      if event
-        return # TODO: re-enable
-
+      Promise.resolve {userUuids: conversation.userUuids}
+    ).then ({group, userUuids}) =>
       if group
         path = {
           key: 'groupChatConversation'
           params:
-            groupId: group.key or group.id
-            conversationId: conversation.id
+            groupUuid: group.key or group.uuid
+            conversationUuid: conversation.uuid
             gameKey: config.DEFAULT_GAME_KEY
           qs:
-            minTimeUuid: chatMessage?.timeUuid
-        }
-      else if event
-        path = {
-          key: 'event'
-          params:
-            id: event.id
-            gameKey: config.DEFAULT_GAME_KEY
+            minId: conversationMessage?.uuid
         }
       else
         path = {
           key: 'conversation'
           params:
-            id: conversation.id
+            uuid: conversation.uuid
             gameKey: config.DEFAULT_GAME_KEY
         }
 
       message =
-        title: event?.name or group?.name or User.getDisplayName meUser
-        type: if group or event \
-              then @TYPES.CHAT_MESSAGE
+        title: group?.name or User.getDisplayName meUser
+        type: if group \
+              then @TYPES.CONVERSATION_MESSAGE
               else @TYPES.PRIVATE_MESSAGE
-        text: if group or event \
+        text: if group \
               then "#{User.getDisplayName(meUser)}: #{text}"
               else text
         url: "https://#{config.FREE_ROAM_HOST}"
@@ -183,26 +170,26 @@ class PushNotificationService
               then "#{cdnUrl}/groups/badges/#{group.badgeId}.png"
               else meUser?.avatarImage?.versions[0].url
         data:
-          conversationId: conversation.id
-          contextId: conversation.id
+          conversationUuid: conversation.uuid
+          contextId: conversation.uuid
           path: path
-        notId: randomSeed.create(conversation.id)(MAX_INT_32)
+        notId: randomSeed.create(conversation.uuid)(MAX_INT_32)
 
       mentionMessage = _.defaults {type: @TYPES.CHAT_MENTION}, message
 
       Promise.all [
         @sendToRoles mentionRoles, mentionMessage, {
-          fromUserId: meUser.id, groupId: conversation.groupId
+          fromUserUuid: meUser.uuid, groupUuid: conversation.groupUuid
           conversation: conversation
         }
 
-        @sendToUserIds mentionUserIds, mentionMessage, {
-          skipMe, fromUserId: meUser.id, groupId: conversation.groupId
+        @sendToUserUuids mentionUserUuids, mentionMessage, {
+          skipMe, fromUserUuid: meUser.uuid, groupUuid: conversation.groupUuid
           conversation: conversation
         }
 
-        @sendToUserIds userIds, message, {
-          skipMe, fromUserId: meUser.id, groupId: conversation.groupId
+        @sendToUserUuids userUuids, message, {
+          skipMe, fromUserUuid: meUser.uuid, groupUuid: conversation.groupUuid
           conversation: conversation
         }
 
@@ -221,7 +208,7 @@ class PushNotificationService
     topic = @getTopicStrFromPushTopic pushTopic
 
     # legacy
-    # topic = "group-#{pushTopic.groupId}"
+    # topic = "group-#{pushTopic.groupUuid}"
     # topic = 'es'
 
     if message.titleObj
@@ -254,31 +241,31 @@ class PushNotificationService
 
 
   sendToGroupTopic: (group, message) =>
-    @sendToPushTopic {groupId: group.id}, message, {language: group.language}
+    @sendToPushTopic {groupUuid: group.uuid}, message, {language: group.language}
 
-  sendToRoles: (roles, message, {groupId} = {}) ->
+  sendToRoles: (roles, message, {groupUuid} = {}) ->
     Promise.map roles, (role) =>
-      pushTopic = {groupId, sourceType: 'role', sourceId: role}
+      pushTopic = {groupUuid, sourceType: 'role', sourceId: role}
       @sendToPushTopic pushTopic, message
 
-  sendToUserIds: (userIds, message, options = {}) ->
-    {skipMe, fromUserId, groupId, conversation} = options
-    Promise.each userIds, (userId) =>
-      unless userId is fromUserId
-        user = User.getById userId, {preferCache: true}
-        if groupId
-          user = user.then EmbedService.embed {embed: defaultUserEmbed, groupId}
+  sendToUserUuids: (userUuids, message, options = {}) ->
+    {skipMe, fromUserUuid, groupUuid, conversation} = options
+    Promise.each userUuids, (userUuid) =>
+      unless userUuid is fromUserUuid
+        user = User.getByUuid userUuid, {preferCache: true}
+        if groupUuid
+          user = user.then EmbedService.embed {embed: defaultUserEmbed, groupUuid}
         user
         .then (user) =>
-          @send user, message, {fromUserId, groupId, conversation}
+          @send user, message, {fromUserUuid, groupUuid, conversation}
 
-  send: (user, message, {fromUserId, groupId, conversation} = {}) =>
+  send: (user, message, {fromUserUuid, groupUuid, conversation} = {}) =>
     unless message and (
       message.title or message.text or message.titleObj or message.textObj
     )
       return Promise.reject new Error 'missing message'
 
-    StatsService.sendEvent user.id, 'push_notification', message.type, 'send'
+    StatsService.sendEvent user.uuid, 'push_notification', message.type, 'send'
 
     language = user.language or Language.getLanguageByCountry user.country
 
@@ -298,15 +285,15 @@ class PushNotificationService
 
     notificationData = {path: message.data.path}
     if conversation
-      notificationData.conversationId = conversation.id
+      notificationData.conversationUuid = conversation.uuid
       if conversation.type is 'pm'
-        uniqueId = "pm-#{conversation.id}"
+        uniqueId = "pm-#{conversation.uuid}"
 
     Notification.upsert {
-      userId: user.id
-      groupId: groupId or config.EMPTY_UUID
+      userUuid: user.uuid
+      groupUuid: groupUuid or config.EMPTY_UUID
       uniqueId: uniqueId
-      fromId: fromUserId
+      fromUuid: fromUserUuid
       title: message.title
       text: message.text
       data: notificationData
@@ -320,22 +307,22 @@ class PushNotificationService
         return Promise.resolve null
 
     if config.ENV is config.ENVS.DEV and not message.forceDevSend
-      console.log 'send notification', user.id, message
+      console.log 'send notification', user.uuid, message
       return Promise.resolve()
 
     successfullyPushedToNative = false
 
-    @_checkIfBlocked user, fromUserId
+    @_checkIfBlocked user, fromUserUuid
     .then ->
-      PushToken.getAllByUserId user.id
+      PushToken.getAllByUserUuid user.uuid
     .then (pushTokens) =>
       pushTokens = _.filter pushTokens, (pushToken) ->
         pushToken.isActive
 
       pushTokenDevices = _.groupBy pushTokens, 'deviceId'
       pushTokens = _.map pushTokenDevices, (tokens) ->
-        if message.groupId
-          groupAppKey = _.find(config.GROUPS, {ID: message.groupId})?.APP_KEY
+        if message.groupUuid
+          groupAppKey = _.find(config.GROUPS, {ID: message.groupUuid})?.APP_KEY
           groupAppToken = _.find tokens, {appKey: config.GROUPS.MAIN.APP_KEY}
           if groupAppToken
             return groupAppToken
@@ -345,7 +332,7 @@ class PushNotificationService
         return tokens[0]
 
       Promise.map pushTokens, (pushToken) =>
-        {id, sourceType, token, errorCount} = pushToken
+        {sourceType, token, errorCount} = pushToken
         fn = if sourceType is 'web' \
              then @sendWeb
              else if sourceType in ['android', 'ios-fcm', 'web-fcm']
@@ -375,30 +362,30 @@ class PushNotificationService
             }, pushToken)
 
           if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
-            PushToken.getAllByUserId user.id
+            PushToken.getAllByUserUuid user.uuid
             .then (tokens) ->
               if _.isEmpty tokens
-                User.updateById user.id, {
+                User.updateByUser user, {
                   hasPushToken: false
                 }
 
-  _checkIfBlocked: (user, fromUserId) ->
-    if fromUserId
-      UserBlock.getAllByUserId user.id
+  _checkIfBlocked: (user, fromUserUuid) ->
+    if fromUserUuid
+      UserBlock.getAllByUserUuid user.uuid
       .then (blockedUsers) ->
-        isBlocked = _.find blockedUsers, {blockedId: fromUserId}
+        isBlocked = _.find blockedUsers, {blockedId: fromUserUuid}
         if isBlocked
           throw new Error 'user blocked'
     else
       Promise.resolve()
 
-  subscribeToAllUserTopics: ({userId, appKey, token, deviceId}) ->
+  subscribeToAllUserTopics: ({userUuid, appKey, token, deviceId}) ->
     isMainApp = appKey is config.GROUPS.MAIN.APP_KEY
-    appGroupId = _.find(config.GROUPS, {APP_KEY: appKey})?.ID
+    appGroupUuid = _.find(config.GROUPS, {APP_KEY: appKey})?.ID
 
     Promise.all [
-      PushToken.getAllByUserId userId
-      PushTopic.getAllByUserId userId
+      PushToken.getAllByUserUuid userUuid
+      PushTopic.getAllByUserUuid userUuid
     ]
     .then ([pushTokens, pushTopics]) =>
       appKeyPushTokens = _.filter pushTokens, {appKey}
@@ -417,10 +404,10 @@ class PushNotificationService
               token: token
               deviceId: deviceId
             }, topic
-      else if appGroupId
+      else if appGroupUuid
         mainAppGroupTopics = _.filter pushTopics, {
           appKey: config.GROUPS.MAIN.APP_KEY
-          groupId: appGroupId
+          groupUuid: appGroupUuid
         }
         uniqueMainAppGroupTopics = _.uniqBy mainAppGroupTopics, (topic) ->
           _.omit topic, ['token']
@@ -442,8 +429,8 @@ class PushNotificationService
                 deviceId: pushToken.deviceId
               }, newTopic
 
-  _getBestTokens: ({pushTokens, appKey, groupId}) ->
-    groupAppKey = _.find(config.GROUPS, {ID: groupId})?.APP_KEY
+  _getBestTokens: ({pushTokens, appKey, groupUuid}) ->
+    groupAppKey = _.find(config.GROUPS, {ID: groupUuid})?.APP_KEY
 
     deviceIds = _.groupBy pushTokens, 'deviceId'
     bestTokens = _.mapValues deviceIds, (tokens, deviceId) ->
@@ -474,19 +461,19 @@ class PushNotificationService
   # max 1 subscription per device,
   # prefer the app they're currently using (appKey, then the group appKey)
   subscribeToPushTopic: (topic) =>
-    {userId, groupId, appKey, sourceType, sourceId} = topic
+    {userUuid, groupUuid, appKey, sourceType, sourceId} = topic
 
     Promise.all [
-      PushToken.getAllByUserId userId
-      PushTopic.getAllByUserId userId
+      PushToken.getAllByUserUuid userUuid
+      PushTopic.getAllByUserUuid userUuid
     ]
     .then ([pushTokens, topics]) =>
       # still store push topics if a token isn't set, that way when one does get
       # set, the user will subscribe to correct topics
       if _.isEmpty pushTokens
-        pushTokens = [{userId, appKey, deviceId: 'none', token: 'none'}]
+        pushTokens = [{userUuid, appKey, deviceId: 'none', token: 'none'}]
 
-      bestTokens = @_getBestTokens {pushTokens, appKey, groupId}
+      bestTokens = @_getBestTokens {pushTokens, appKey, groupUuid}
 
       Promise.all _.map bestTokens, (token) =>
         upsertTopic = _.defaults {
@@ -499,16 +486,16 @@ class PushNotificationService
             @subscribeToTopicByToken token.token, upsertTopic
         ]
 
-  subscribeToGroupTopics: ({userId, groupId, appKey}) =>
+  subscribeToGroupTopics: ({userUuid, groupUuid, appKey}) =>
     Promise.all [
       @subscribeToPushTopic {
-        userId
-        groupId
+        userUuid
+        groupUuid
         appKey
       }
       @subscribeToPushTopic {
-        userId
-        groupId
+        userUuid
+        groupUuid
         appKey
         sourceType: 'role'
         sourceId: 'everyone'
@@ -541,7 +528,7 @@ class PushNotificationService
     topic = @getTopicStrFromPushTopic pushTopic
     base = 'https://iid.googleapis.com/iid/v1'
 
-    PushToken.getAllByUserId pushTopic.userId
+    PushToken.getAllByUserUuid pushTopic.userUuid
     .map (pushToken) ->
       request "#{base}/#{pushToken.token}/rel/topics/#{topic}", {
         json: true
@@ -553,10 +540,10 @@ class PushNotificationService
     .catch (err) ->
       console.log 'unsub topic err', "#{base}/token/rel/topics/#{topic}"
 
-  getTopicStrFromPushTopic: ({groupId, sourceType, sourceId}) ->
+  getTopicStrFromPushTopic: ({groupUuid, sourceType, sourceId}) ->
     sourceType ?= 'all'
     sourceId ?= 'all'
     # : not a valid topic character
-    "#{groupId}~#{sourceType}~#{sourceId}"
+    "#{groupUuid}~#{sourceType}~#{sourceId}"
 
 module.exports = new PushNotificationService()

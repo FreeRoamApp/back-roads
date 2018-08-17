@@ -5,28 +5,30 @@ cknex = require '../services/cknex'
 config = require '../config'
 
 tables = [
-  # TODO: separate table for last_session_by_userId: lastActiveTime, lastActiveIp
+  # TODO: separate table for last_session_by_userUuid: lastActiveTime, lastActiveIp
   {
-    name: 'users_by_id'
+    name: 'users_by_uuid'
     keyspace: 'free_roam'
     fields:
-      id: 'timeuuid'
+      uuid: 'timeuuid'
       username: 'text'
       password: 'text'
+      email: 'text'
       name: 'text'
       avatarImage: 'text'
       language: 'text'
       flags: 'text'
     primaryKey:
-      partitionKey: ['id']
+      partitionKey: ['uuid']
   }
   {
     name: 'users_by_username'
     keyspace: 'free_roam'
     fields:
-      id: 'timeuuid'
+      uuid: 'timeuuid'
       username: 'text'
       password: 'text'
+      email: 'text'
       name: 'text'
       avatarImage: 'text'
       language: 'text'
@@ -34,14 +36,31 @@ tables = [
     primaryKey:
       partitionKey: ['username']
   }
+  {
+    name: 'users_by_email'
+    keyspace: 'free_roam'
+    fields:
+      uuid: 'timeuuid'
+      username: 'text'
+      password: 'text'
+      email: 'text'
+      name: 'text'
+      avatarImage: 'text'
+      language: 'text'
+      flags: 'text'
+    primaryKey:
+      partitionKey: ['email']
+  }
 ]
 
 defaultUser = (user) ->
   unless user?
     return null
 
+  user.flags = JSON.stringify user.flags
+
   _.defaults user, {
-    id: cknex.getTimeUuid()
+    uuid: cknex.getTimeUuid()
     language: 'en'
   }
 
@@ -49,8 +68,16 @@ defaultUserOutput = (user) ->
   unless user?
     return null
 
-  _.defaults user, {
-    id: "#{user.id}"
+  if user.flags
+    user.flags = try
+      JSON.parse user.flags
+    catch
+      {}
+  else
+    user.flags = {}
+
+  user = _.defaults user, {
+    uuid: "#{user.uuid}"
     username: null
     language: 'en'
   }
@@ -58,10 +85,10 @@ defaultUserOutput = (user) ->
 class UserModel
   SCYLLA_TABLES: tables
 
-  getById: (id) ->
+  getByUuid: (uuid) ->
     cknex().select '*'
-    .from 'users_by_id'
-    .where 'id', '=', id
+    .from 'users_by_uuid'
+    .where 'uuid', '=', uuid
     .run {isSingle: true}
     .then defaultUserOutput
 
@@ -79,9 +106,9 @@ class UserModel
     user = defaultUser user
 
     Promise.all _.filter [
-      cknex().update 'users_by_id'
-      .set _.omit user, ['id']
-      .where 'id', '=', user.id
+      cknex().update 'users_by_uuid'
+      .set _.omit user, ['uuid']
+      .where 'uuid', '=', user.uuid
       .run()
 
       if user.username
@@ -89,9 +116,33 @@ class UserModel
         .set _.omit user, ['username']
         .where 'username', '=', user.username
         .run()
+
+      if user.email
+        cknex().update 'users_by_email'
+        .set _.omit user, ['email']
+        .where 'email', '=', user.email
+        .run()
     ]
     .then ->
-      user
+      defaultUserOutput user
+
+  updateByUser: (user, newUser) ->
+    newUser = defaultUser newUser
+
+    Promise.all _.filter [
+      cknex().update 'users_by_uuid'
+      .set _.omit newUser, ['uuid']
+      .where 'uuid', '=', user.uuid
+      .run()
+
+      if user.username
+        cknex().update 'users_by_username'
+        .set _.omit newUser, ['username']
+        .where 'username', '=', user.username
+        .run()
+    ]
+    .then ->
+      defaultUserOutput user
 
   getUniqueUsername: (baseUsername, appendedNumber = 0) =>
     username = "#{baseUsername}".toLowerCase()
@@ -114,7 +165,7 @@ class UserModel
     unless user
       return null
     sanitizedUser = _.pick user, [
-      'id'
+      'uuid'
       'username'
       'name'
       'avatarImage'

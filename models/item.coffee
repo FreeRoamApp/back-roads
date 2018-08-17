@@ -11,6 +11,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'text' # eg: surge-protector
+      uuid: 'timeuuid'
       categories: 'text'
       name: 'text'
       why: 'text'
@@ -24,6 +25,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'text' # eg: surge-protector
+      uuid: 'timeuuid'
       category: 'text'
       name: 'text'
       why: 'text'
@@ -114,7 +116,7 @@ class Item
     .then ({hits}) ->
       _.map hits.hits, '_source'
 
-  getById: (id) ->
+  getByUuid: (id) ->
     cknex().select '*'
     .from 'items_by_id'
     .where 'id', '=', id

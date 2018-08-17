@@ -4,13 +4,15 @@ Promise = require 'bluebird'
 
 CacheService = require './cache'
 CleanupService = require './cleanup'
-# Thread = require '../models/thread'
+Thread = require '../models/thread'
 Category = require '../models/category'
+Group = require '../models/group'
 Item = require '../models/item'
 Place = require '../models/place'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
 allCategories = require '../resources/data/categories'
+allGroups = require '../resources/data/groups'
 allItems = require '../resources/data/items'
 allPlaces = require '../resources/data/places'
 allProducts = require '../resources/data/products'
@@ -26,16 +28,17 @@ class CronService
     @addCron 'quarterMinute', '15 * * * * *', ->
       console.log 'qmin'
       CleanupService.clean()
-      # Thread.updateScores 'stale'
+      Thread.updateScores 'stale'
       # FIXME: running these every minute seems to cause memory leak?
       if config.ENV is config.ENVS.DEV
+        Group.upsert _.cloneDeep allGroups[0]
         Item.batchUpsert _.cloneDeep allItems
         Place.batchUpsert _.cloneDeep allPlaces
         Product.batchUpsert _.cloneDeep allProducts
         Category.batchUpsert _.cloneDeep allCategories
 
     @addCron 'tenMin', '0 */10 * * * *', ->
-      # Thread.updateScores 'time'
+      Thread.updateScores 'time'
 
 
     @addCron 'oneHour', '0 20 * * * *', ->

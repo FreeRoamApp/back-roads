@@ -8,23 +8,23 @@ TWO_DAYS_SECONDS = 3600 * 24 * 2
 
 tables = [
   {
-    name: 'push_tokens_by_userId'
+    name: 'push_tokens_by_userUuid'
     keyspace: 'free_roam'
     fields:
-      userId: 'uuid'
+      userUuid: 'uuid'
       token: 'text'
       sourceType: 'text'
       isActive: 'boolean'
       errorCount: 'int'
     primaryKey:
-      partitionKey: ['userId']
+      partitionKey: ['userUuid']
       clusteringColumns: ['token']
   }
   {
     name: 'push_tokens_by_token'
     keyspace: 'free_roam'
     fields:
-      userId: 'uuid'
+      userUuid: 'uuid'
       token: 'text'
       deviceId: 'text'
       sourceType: 'text'
@@ -32,7 +32,7 @@ tables = [
       errorCount: 'int'
     primaryKey:
       partitionKey: ['token']
-      clusteringColumns: ['userId']
+      clusteringColumns: ['userUuid']
   }
 ]
 
@@ -45,7 +45,7 @@ defaultToken = (token) ->
     token: null
     deviceId: null
     isActive: true
-    userId: null
+    userUuid: null
     errorCount: 0
   }
 
@@ -53,14 +53,14 @@ defaultTokenOutput = (token) ->
   unless token?
     return null
 
-  token.userId = "#{token.userId}"
+  token.userUuid = "#{token.userUuid}"
 
   _.defaults token, {
     sourceType: null
     token: null
     deviceId: null
     isActive: true
-    userId: null
+    userUuid: null
     errorCount: 0
   }
 
@@ -76,22 +76,22 @@ class PushToken
 
     token = defaultToken token
 
-    qByUserId = cknex().update 'push_tokens_by_userId'
-    .set _.omit token, ['userId', 'token']
-    .where 'userId', '=', token.userId
+    qByUserUuid = cknex().update 'push_tokens_by_userUuid'
+    .set _.omit token, ['userUuid', 'token']
+    .where 'userUuid', '=', token.userUuid
     .andWhere 'token', '=', token.token
 
     qByToken = cknex().update 'push_tokens_by_token'
-    .set _.omit token, ['token', 'userId']
+    .set _.omit token, ['token', 'userUuid']
     .where 'token', '=', token.token
-    .andWhere 'userId', '=', token.userId
+    .andWhere 'userUuid', '=', token.userUuid
 
     unless token.isActive
-      qByUserId.usingTTL TWO_DAYS_SECONDS
+      qByUserUuid.usingTTL TWO_DAYS_SECONDS
       qByToken.usingTTL TWO_DAYS_SECONDS
 
     Promise.all [
-      qByUserId.run()
+      qByUserUuid.run()
       qByToken.run()
     ]
     .then ->
@@ -104,10 +104,10 @@ class PushToken
     .run {isSingle: true}
     .then defaultTokenOutput
 
-  getAllByUserId: (userId) ->
+  getAllByUserUuid: (userUuid) ->
     cknex().select '*'
-    .from 'push_tokens_by_userId'
-    .where 'userId', '=', userId
+    .from 'push_tokens_by_userUuid'
+    .where 'userUuid', '=', userUuid
     .run()
     .map defaultTokenOutput
 
@@ -121,22 +121,21 @@ class PushToken
   deleteByPushToken: (pushToken) ->
     Promise.all [
       cknex().delete()
-      .from 'push_tokens_by_userId'
+      .from 'push_tokens_by_userUuid'
       .where 'token', '=', pushToken.token
-      .andWhere 'userId', '=', pushToken.userId
+      .andWhere 'userUuid', '=', pushToken.userUuid
       .run()
 
       cknex().delete()
       .from 'push_tokens_by_token'
       .where 'token', '=', pushToken.token
-      .andWhere 'userId', '=', pushToken.userId
+      .andWhere 'userUuid', '=', pushToken.userUuid
       .run()
     ]
 
   sanitizePublic: (token) ->
     _.pick token, [
-      'id'
-      'userId'
+      'userUuid'
       'token'
       'sourceType'
     ]

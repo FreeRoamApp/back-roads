@@ -38,6 +38,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'text' # eg: old-settlers-rv-park
+      uuid: 'timeuuid'
       name: 'text'
       location: {type: 'set', subType: 'double'} # coordinates
       thoroughfare: 'text' # address
@@ -114,12 +115,12 @@ class Place
     .then ({hits}) ->
       _.map hits.hits, '_source'
 
-  getById: (id) ->
+  getByUuid: (id) ->
     cknex().select '*'
     .from 'places_by_id'
     .where 'id', '=', id
     .run {isSingle: true}
-    .then defaultItemOutput
+    .then defaultPlaceOutput
 
   getAll: ({limit} = {}) ->
     limit ?= 30
@@ -128,6 +129,6 @@ class Place
     .from 'places_by_id'
     .limit limit
     .run()
-    .map defaultItemOutput
+    .map defaultPlaceOutput
 
 module.exports = new Place()

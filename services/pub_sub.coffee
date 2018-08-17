@@ -3,8 +3,6 @@ uuid = require 'uuid'
 _ = require 'lodash'
 Redis = require 'ioredis'
 
-return module.exports = {} # TODO
-
 config = require '../config'
 
 class PubSubService
