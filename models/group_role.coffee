@@ -13,7 +13,7 @@ defaultGroupRole = (groupRole) ->
     return null
 
   _.defaults groupRole, {
-    uuid: cknex.getTimeUuid()
+    id: cknex.getTimeUuid()
   }
 
 defaultGroupRoleOutput = (groupRole) ->
@@ -36,19 +36,19 @@ defaultGroupRoleOutput = (groupRole) ->
 
 tables = [
   {
-    name: 'group_roles_by_groupUuid'
+    name: 'group_roles_by_groupId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      groupUuid: 'uuid'
+      id: 'timeuuid'
+      groupId: 'uuid'
       name: 'text'
       globalPermissions: 'text' # json
       channelPermissions: {type: 'map', subType: 'uuid', subType2: 'text'}
     primaryKey:
       # a little uneven since some groups will have a lot of roles, but each
       # row is small
-      partitionKey: ['groupUuid']
-      clusteringColumns: ['uuid']
+      partitionKey: ['groupId']
+      clusteringColumns: ['id']
   }
 ]
 
@@ -60,32 +60,32 @@ class GroupRoleModel
 
     groupRole.globalPermissions = JSON.stringify groupRole.globalPermissions
 
-    q = cknex().update 'group_roles_by_groupUuid'
-    .set _.omit groupRole, ['groupUuid', 'uuid']
+    q = cknex().update 'group_roles_by_groupId'
+    .set _.omit groupRole, ['groupId', 'id']
 
     if map
       _.forEach map, (value, column) ->
         q.add column, value
-    q.where 'groupUuid', '=', groupRole.groupUuid
-    .andWhere 'uuid', '=', groupRole.uuid
+    q.where 'groupId', '=', groupRole.groupId
+    .andWhere 'id', '=', groupRole.id
     .run()
     .then ->
       groupRole
     .tap ->
-      prefix = CacheService.PREFIXES.GROUP_ROLE_GROUP_UUID_USER_ID
-      cacheKey = "#{prefix}:#{groupRole.groupUuid}:#{groupRole.userUuid}"
+      prefix = CacheService.PREFIXES.GROUP_ROLE_GROUP_ID_USER_ID
+      cacheKey = "#{prefix}:#{groupRole.groupId}:#{groupRole.userId}"
       prefix = CacheService.PREFIXES.GROUP_ROLES
-      allCacheKey = "#{prefix}:#{groupRole.groupUuid}"
+      allCacheKey = "#{prefix}:#{groupRole.groupId}"
       Promise.all [
         CacheService.deleteByKey cacheKey
         CacheService.deleteByKey allCacheKey
       ]
 
-  getAllByGroupUuid: (groupUuid, {preferCache} = {}) =>
+  getAllByGroupId: (groupId, {preferCache} = {}) =>
     get = =>
       cknex().select '*'
-      .from 'group_roles_by_groupUuid'
-      .where 'groupUuid', '=', groupUuid
+      .from 'group_roles_by_groupId'
+      .where 'groupId', '=', groupId
       .run()
       .then (roles) =>
         # probably safe to get rid of this in mid 2018
@@ -93,35 +93,35 @@ class GroupRoleModel
           roles
         else
           @upsert {
-            groupUuid: groupUuid
+            groupId: groupId
             name: 'everyone'
             globalPermissions: {}
           }
           .then =>
-            @getAllByGroupUuid groupUuid
+            @getAllByGroupId groupId
       .map defaultGroupRoleOutput
 
     if preferCache
-      cacheKey = "#{CacheService.PREFIXES.GROUP_ROLES}:#{groupUuid}"
+      cacheKey = "#{CacheService.PREFIXES.GROUP_ROLES}:#{groupId}"
       CacheService.preferCache cacheKey, get, {
         expireSeconds: ONE_HOUR_SECONDS
       }
     else
       get()
 
-  getByGroupUuidAndRoleUuid: (groupUuid, uuid) ->
+  getByGroupIdAndRoleId: (groupId, id) ->
     cknex().select '*'
-    .from 'group_roles_by_groupUuid'
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'uuid', '=', uuid
+    .from 'group_roles_by_groupId'
+    .where 'groupId', '=', groupId
+    .andWhere 'id', '=', id
     .run {isSingle: true}
     .then defaultGroupRoleOutput
 
-  deleteByGroupUuidAndRoleUuid: (groupUuid, uuid) ->
+  deleteByGroupIdAndRoleId: (groupId, id) ->
     cknex().delete()
-    .from 'group_roles_by_groupUuid'
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'uuid', '=', uuid
+    .from 'group_roles_by_groupId'
+    .where 'groupId', '=', groupId
+    .andWhere 'id', '=', id
     .run()
 
 module.exports = new GroupRoleModel()

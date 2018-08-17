@@ -9,7 +9,7 @@ config = require '../config'
 
 class ThreadVoteCtrl
   upsertByParent: ({parent, vote}, {user}) ->
-    ThreadVote.getByUserUuidAndParent user.uuid, parent
+    ThreadVote.getByUserIdAndParent user.id, parent
     .then (existingVote) ->
       voteNumber = if vote is 'up' then 1 else -1
 
@@ -30,12 +30,12 @@ class ThreadVoteCtrl
       voteTime = existingVote?.time or new Date()
 
       Promise.all [
-        ThreadVote.upsertByUserUuidAndParent(
-          user.uuid, parent, {vote: voteNumber}
+        ThreadVote.upsertByUserIdAndParent(
+          user.id, parent, {vote: voteNumber}
         )
 
         if parent.type is 'thread'
-          Thread.incrementByUuid parent.uuid, values
+          Thread.incrementById parent.id, values
         else
           ThreadComment.voteByThreadComment parent, values
       ]

@@ -34,11 +34,11 @@ elasticsearch = require '../services/elasticsearch'
 
 tables = [
   {
-    name: 'places_by_id'
+    name: 'places_by_slug'
     keyspace: 'free_roam'
     fields:
-      id: 'text' # eg: old-settlers-rv-park
-      uuid: 'timeuuid'
+      slug: 'text' # eg: old-settlers-rv-park
+      id: 'timeuuid'
       name: 'text'
       location: {type: 'set', subType: 'double'} # coordinates
       thoroughfare: 'text' # address
@@ -48,7 +48,7 @@ tables = [
       postal_code: 'text'
       country: 'text' # 2 char iso
     primaryKey:
-      partitionKey: ['id']
+      partitionKey: ['slug']
   }
 ]
 
@@ -86,9 +86,9 @@ class Place
     place = defaultPlace place
 
     Promise.all [
-      cknex().update 'places_by_id'
-      .set _.omit place, ['id']
-      .where 'id', '=', place.id
+      cknex().update 'places_by_slug'
+      .set _.omit place, ['slug']
+      .where 'slug', '=', place.slug
       .run()
 
       @index place
@@ -99,7 +99,7 @@ class Place
     elasticsearch.index {
       index: 'places'
       type: 'places'
-      id: place.id
+      id: place.slug
       body: _.pick place, ['name', 'location']
     }
 
@@ -115,10 +115,10 @@ class Place
     .then ({hits}) ->
       _.map hits.hits, '_source'
 
-  getByUuid: (id) ->
+  getBySlug: (slug) ->
     cknex().select '*'
-    .from 'places_by_id'
-    .where 'id', '=', id
+    .from 'places_by_slug'
+    .where 'slug', '=', slug
     .run {isSingle: true}
     .then defaultPlaceOutput
 
@@ -126,7 +126,7 @@ class Place
     limit ?= 30
 
     cknex().select '*'
-    .from 'places_by_id'
+    .from 'places_by_slug'
     .limit limit
     .run()
     .map defaultPlaceOutput

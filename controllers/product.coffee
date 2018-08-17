@@ -10,12 +10,12 @@ defaultEmbed = [
 ]
 
 class ProductCtrl
-  getById: ({id}, {user}) ->
-    Product.getById id
+  getBySlug: ({slug}, {user}) ->
+    Product.getBySlug slug
     .then EmbedService.embed {embed: defaultEmbed}
 
-  getAllByItemId: ({itemId}, {user}) ->
-    Product.getAllByItemId itemId
+  getAllByItemSlug: ({itemSlug}, {user}) ->
+    Product.getAllByItemSlug itemSlug
     .map EmbedService.embed {embed: defaultEmbed}
 
 module.exports = new ProductCtrl()

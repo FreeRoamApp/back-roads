@@ -14,23 +14,23 @@ defaultGroupAuditLog = (groupAuditLog) ->
     return null
 
   _.defaults groupAuditLog, {
-    uuid: cknex.getTimeUuid()
+    id: cknex.getTimeUuid()
   }
 
 
 tables = [
   {
-    name: 'group_audit_log_by_uuid'
+    name: 'group_audit_log_by_id'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      userUuid: 'uuid'
-      groupUuid: 'uuid'
+      id: 'timeuuid'
+      userId: 'uuid'
+      groupId: 'uuid'
       actionText: 'text'
     primaryKey:
-      partitionKey: ['groupUuid']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['groupId']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
 ]
 
@@ -42,21 +42,21 @@ class GroupAuditLogModel
       groupAuditLog
     )
 
-    cknex().update 'group_audit_log_by_uuid'
+    cknex().update 'group_audit_log_by_id'
     .set _.omit groupAuditLog, [
-      'groupUuid', 'uuid'
+      'groupId', 'id'
     ]
-    .andWhere 'groupUuid', '=', groupAuditLog.groupUuid
-    .andWhere 'uuid', '=', groupAuditLog.id
+    .andWhere 'groupId', '=', groupAuditLog.groupId
+    .andWhere 'id', '=', groupAuditLog.id
     .usingTTL SIXTY_DAYS_SECONDS
     .run()
     .then ->
       groupAuditLog
 
-  getAllByGroupUuid: (groupUuid) ->
+  getAllByGroupId: (groupId) ->
     cknex().select '*'
-    .from 'group_audit_log_by_uuid'
-    .where 'groupUuid', '=', groupUuid
+    .from 'group_audit_log_by_id'
+    .where 'groupId', '=', groupId
     .limit 30
     .run()
 

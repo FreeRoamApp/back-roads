@@ -12,7 +12,7 @@ defaultConversation = (conversation) ->
   unless conversation?
     return null
 
-  conversation.uuid ?= cknex.getTimeUuid conversation.lastUpdateTime
+  conversation.id ?= cknex.getTimeUuid conversation.lastUpdateTime
   conversation.data = JSON.stringify conversation.data
 
   conversation
@@ -26,64 +26,64 @@ defaultConversationOutput = (conversation) ->
   catch err
     {}
 
-  conversation.userUuids = _.map conversation.userUuids, (userUuid) -> "#{userUuid}"
-  conversation.uuid = "#{conversation.uuid}"
-  if conversation.userUuid
-    conversation.userUuid = "#{conversation.userUuid}"
-  if conversation.groupUuid
-    conversation.groupUuid = "#{conversation.groupUuid}"
+  conversation.userIds = _.map conversation.userIds, (userId) -> "#{userId}"
+  conversation.id = "#{conversation.id}"
+  if conversation.userId
+    conversation.userId = "#{conversation.userId}"
+  if conversation.groupId
+    conversation.groupId = "#{conversation.groupId}"
 
   conversation
 
 tables = [
   {
-    name: 'conversations_by_userUuid'
+    name: 'conversations_by_userId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid' # not unique - 1 row per userUuid
-      userUuid: 'uuid'
-      userUuids: {type: 'set', subType: 'uuid'}
-      groupUuid: 'uuid'
+      id: 'timeuuid' # not unique - 1 row per userId
+      userId: 'uuid'
+      userIds: {type: 'set', subType: 'uuid'}
+      groupId: 'uuid'
       type: 'text'
       data: 'text' # json: name, description, slowMode, slowModeCooldown
       isRead: 'boolean'
       lastUpdateTime: 'timestamp'
     primaryKey:
-      partitionKey: ['userUuid']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['userId']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   {
-    name: 'conversations_by_groupUuid'
+    name: 'conversations_by_groupId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid' # not unique - 1 row per userUuid
-      userUuid: 'uuid'
-      userUuids: {type: 'set', subType: 'uuid'}
-      groupUuid: 'uuid'
+      id: 'timeuuid' # not unique - 1 row per userId
+      userId: 'uuid'
+      userIds: {type: 'set', subType: 'uuid'}
+      groupId: 'uuid'
       type: 'text'
       data: 'text' # json: name, description, slowMode, slowModeCooldown
       isRead: 'boolean'
       lastUpdateTime: 'timestamp'
     primaryKey:
-      partitionKey: ['groupUuid']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['groupId']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   {
-    name: 'conversations_by_uuid'
+    name: 'conversations_by_id'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      userUuid: 'uuid'
-      userUuids: {type: 'set', subType: 'uuid'}
-      groupUuid: 'uuid'
+      id: 'timeuuid'
+      userId: 'uuid'
+      userIds: {type: 'set', subType: 'uuid'}
+      groupId: 'uuid'
       type: 'text'
       data: 'text' # json: name, description, slowMode, slowModeCooldown
       isRead: 'boolean'
       lastUpdateTime: 'timestamp'
     primaryKey:
-      partitionKey: ['uuid']
+      partitionKey: ['id']
       clusteringColumns: null
   }
 ]
@@ -91,69 +91,69 @@ tables = [
 class ConversationModel
   SCYLLA_TABLES: tables
 
-  upsert: (conversation, {userUuid} = {}) ->
+  upsert: (conversation, {userId} = {}) ->
     conversation = defaultConversation conversation
 
     Promise.all _.filter _.flatten [
-      _.map conversation.userUuids, (conversationUserUuid) ->
-        conversation.isRead = conversationUserUuid is userUuid
-        cknex().update 'conversations_by_userUuid'
-        .set _.omit conversation, ['userUuid', 'uuid']
-        .where 'userUuid', '=', conversationUserUuid
-        .andWhere 'uuid', '=', conversation.uuid
+      _.map conversation.userIds, (conversationUserId) ->
+        conversation.isRead = conversationUserId is userId
+        cknex().update 'conversations_by_userId'
+        .set _.omit conversation, ['userId', 'id']
+        .where 'userId', '=', conversationUserId
+        .andWhere 'id', '=', conversation.id
         .run()
 
-      if conversation.groupUuid
-        cknex().update 'conversations_by_groupUuid'
-        .set _.omit conversation, ['groupUuid', 'uuid']
-        .where 'groupUuid', '=', conversation.groupUuid
-        .andWhere 'uuid', '=', conversation.uuid
+      if conversation.groupId
+        cknex().update 'conversations_by_groupId'
+        .set _.omit conversation, ['groupId', 'id']
+        .where 'groupId', '=', conversation.groupId
+        .andWhere 'id', '=', conversation.id
         .run()
 
-      cknex().update 'conversations_by_uuid'
-      .set _.omit conversation, ['uuid']
-      .where 'uuid', '=', conversation.uuid
+      cknex().update 'conversations_by_id'
+      .set _.omit conversation, ['id']
+      .where 'id', '=', conversation.id
       .run()
     ]
     .tap ->
-      prefix = CacheService.PREFIXES.CONVERSATION_UUID
-      key = "#{prefix}:#{conversation.uuid}"
+      prefix = CacheService.PREFIXES.CONVERSATION_ID
+      key = "#{prefix}:#{conversation.id}"
       CacheService.deleteByKey key
     .then ->
       conversation
 
-  getByUuid: (uuid, {preferCache} = {}) ->
+  getById: (id, {preferCache} = {}) ->
     preferCache ?= true
     get = ->
       cknex().select '*'
-      .from 'conversations_by_uuid'
-      .where 'uuid', '=', uuid
+      .from 'conversations_by_id'
+      .where 'id', '=', id
       .run {isSingle: true}
       .then defaultConversationOutput
       .catch (err) ->
-        console.log 'covnersation get err', uuid
+        console.log 'covnersation get err', id
         throw err
 
     if preferCache
-      prefix = CacheService.PREFIXES.CONVERSATION_UUID
-      key = "#{prefix}:#{uuid}"
+      prefix = CacheService.PREFIXES.CONVERSATION_ID
+      key = "#{prefix}:#{id}"
       CacheService.preferCache key, get, {expireSeconds: ONE_DAY_S}
     else
       get()
 
-  getByGroupUuidAndName: (groupUuid, name) =>
-    @getAllByGroupUuid groupUuid
+  getByGroupIdAndName: (groupId, name) =>
+    @getAllByGroupId groupId
     .then (conversations) ->
       _.find conversations, {name}
     .then defaultConversationOutput
 
-  getAllByUserUuid: (userUuid, {limit} = {}) ->
+  getAllByUserId: (userId, {limit} = {}) ->
     limit ?= 10
 
     # TODO: use a redis leaderboard for sorting by last update?
     cknex().select '*'
-    .from 'conversations_by_userUuid'
-    .where 'userUuid', '=', userUuid
+    .from 'conversations_by_userId'
+    .where 'userId', '=', userId
     .limit 1000
     .run()
     .then (conversations) ->
@@ -163,35 +163,35 @@ class ConversationModel
       conversations = _.take conversations, limit
     .map defaultConversationOutput
 
-  getAllByGroupUuid: (groupUuid) ->
+  getAllByGroupId: (groupId) ->
     cknex().select '*'
-    .from 'conversations_by_groupUuid'
-    .where 'groupUuid', '=', groupUuid
+    .from 'conversations_by_groupId'
+    .where 'groupId', '=', groupId
     .run()
     .map defaultConversationOutput
 
-  getByUserUuids: (checkUserUuids, {limit} = {}) =>
-    @getAllByUserUuid checkUserUuids[0], {limit: 2500}
+  getByUserIds: (checkUserIds, {limit} = {}) =>
+    @getAllByUserId checkUserIds[0], {limit: 2500}
     .then (conversations) ->
-      _.find conversations, ({type, userUuids}) ->
-        type is 'pm' and _.every checkUserUuids, (userUuid) ->
-          userUuids.indexOf(userUuid) isnt -1
+      _.find conversations, ({type, userIds}) ->
+        type is 'pm' and _.every checkUserIds, (userId) ->
+          userIds.indexOf(userId) isnt -1
     .then defaultConversation
 
-  markRead: ({uuid}, userUuid) ->
-    cknex().update 'conversations_by_userUuid'
+  markRead: ({id}, userId) ->
+    cknex().update 'conversations_by_userId'
     .set {isRead: true}
-    .where 'userUuid', '=', userUuid
-    .andWhere 'uuid', '=', uuid
+    .where 'userId', '=', userId
+    .andWhere 'id', '=', id
     .run()
 
   sanitize: _.curry (requesterId, conversation) ->
     _.pick conversation, [
-      'uuid'
-      'userUuids'
+      'id'
+      'userIds'
       'data'
       'users'
-      'groupUuid'
+      'groupId'
       'lastUpdateTime'
       'lastMessage'
       'isRead'

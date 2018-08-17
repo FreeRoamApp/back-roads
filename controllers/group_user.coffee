@@ -24,26 +24,26 @@ userEmbed = [
   EmbedService.TYPES.GROUP_USER.USER
 ]
 class GroupUserCtrl
-  addRoleByGroupUuidAndUserUuid: ({groupUuid, userUuid, roleUuid}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  addRoleByGroupIdAndUserId: ({groupId, userId, roleId}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.MANAGE_ROLE
     ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      GroupRole.getAllByGroupUuid groupUuid
+      GroupRole.getAllByGroupId groupId
       .then (roles) ->
         role = _.find roles, (role) ->
-          "#{role.roleUuid}" is "#{roleUuid}"
+          "#{role.roleId}" is "#{roleId}"
         unless role
           router.throw status: 404, info: 'no role exists'
 
-        User.getByUuid userUuid
+        User.getById userId
         .then (otherUser) ->
           GroupAuditLog.upsert {
-            groupUuid
-            userUuid: user.uuid
+            groupId
+            userId: user.id
             actionText: Language.get 'audit.giveRole', {
               replacements:
                 name: User.getDisplayName otherUser
@@ -54,33 +54,33 @@ class GroupUserCtrl
 
         console.log 'add role'
         PushNotificationService.subscribeToPushTopic {
-          userUuid, groupUuid, sourceType: 'role', sourceId: role.name
+          userId, groupId, sourceType: 'role', sourceId: role.name
         }
 
-        GroupUser.addRoleUuidByGroupUser {
-          userUuid: userUuid
-          groupUuid: groupUuid
-        }, roleUuid
+        GroupUser.addRoleIdByGroupUser {
+          userId: userId
+          groupId: groupId
+        }, roleId
 
-  removeRoleByGroupUuidAndUserUuid: ({groupUuid, userUuid, roleUuid}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  removeRoleByGroupIdAndUserId: ({groupId, userId, roleId}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.MANAGE_ROLE
     ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
-      GroupRole.getAllByGroupUuid groupUuid
+      GroupRole.getAllByGroupId groupId
       .then (roles) ->
         role = _.find roles, (role) ->
-          "#{role.roleUuid}" is "#{roleUuid}"
+          "#{role.roleId}" is "#{roleId}"
         unless role
           router.throw status: 404, info: 'no role exists'
 
-        User.getByUuid userUuid
+        User.getById userId
         .then (otherUser) ->
           GroupAuditLog.upsert {
-            groupUuid
-            userUuid: user.uuid
+            groupId
+            userId: user.id
             actionText: Language.get 'audit.removeRole', {
               replacements:
                 name: User.getDisplayName otherUser
@@ -90,27 +90,27 @@ class GroupUserCtrl
           }
 
         PushNotificationService.unsubscribeToTopicByPushTopic {
-          userUuid, groupUuid, sourceType: 'role', sourceId: role.name
+          userId, groupId, sourceType: 'role', sourceId: role.name
         }
 
-        GroupUser.removeRoleUuidByGroupUser {
-          userUuid: userUuid
-          groupUuid: groupUuid
-        }, roleUuid
+        GroupUser.removeRoleIdByGroupUser {
+          userId: userId
+          groupId: groupId
+        }, roleId
 
-  addKarmaByGroupUuidAndUserUuid: ({groupUuid, userUuid, karma}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  addKarmaByGroupIdAndUserId: ({groupId, userId, karma}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.ADD_XP
     ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      User.getByUuid userUuid
+      User.getById userId
       .then (otherUser) ->
         GroupAuditLog.upsert {
-          groupUuid
-          userUuid: user.uuid
+          groupId
+          userId: user.id
           actionText: Language.get 'audit.giveKarma', {
             replacements:
               name: User.getDisplayName otherUser
@@ -120,45 +120,45 @@ class GroupUserCtrl
         }
 
         unless isNaN karma
-          GroupUser.incrementKarmaByGroupUuidAndUserUuid groupUuid, userUuid, karma
+          GroupUser.incrementKarmaByGroupIdAndUserId groupId, userId, karma
 
-  getByGroupUuidAndUserUuid: ({groupUuid, userUuid}, {user}) ->
-    GroupUser.getByGroupUuidAndUserUuid groupUuid, userUuid
+  getByGroupIdAndUserId: ({groupId, userId}, {user}) ->
+    GroupUser.getByGroupIdAndUserId groupId, userId
     .then EmbedService.embed {embed: defaultEmbed}
 
-  getTopByGroupUuid: ({groupUuid}, {user}) ->
-    key = "#{CacheService.PREFIXES.GROUP_USER_TOP}:#{groupUuid}"
+  getTopByGroupId: ({groupId}, {user}) ->
+    key = "#{CacheService.PREFIXES.GROUP_USER_TOP}:#{groupId}"
     CacheService.preferCache key, ->
-      GroupUser.getTopByGroupUuid groupUuid
+      GroupUser.getTopByGroupId groupId
       .map EmbedService.embed {embed: userEmbed}
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
-  getMeSettingsByGroupUuid: ({groupUuid}, {user}) ->
-    Group.hasPermissionByUuidAndUserUuid groupUuid, user.uuid, {level: 'member'}
+  getMeSettingsByGroupId: ({groupId}, {user}) ->
+    Group.hasPermissionByIdAndUserId groupId, user.id, {level: 'member'}
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      GroupUser.getSettingsByGroupUuidAndUserUuid groupUuid, user.uuid
+      GroupUser.getSettingsByGroupIdAndUserId groupId, user.id
 
-  updateMeSettingsByGroupUuid: ({groupUuid, globalNotifications}, {user}) ->
-    Group.hasPermissionByUuidAndUserUuid groupUuid, user.uuid, {level: 'member'}
+  updateMeSettingsByGroupId: ({groupId, globalNotifications}, {user}) ->
+    Group.hasPermissionByIdAndUserId groupId, user.id, {level: 'member'}
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      GroupUser.getSettingsByGroupUuidAndUserUuid groupUuid, user.uuid
+      GroupUser.getSettingsByGroupIdAndUserId groupId, user.id
       .then (settings) ->
         GroupUser.upsertSettings {
-          groupUuid, userUuid: user.uuid
+          groupId, userId: user.id
           globalNotifications: _.defaults(
             globalNotifications, settings?.globalNotifications
           )
         }
 
-  # getOnlineCountByGroupUuid: ({groupUuid}) ->
-  #   if groupUuid
-  #     GroupUsersOnline.getCountByGroupUuid groupUuid
+  # getOnlineCountByGroupId: ({groupId}) ->
+  #   if groupId
+  #     GroupUsersOnline.getCountByGroupId groupId
   #   else
   #     0
 

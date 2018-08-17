@@ -6,11 +6,11 @@ cknex = require '../services/cknex'
 
 tables = [
   {
-    name: 'categories_by_id'
+    name: 'categories_by_slug'
     keyspace: 'free_roam'
     fields:
-      id: 'text' # eg: starting-out
-      uuid: 'timeuuid'
+      slug: 'text' # eg: starting-out
+      id: 'timeuuid'
       name: 'text'
       description: 'text'
       type: 'text'
@@ -18,7 +18,7 @@ tables = [
       data: 'text'
     primaryKey:
       partitionKey: ['type']
-      clusteringColumns: ['id']
+      clusteringColumns: ['slug']
   }
 ]
 
@@ -57,10 +57,10 @@ class Category
     category = defaultCategory category
 
     Promise.all [
-      cknex().update 'categories_by_id'
-      .set _.omit category, ['type', 'id']
+      cknex().update 'categories_by_slug'
+      .set _.omit category, ['type', 'slug']
       .where 'type', '=', category.type
-      .where 'id', '=', category.id
+      .where 'slug', '=', category.slug
       .run()
     ]
 
@@ -68,7 +68,7 @@ class Category
     limit ?= 30
 
     cknex().select '*'
-    .from 'categories_by_id'
+    .from 'categories_by_slug'
     .limit limit
     .run()
     .then (categories) ->

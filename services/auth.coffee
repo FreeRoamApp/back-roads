@@ -14,8 +14,8 @@ class AuthService
       return next()
 
 
-    Auth.userUuidFromAccessToken accessToken
-    .then User.getByUuid, {preferCache: true}
+    Auth.userIdFromAccessToken accessToken
+    .then User.getById, {preferCache: true}
     .then (user) ->
       if not user?
         next()
@@ -29,8 +29,8 @@ class AuthService
 
   exoidMiddleware: ({accessToken, userAgent}, req) =>
     if accessToken
-      Auth.userUuidFromAccessToken accessToken
-      .then User.getByUuid, {preferCache: true}
+      Auth.userIdFromAccessToken accessToken
+      .then User.getById, {preferCache: true}
       .then (user) ->
         if user
           req.user = user

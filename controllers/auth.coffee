@@ -25,7 +25,7 @@ class AuthCtrl
 
     User.upsert {language: language?.toLowerCase?()}
     .then (user) ->
-      Auth.fromUserUuid user.uuid
+      Auth.fromUserId user.id
 
   join: ({email, username, password}, {user}) ->
     insecurePassword = password
@@ -76,7 +76,7 @@ class AuthCtrl
         .then (password) ->
           User.updateByUser user, {username, password, email}
       .then ->
-        Auth.fromUserUuid user.uuid
+        Auth.fromUserId user.id
 
   loginUsername: ({username, password}) ->
     insecurePassword = password
@@ -137,7 +137,7 @@ class AuthCtrl
         }
 
     .then (user) ->
-      Auth.fromUserUuid user.uuid
+      Auth.fromUserId user.id
 
 
 module.exports = new AuthCtrl()

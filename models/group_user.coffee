@@ -10,7 +10,7 @@ config = require '../config'
 ONE_DAY_SECONDS = 3600 * 24
 ONE_HOUR_SECONDS = 3600
 
-# don't run get all by groupUuid since some groups have 1m users
+# don't run get all by groupId since some groups have 1m users
 
 defaultGroupUser = (groupUser) ->
   unless groupUser?
@@ -43,70 +43,70 @@ defaultGroupUserSettingsOutput = (groupUserSettings) ->
 
 tables = [
   {
-    name: 'group_users_by_groupUuid'
+    name: 'group_users_by_groupId'
     keyspace: 'free_roam'
     fields:
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
-      roleUuids: {type: 'set', subType: 'uuid'}
+      groupId: 'uuid'
+      userId: 'uuid'
+      roleIds: {type: 'set', subType: 'uuid'}
       data: 'text'
       time: 'timestamp'
     primaryKey:
       # a little uneven since some groups will have a lot of users, but each
       # row is small...
       # TODO: probably sohuldn't add to group for public groups. dependent
-      # on switching getCountByGroupUuid to use a counter.
+      # on switching getCountByGroupId to use a counter.
       # 1/10/2018 largest row (500k users) is 20mb
-      partitionKey: ['groupUuid']
-      clusteringColumns: ['userUuid']
+      partitionKey: ['groupId']
+      clusteringColumns: ['userId']
   }
   {
-    name: 'group_users_by_userUuid'
+    name: 'group_users_by_userId'
     keyspace: 'free_roam'
     fields:
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
-      roleUuids: {type: 'set', subType: 'uuid'}
+      groupId: 'uuid'
+      userId: 'uuid'
+      roleIds: {type: 'set', subType: 'uuid'}
       data: 'text'
       time: 'timestamp'
     primaryKey:
-      partitionKey: ['userUuid']
-      clusteringColumns: ['groupUuid']
+      partitionKey: ['userId']
+      clusteringColumns: ['groupId']
   }
   {
-    name: 'group_users_karma_counter_by_userUuid'
+    name: 'group_users_karma_counter_by_userId'
     keyspace: 'free_roam'
     fields:
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
+      groupId: 'uuid'
+      userId: 'uuid'
       karma: 'counter'
       level: 'counter'
     primaryKey:
-      partitionKey: ['userUuid']
-      clusteringColumns: ['groupUuid']
+      partitionKey: ['userId']
+      clusteringColumns: ['groupId']
   }
   {
-    name: 'group_users_counter_by_groupUuid'
+    name: 'group_users_counter_by_groupId'
     keyspace: 'free_roam'
     fields:
-      groupUuid: 'uuid'
+      groupId: 'uuid'
       userCount: 'counter'
     primaryKey:
-      partitionKey: ['groupUuid']
+      partitionKey: ['groupId']
   }
   {
     name: 'group_user_settings'
     keyspace: 'free_roam'
     fields:
-      groupUuid: 'uuid'
-      userUuid: 'uuid'
+      groupId: 'uuid'
+      userId: 'uuid'
       globalNotifications: 'text'
       channelNotifications: {
         type: 'map', subType: 'uuid', subType2: 'text'
       }
     primaryKey:
-      partitionKey: ['userUuid']
-      clusteringColumns: ['groupUuid']
+      partitionKey: ['userId']
+      clusteringColumns: ['groupId']
   }
 ]
 
@@ -140,181 +140,181 @@ class GroupUserModel
     groupUser = defaultGroupUser groupUser
 
     Promise.all [
-      cknex().update 'group_users_by_groupUuid'
-      .set _.omit groupUser, ['userUuid', 'groupUuid']
-      .where 'groupUuid', '=', groupUser.groupUuid
-      .andWhere 'userUuid', '=', groupUser.userUuid
+      cknex().update 'group_users_by_groupId'
+      .set _.omit groupUser, ['userId', 'groupId']
+      .where 'groupId', '=', groupUser.groupId
+      .andWhere 'userId', '=', groupUser.userId
       .run()
 
-      cknex().update 'group_users_by_userUuid'
-      .set _.omit groupUser, ['userUuid', 'groupUuid']
-      .where 'userUuid', '=', groupUser.userUuid
-      .andWhere 'groupUuid', '=', groupUser.groupUuid
+      cknex().update 'group_users_by_userId'
+      .set _.omit groupUser, ['userId', 'groupId']
+      .where 'userId', '=', groupUser.userId
+      .andWhere 'groupId', '=', groupUser.groupId
       .run()
     ]
     .then ->
       groupUser
     .tap ->
       prefix = CacheService.PREFIXES.GROUP_USER_USER_ID
-      cacheKey = "#{prefix}:#{groupUser.userUuid}"
+      cacheKey = "#{prefix}:#{groupUser.userId}"
       CacheService.deleteByKey cacheKey
       categoryPrefix = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY
-      categoryCacheKey = "#{categoryPrefix}:#{groupUser.userUuid}"
+      categoryCacheKey = "#{categoryPrefix}:#{groupUser.userId}"
       CacheService.deleteByCategory categoryCacheKey
 
   create: (groupUser) =>
     Promise.all [
       @upsert groupUser
-      @incrementCountByGroupUuid groupUser.groupUuid, 1
+      @incrementCountByGroupId groupUser.groupId, 1
     ]
 
-  addRoleUuidByGroupUser: (groupUser, roleUuid) ->
+  addRoleIdByGroupUser: (groupUser, roleId) ->
     Promise.all [
-      cknex().update 'group_users_by_groupUuid'
-      .add 'roleUuids', [[roleUuid]]
-      .where 'groupUuid', '=', groupUser.groupUuid
-      .andWhere 'userUuid', '=', groupUser.userUuid
+      cknex().update 'group_users_by_groupId'
+      .add 'roleIds', [[roleId]]
+      .where 'groupId', '=', groupUser.groupId
+      .andWhere 'userId', '=', groupUser.userId
       .run()
 
-      cknex().update 'group_users_by_userUuid'
-      .add 'roleUuids', [[roleUuid]]
-      .where 'userUuid', '=', groupUser.userUuid
-      .andWhere 'groupUuid', '=', groupUser.groupUuid
+      cknex().update 'group_users_by_userId'
+      .add 'roleIds', [[roleId]]
+      .where 'userId', '=', groupUser.userId
+      .andWhere 'groupId', '=', groupUser.groupId
       .run()
     ]
     .tap ->
       prefix = CacheService.PREFIXES.GROUP_USER_USER_ID
-      cacheKey = "#{prefix}:#{groupUser.userUuid}"
+      cacheKey = "#{prefix}:#{groupUser.userId}"
       CacheService.deleteByKey cacheKey
       categoryPrefix = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY
-      categoryCacheKey = "#{categoryPrefix}:#{groupUser.userUuid}"
+      categoryCacheKey = "#{categoryPrefix}:#{groupUser.userId}"
       CacheService.deleteByCategory categoryCacheKey
 
-  removeRoleUuidByGroupUser: (groupUser, roleUuid) ->
+  removeRoleIdByGroupUser: (groupUser, roleId) ->
     Promise.all [
-      cknex().update 'group_users_by_groupUuid'
-      .remove 'roleUuids', [roleUuid]
-      .where 'groupUuid', '=', groupUser.groupUuid
-      .andWhere 'userUuid', '=', groupUser.userUuid
+      cknex().update 'group_users_by_groupId'
+      .remove 'roleIds', [roleId]
+      .where 'groupId', '=', groupUser.groupId
+      .andWhere 'userId', '=', groupUser.userId
       .run()
 
-      cknex().update 'group_users_by_userUuid'
-      .remove 'roleUuids', [roleUuid]
-      .where 'userUuid', '=', groupUser.userUuid
-      .andWhere 'groupUuid', '=', groupUser.groupUuid
+      cknex().update 'group_users_by_userId'
+      .remove 'roleIds', [roleId]
+      .where 'userId', '=', groupUser.userId
+      .andWhere 'groupId', '=', groupUser.groupId
       .run()
     ]
     .tap ->
       prefix = CacheService.PREFIXES.GROUP_USER_USER_ID
-      cacheKey = "#{prefix}:#{groupUser.userUuid}"
+      cacheKey = "#{prefix}:#{groupUser.userId}"
       CacheService.deleteByKey cacheKey
       categoryPrefix = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY
-      categoryCacheKey = "#{categoryPrefix}:#{groupUser.userUuid}"
+      categoryCacheKey = "#{categoryPrefix}:#{groupUser.userId}"
       CacheService.deleteByCategory categoryCacheKey
 
-  getCountByGroupUuid: (groupUuid, {preferCache} = {}) ->
+  getCountByGroupId: (groupId, {preferCache} = {}) ->
     get = ->
       cknex().select '*'
-      .from 'group_users_counter_by_groupUuid'
-      .where 'groupUuid', '=', groupUuid
+      .from 'group_users_counter_by_groupId'
+      .where 'groupId', '=', groupId
       .run {isSingle: true}
       .then (response) ->
         response?.userCount or 0
 
     if preferCache
-      cacheKey = "#{CacheService.PREFIXES.GROUP_USER_COUNT}:#{groupUuid}"
+      cacheKey = "#{CacheService.PREFIXES.GROUP_USER_COUNT}:#{groupId}"
       CacheService.preferCache cacheKey, get, {
         expireSeconds: ONE_HOUR_SECONDS
       }
     else
       get()
 
-  incrementCountByGroupUuid: (groupUuid, amount) ->
-    cknex().update 'group_users_counter_by_groupUuid'
+  incrementCountByGroupId: (groupId, amount) ->
+    cknex().update 'group_users_counter_by_groupId'
     .increment 'userCount', amount
-    .where 'groupUuid', '=', groupUuid
+    .where 'groupId', '=', groupId
     .run()
 
-  getAllByUserUuid: (userUuid) ->
+  getAllByUserId: (userId) ->
     cknex().select '*'
-    .from 'group_users_by_userUuid'
-    .where 'userUuid', '=', userUuid
+    .from 'group_users_by_userId'
+    .where 'userId', '=', userId
     .run()
 
-  getByGroupUuidAndUserUuid: (groupUuid, userUuid) ->
+  getByGroupIdAndUserId: (groupId, userId) ->
     cknex().select '*'
-    # .from 'group_users_by_groupUuid'
-    .from 'group_users_by_userUuid'
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'userUuid', '=', userUuid
+    # .from 'group_users_by_groupId'
+    .from 'group_users_by_userId'
+    .where 'groupId', '=', groupId
+    .andWhere 'userId', '=', userId
     .run {isSingle: true}
     .then (groupUser) ->
       # so roles can still be embedded
-      groupUser or {groupUuid}
+      groupUser or {groupId}
 
-  getXpByGroupUuidAndUserUuid: (groupUuid, userUuid) ->
+  getXpByGroupIdAndUserId: (groupId, userId) ->
     cknex().select '*'
-    .from 'group_users_karma_counter_by_userUuid'
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'userUuid', '=', userUuid
+    .from 'group_users_karma_counter_by_userId'
+    .where 'groupId', '=', groupId
+    .andWhere 'userId', '=', userId
     .run {isSingle: true}
     .then (groupUser) ->
       groupUser?.karma or 0
 
-  getTopByGroupUuid: (groupUuid) ->
+  getTopByGroupId: (groupId) ->
     prefix = CacheService.STATIC_PREFIXES.GROUP_LEADERBOARD
-    key = "#{prefix}:#{groupUuid}"
+    key = "#{prefix}:#{groupId}"
     CacheService.leaderboardGet key
     .then (results) ->
-      _.map _.chunk(results, 2), ([userUuid, karma], i) ->
+      _.map _.chunk(results, 2), ([userId, karma], i) ->
         {
           rank: i + 1
-          groupUuid
-          userUuid
+          groupId
+          userId
           karma: parseInt karma
         }
 
-  incrementXpByGroupUuidAndUserUuid: (groupUuid, userUuid, amount) ->
-    updateXp = cknex().update 'group_users_karma_counter_by_userUuid'
+  incrementXpByGroupIdAndUserId: (groupId, userId, amount) ->
+    updateXp = cknex().update 'group_users_karma_counter_by_userId'
     .increment 'karma', amount
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'userUuid', '=', userUuid
+    .where 'groupId', '=', groupId
+    .andWhere 'userId', '=', userId
     .run()
 
     Promise.all [
       updateXp
 
       prefix = CacheService.STATIC_PREFIXES.GROUP_LEADERBOARD
-      key = "#{prefix}:#{groupUuid}"
-      CacheService.leaderboardIncrement key, userUuid, amount, {
+      key = "#{prefix}:#{groupId}"
+      CacheService.leaderboardIncrement key, userId, amount, {
         currentValueFn: =>
           updateXp.then =>
-            @getXpByGroupUuidAndUserUuid groupUuid, userUuid
+            @getXpByGroupIdAndUserId groupId, userId
       }
     ]
 
-  deleteByGroupUuidAndUserUuid: (groupUuid, userUuid) =>
+  deleteByGroupIdAndUserId: (groupId, userId) =>
     Promise.all [
       cknex().delete()
-      .from 'group_users_by_groupUuid'
-      .where 'groupUuid', '=', groupUuid
-      .andWhere 'userUuid', '=', userUuid
+      .from 'group_users_by_groupId'
+      .where 'groupId', '=', groupId
+      .andWhere 'userId', '=', userId
       .run()
 
       cknex().delete()
-      .from 'group_users_by_userUuid'
-      .where 'userUuid', '=', userUuid
-      .andWhere 'groupUuid', '=', groupUuid
+      .from 'group_users_by_userId'
+      .where 'userId', '=', userId
+      .andWhere 'groupId', '=', groupId
       .run()
 
-      @incrementCountByGroupUuid groupUuid, -1
+      @incrementCountByGroupId groupId, -1
     ]
 
-  getSettingsByGroupUuidAndUserUuid: (groupUuid, userUuid) ->
+  getSettingsByGroupIdAndUserId: (groupId, userId) ->
     cknex().select '*'
     .from 'group_user_settings'
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'userUuid', '=', userUuid
+    .where 'groupId', '=', groupId
+    .andWhere 'userId', '=', userId
     .run {isSingle: true}
     .then defaultGroupUserSettingsOutput
 
@@ -322,24 +322,24 @@ class GroupUserModel
     settings = defaultGroupUserSettings settings
 
     cknex().update 'group_user_settings'
-    .set _.omit settings, ['userUuid', 'groupUuid']
-    .where 'groupUuid', '=', settings.groupUuid
-    .andWhere 'userUuid', '=', settings.userUuid
+    .set _.omit settings, ['userId', 'groupId']
+    .where 'groupId', '=', settings.groupId
+    .andWhere 'userId', '=', settings.userId
     .run()
 
-  hasPermissionByGroupUuidAndUser: (groupUuid, user, permissions, options) =>
+  hasPermissionByGroupIdAndUser: (groupId, user, permissions, options) =>
     options ?= {}
-    {channelUuid} = options
+    {channelId} = options
 
-    @getByGroupUuidAndUserUuid groupUuid, user.uuid
+    @getByGroupIdAndUserId groupId, user.id
     .then (groupUser) =>
       groupUser or= {}
-      GroupRole.getAllByGroupUuid groupUuid, {preferCache: true}
+      GroupRole.getAllByGroupId groupId, {preferCache: true}
       .then (roles) ->
         everyoneRole = _.find roles, {name: 'everyone'}
-        groupUserRoles = _.filter _.map groupUser.roleUuids, (roleUuid) ->
+        groupUserRoles = _.filter _.map groupUser.roleIds, (roleId) ->
           _.find roles, (role) ->
-            "#{role.roleUuid}" is "#{roleUuid}"
+            "#{role.roleId}" is "#{roleId}"
         if everyoneRole
           groupUserRoles = groupUserRoles.concat everyoneRole
         groupUser.roles = groupUserRoles
@@ -348,15 +348,15 @@ class GroupUserModel
         @hasPermission {
           meGroupUser: groupUser
           permissions: permissions
-          channelUuid: channelUuid
+          channelId: channelId
           me: user
         }
 
-  hasPermission: ({meGroupUser, me, permissions, channelUuid}) ->
+  hasPermission: ({meGroupUser, me, permissions, channelId}) ->
     isGlobalModerator = me?.flags?.isModerator
     isGlobalModerator or _.every permissions, (permission) ->
       _.find meGroupUser?.roles, (role) ->
-        channelPermissions = channelUuid and role.channelPermissions?[channelUuid]
+        channelPermissions = channelId and role.channelPermissions?[channelId]
         globalPermissions = role.globalPermissions
         permissions = _.defaults(
           channelPermissions, globalPermissions, config.DEFAULT_PERMISSIONS

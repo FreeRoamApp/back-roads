@@ -15,42 +15,42 @@ config = require '../config'
 BANNED_LIMIT = 15
 
 class BanCtrl
-  getByGroupUuidAndUserUuid: ({groupUuid, userUuid} = {}, {user}) ->
-    Ban.getByGroupUuidAndUserUuid groupUuid, userUuid
+  getByGroupIdAndUserId: ({groupId, userId} = {}, {user}) ->
+    Ban.getByGroupIdAndUserId groupId, userId
 
-  getAllByGroupUuid: ({groupUuid, duration} = {}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  getAllByGroupId: ({groupId, duration} = {}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.TEMP_BAN_USER
     ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      groupUuid ?= config.MAIN_GROUP_UUID
+      groupId ?= config.MAIN_GROUP_ID
       duration ?= '24h'
 
-      Ban.getAllByGroupUuidAndDuration groupUuid, duration
+      Ban.getAllByGroupIdAndDuration groupId, duration
       .map EmbedService.embed {
         embed: [
           EmbedService.TYPES.BAN.USER
           EmbedService.TYPES.BAN.BANNED_BY_USER
         ]
         options:
-          groupUuid: groupUuid
+          groupId: groupId
       }
 
-  banByGroupUuidAndUserUuid: ({userUuid, groupUuid, duration, type}, {user}) ->
+  banByGroupIdAndUserId: ({userId, groupId, duration, type}, {user}) ->
     permission = if duration is 'permanent' \
                  then GroupUser.PERMISSIONS.PERMA_BAN_USER
                  else GroupUser.PERMISSIONS.TEMP_BAN_USER
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [permission]
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [permission]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      ban = {userUuid, groupUuid, duration, bannedByUuid: user.uuid}
+      ban = {userId, groupId, duration, bannedById: user.id}
 
-      User.getByUuid userUuid
+      User.getById userId
       .then (otherUser) ->
         unless otherUser
           router.throw status: 404, info: 'User not found'
@@ -61,8 +61,8 @@ class BanCtrl
 
 
         GroupAuditLog.upsert {
-          groupUuid
-          userUuid: user.uuid
+          groupId
+          userId: user.id
           actionText: Language.get 'audit.ban', {
             replacements:
               name: User.getDisplayName otherUser
@@ -77,26 +77,26 @@ class BanCtrl
           ttl: if duration is '24h' then 3600 * 24 else undefined
         }
     .then ->
-      if groupUuid
+      if groupId
         Promise.all [
-          ConversationMessage.deleteAllByGroupUuidAndUserUuid groupUuid, userUuid
-          ThreadComment.deleteAllByUserUuid userUuid
-          Thread.deleteAllByUserUuid userUuid
+          ConversationMessage.deleteAllByGroupIdAndUserId groupId, userId
+          ThreadComment.deleteAllByUserId userId
+          Thread.deleteAllByUserId userId
         ]
 
-  unbanByGroupUuidAndUserUuid: ({userUuid, groupUuid}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  unbanByGroupIdAndUserId: ({userId, groupId}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.UNBAN_USER
     ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      User.getByUuid userUuid
+      User.getById userId
       .then (otherUser) ->
         GroupAuditLog.upsert {
-          groupUuid
-          userUuid: user.uuid
+          groupId
+          userId: user.id
           actionText: Language.get 'audit.unban', {
             replacements:
               name: User.getDisplayName otherUser
@@ -107,6 +107,6 @@ class BanCtrl
         if user.username in ['ponkat', 'jaimejosuee']
           User.updateByUser otherUser, {flags: {isChatBanned: false}}
 
-      Ban.deleteAllByGroupUuidAndUserUuid groupUuid, userUuid
+      Ban.deleteAllByGroupIdAndUserId groupId, userId
 
 module.exports = new BanCtrl()

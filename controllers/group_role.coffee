@@ -11,11 +11,11 @@ CacheService = require '../services/cache'
 config = require '../config'
 
 class GroupRoleCtrl
-  getAllByGroupUuid: ({groupUuid}, {user}) ->
-    GroupRole.getAllByGroupUuid groupUuid
+  getAllByGroupId: ({groupId}, {user}) ->
+    GroupRole.getAllByGroupId groupId
 
-  createByGroupUuid: ({groupUuid, name}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  createByGroupId: ({groupId, name}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.MANAGE_ROLE
     ]
     .then (hasPermission) ->
@@ -23,8 +23,8 @@ class GroupRoleCtrl
         router.throw status: 400, info: 'no permission'
 
       GroupAuditLog.upsert {
-        groupUuid: groupUuid
-        userUuid: user.uuid
+        groupId: groupId
+        userId: user.id
         actionText: Language.get 'audit.addRole', {
           replacements:
             role: name
@@ -33,24 +33,24 @@ class GroupRoleCtrl
       }
 
       GroupRole.upsert {
-        groupUuid: groupUuid
+        groupId: groupId
         name: name
         globalPermissions: {}
       }
 
-  deleteByGroupUuidAndRoleUuid: ({groupUuid, roleUuid}, {user}) ->
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [
+  deleteByGroupIdAndRoleId: ({groupId, roleId}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
       GroupUser.PERMISSIONS.MANAGE_ROLE
     ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      GroupRole.getByGroupUuidAndRoleUuid groupUuid, roleUuid
+      GroupRole.getByGroupIdAndRoleId groupId, roleId
       .then (role) ->
         GroupAuditLog.upsert {
-          groupUuid: groupUuid
-          userUuid: user.uuid
+          groupId: groupId
+          userId: user.id
           actionText: Language.get 'audit.deleteRole', {
             replacements:
               role: role.name
@@ -58,18 +58,18 @@ class GroupRoleCtrl
           }
         }
 
-      GroupRole.deleteByGroupUuidAndRoleUuid groupUuid, roleUuid
+      GroupRole.deleteByGroupIdAndRoleId groupId, roleId
       .tap ->
         prefix = CacheService.PREFIXES.GROUP_ROLES
-        key = "#{prefix}:#{groupUuid}"
+        key = "#{prefix}:#{groupId}"
         CacheService.deleteByKey key
 
   updatePermissions: (params, {user}) ->
-    {groupUuid, roleUuid, channelUuid, permissions} = params
+    {groupId, roleId, channelId, permissions} = params
 
     isSettingAdminPermission = permissions.admin
 
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, _.filter [
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, _.filter [
       GroupUser.PERMISSIONS.MANAGE_ROLE
       if isSettingAdminPermission
         GroupUser.PERMISSIONS.ADMIN
@@ -81,29 +81,29 @@ class GroupRoleCtrl
       mapOptions = {
         map:
           channelPermissions:
-            "#{channelUuid}": JSON.stringify permissions
+            "#{channelId}": JSON.stringify permissions
       }
       diff = {
-        groupUuid
-        roleUuid
+        groupId
+        roleId
       }
-      if not channelUuid
+      if not channelId
         diff.globalPermissions = permissions
 
       Promise.all [
-        if channelUuid
-        then Conversation.getByUuid channelUuid
+        if channelId
+        then Conversation.getById channelId
         else Promise.resolve null
 
-        GroupRole.getByGroupUuidAndRoleUuid groupUuid, roleUuid
+        GroupRole.getByGroupIdAndRoleId groupId, roleId
       ]
       .then ([channel, role]) ->
         languageKey = if channel \
                       then 'audit.updateRoleChannel'
                       else 'audit.updateRole'
         GroupAuditLog.upsert {
-          groupUuid
-          userUuid: user.uuid
+          groupId
+          userId: user.id
           actionText: Language.get languageKey, {
             replacements:
               role: role.name
@@ -112,10 +112,10 @@ class GroupRoleCtrl
           }
         }
 
-      GroupRole.upsert diff, if channelUuid then mapOptions else undefined
+      GroupRole.upsert diff, if channelId then mapOptions else undefined
       .tap ->
         prefix = CacheService.PREFIXES.GROUP_ROLES
-        key = "#{prefix}:#{groupUuid}"
+        key = "#{prefix}:#{groupId}"
         CacheService.deleteByKey key
 
 module.exports = new GroupRoleCtrl()

@@ -23,7 +23,7 @@ TEN_MINUTES_SECONDS = 60 * 10
 MAX_COMMENT_DEPTH = 3
 
 # there's probably a cleaner / more efficial way to this
-getCommentsTree = (comments, findParentUuid, options) ->
+getCommentsTree = (comments, findParentId, options) ->
   options ?= {}
   {depth, sort, skip, limit, getUnmatched} = options
   depth ?= 0
@@ -33,15 +33,15 @@ getCommentsTree = (comments, findParentUuid, options) ->
   if depth > MAX_COMMENT_DEPTH
     return {comments: [], unmatched: comments}
 
-  {matchedComments, unmatched} = _.groupBy comments, ({parentUuid}) ->
-    if "#{parentUuid}" is "#{findParentUuid}"
+  {matchedComments, unmatched} = _.groupBy comments, ({parentId}) ->
+    if "#{parentId}" is "#{findParentId}"
     then 'matchedComments'
     else 'unmatched'
 
   commentsTree = _.map matchedComments, (comment) ->
     # for each map step, reduce size of unmatched
     {comments, unmatched} = getCommentsTree(
-      unmatched, comment.uuid, _.defaults {
+      unmatched, comment.id, _.defaults {
         depth: depth + 1
         skip: 0
         getUnmatched: true
@@ -64,23 +64,23 @@ getCommentsTree = (comments, findParentUuid, options) ->
 
 embedMyVotes = (comments, commentVotes) ->
   _.map comments, (comment) ->
-    comment.myVote = _.find commentVotes, ({parentUuid}) ->
-      "#{parentUuid}" is "#{comment.uuid}"
+    comment.myVote = _.find commentVotes, ({parentId}) ->
+      "#{parentId}" is "#{comment.id}"
     comment.children = embedMyVotes comment.children, commentVotes
     comment
 
 class ThreadCommentCtrl
-  checkIfBanned: (groupUuid, ipAddr, userUuid, router) ->
+  checkIfBanned: (groupId, ipAddr, userId, router) ->
     ipAddr ?= 'n/a'
     Promise.all [
-      Ban.getByGroupUuidAndIp groupUuid, ipAddr, {preferCache: true}
-      Ban.getByGroupUuidAndUserUuid groupUuid, userUuid, {preferCache: true}
+      Ban.getByGroupIdAndIp groupId, ipAddr, {preferCache: true}
+      Ban.getByGroupIdAndUserId groupId, userId, {preferCache: true}
     ]
-    .then ([bannedIp, bannedUserUuid]) ->
-      if bannedIp?.ip or bannedUserUuid?.userUuid
+    .then ([bannedIp, bannedUserId]) ->
+      if bannedIp?.ip or bannedUserId?.userId
         router.throw status: 403, 'unable to post'
 
-  create: ({body, threadUuid, parentUuid, parentType}, {user, headers, connection}) =>
+  create: ({body, threadId, parentId, parentType}, {user, headers, connection}) =>
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
@@ -98,74 +98,74 @@ class ThreadCommentCtrl
     unless body
       router.throw status: 400, info: 'can\'t be empty'
 
-    Thread.getByUuid threadUuid, {preferCache: true, omitCounter: true}
+    Thread.getById threadId, {preferCache: true, omitCounter: true}
     .then (thread) =>
-      @checkIfBanned thread.groupUuid, ip, user.uuid, router
+      @checkIfBanned thread.groupId, ip, user.id, router
       .then ->
         ThreadComment.upsert
-          userUuid: user.uuid
+          userId: user.id
           body: body
-          threadUuid: threadUuid
-          parentUuid: parentUuid
+          threadId: threadId
+          parentId: parentId
           parentType: parentType
       .then ->
-        prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID_CATEGORY
+        prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
         Promise.all [
-          CacheService.deleteByCategory "#{prefix}:#{threadUuid}"
+          CacheService.deleteByCategory "#{prefix}:#{threadId}"
         ]
 
-  getAllByThreadUuid: ({threadUuid, sort, skip, limit, groupUuid}, {user}) ->
+  getAllByThreadId: ({threadId, sort, skip, limit, groupId}, {user}) ->
     sort ?= 'popular'
     skip ?= 0
-    prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID
-    categoryPrefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID_CATEGORY
-    key = "#{prefix}:#{threadUuid}:#{sort}:#{skip}:#{limit}"
-    category = "#{categoryPrefix}:#{threadUuid}"
+    prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG
+    categoryPrefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
+    key = "#{prefix}:#{threadId}:#{sort}:#{skip}:#{limit}"
+    category = "#{categoryPrefix}:#{threadId}"
     CacheService.preferCache key, ->
-      ThreadComment.getAllByThreadUuid threadUuid
-      .map EmbedService.embed {embed: defaultEmbed, options: {groupUuid}}
+      ThreadComment.getAllByThreadId threadId
+      .map EmbedService.embed {embed: defaultEmbed, options: {groupId}}
       .then (allComments) ->
-        getCommentsTree allComments, threadUuid, {sort, skip, limit}
+        getCommentsTree allComments, threadId, {sort, skip, limit}
     , {category, expireSeconds: TEN_MINUTES_SECONDS}
     .then (comments) ->
       comments = comments?.slice skip, skip + limit
-      ThreadVote.getAllByUserUuidAndParentTopUuid user.uuid, threadUuid
+      ThreadVote.getAllByUserIdAndParentTopId user.id, threadId
       .then (commentVotes) ->
         embedMyVotes comments, commentVotes
 
-  flag: ({uuid}, {headers, connection}) ->
+  flag: ({id}, {headers, connection}) ->
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
 
     # TODO
-    ThreadComment.getByUuid uuid
+    ThreadComment.getById id
     .then EmbedService.embed {
       embed: [EmbedService.TYPES.THREAD_COMMENT.USER]
     }
 
-  deleteByThreadComment: ({threadComment, groupUuid}, {user}) ->
+  deleteByThreadComment: ({threadComment, groupId}, {user}) ->
     permission = GroupUser.PERMISSIONS.DELETE_FORUM_COMMENT
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [permission]
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [permission]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
       ThreadComment.deleteByThreadComment threadComment
       .tap ->
-        prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID_CATEGORY
-        CacheService.deleteByCategory "#{prefix}:#{threadComment.threadUuid}"
+        prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
+        CacheService.deleteByCategory "#{prefix}:#{threadComment.threadId}"
 
-  deleteAllByGroupUuidAndUserUuid: ({groupUuid, userUuid, threadUuid}, {user}) ->
+  deleteAllByGroupIdAndUserId: ({groupId, userId, threadId}, {user}) ->
     permission = GroupUser.PERMISSIONS.DELETE_FORUM_COMMENT
-    GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, [permission]
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [permission]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      ThreadComment.deleteAllByUserUuid userUuid
+      ThreadComment.deleteAllByUserId userId
       .tap ->
-        if threadUuid
-          prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID_CATEGORY
-          CacheService.deleteByCategory "#{prefix}:#{threadUuid}"
+        if threadId
+          prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
+          CacheService.deleteByCategory "#{prefix}:#{threadId}"
 
 module.exports = new ThreadCommentCtrl()

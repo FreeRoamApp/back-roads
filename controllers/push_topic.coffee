@@ -7,10 +7,10 @@ PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
 class PushTopicCtrl
-  subscribe: ({groupUuid, appKey, sourceType, sourceId}, {user}) ->
+  subscribe: ({groupId, appKey, sourceType, sourceId}, {user}) ->
     PushNotificationService.subscribeToTopic {
-      groupUuid, appKey, sourceType, sourceId
-      userUuid: user.uuid
+      groupId, appKey, sourceType, sourceId
+      userId: user.id
     }
 
 module.exports = new PushTopicCtrl()

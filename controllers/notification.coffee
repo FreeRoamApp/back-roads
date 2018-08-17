@@ -6,7 +6,7 @@ config = require '../config'
 
 class NotificationCtrl
   getAll: ({}, {user}) ->
-    Notification.getAllByUserUuid user.uuid, {limit: 20}
+    Notification.getAllByUserId user.id, {limit: 20}
 
 
 module.exports = new NotificationCtrl()

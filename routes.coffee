@@ -40,82 +40,82 @@ module.exports = router
 # Authed Routes   #
 ###################
 .on 'users.getMe', authed UserCtrl.getMe
-.on 'users.getByUuid', authed UserCtrl.getByUuid
+.on 'users.getById', authed UserCtrl.getById
 .on 'users.getByUsername', authed UserCtrl.getByUsername
 .on 'users.getCountry', authed UserCtrl.getCountry
 
 .on 'categories.getAll', authed CategoryCtrl.getAll
 
 .on 'groups.create', authed GroupCtrl.create
-.on 'groups.updateByUuid', authed GroupCtrl.updateByUuid
-.on 'groups.joinByUuid', authed GroupCtrl.joinByUuid
-.on 'groups.leaveByUuid', authed GroupCtrl.leaveByUuid
+.on 'groups.updateById', authed GroupCtrl.updateById
+.on 'groups.joinById', authed GroupCtrl.joinById
+.on 'groups.leaveById', authed GroupCtrl.leaveById
 .on 'groups.getAll', authed GroupCtrl.getAll
-.on 'groups.getAllByUserUuid', authed GroupCtrl.getAllByUserUuid
-.on 'groups.getAllConversationByUuid', authed GroupCtrl.getAllConversationByUuid
-.on 'groups.getByUuid', authed GroupCtrl.getByUuid
+.on 'groups.getAllByUserId', authed GroupCtrl.getAllByUserId
+.on 'groups.getAllConversationById', authed GroupCtrl.getAllConversationById
 .on 'groups.getById', authed GroupCtrl.getById
-.on 'groups.sendNotificationByUuid', authed GroupCtrl.sendNotificationByUuid
+.on 'groups.getBySlug', authed GroupCtrl.getBySlug
+.on 'groups.sendNotificationById', authed GroupCtrl.sendNotificationById
 
-.on 'groupAuditLogs.getAllByGroupUuid',
-  authed GroupAuditLogCtrl.getAllByGroupUuid
+.on 'groupAuditLogs.getAllByGroupId',
+  authed GroupAuditLogCtrl.getAllByGroupId
 
-.on 'groupUsers.addRoleByGroupUuidAndUserUuid',
-  authed GroupUserCtrl.addRoleByGroupUuidAndUserUuid
-.on 'groupUsers.removeRoleByGroupUuidAndUserUuid',
-  authed GroupUserCtrl.removeRoleByGroupUuidAndUserUuid
-.on 'groupUsers.addXpByGroupUuidAndUserUuid',
-  authed GroupUserCtrl.addXpByGroupUuidAndUserUuid
-.on 'groupUsers.getByGroupUuidAndUserUuid',
-  authed GroupUserCtrl.getByGroupUuidAndUserUuid
-.on 'groupUsers.getTopByGroupUuid', authed GroupUserCtrl.getTopByGroupUuid
-.on 'groupUsers.getMeSettingsByGroupUuid',
-  authed GroupUserCtrl.getMeSettingsByGroupUuid
-.on 'groupUsers.updateMeSettingsByGroupUuid',
-  authed GroupUserCtrl.updateMeSettingsByGroupUuid
-.on 'groupUsers.getOnlineCountByGroupUuid',
-  authed GroupUserCtrl.getOnlineCountByGroupUuid
+.on 'groupUsers.addRoleByGroupIdAndUserId',
+  authed GroupUserCtrl.addRoleByGroupIdAndUserId
+.on 'groupUsers.removeRoleByGroupIdAndUserId',
+  authed GroupUserCtrl.removeRoleByGroupIdAndUserId
+.on 'groupUsers.addXpByGroupIdAndUserId',
+  authed GroupUserCtrl.addXpByGroupIdAndUserId
+.on 'groupUsers.getByGroupIdAndUserId',
+  authed GroupUserCtrl.getByGroupIdAndUserId
+.on 'groupUsers.getTopByGroupId', authed GroupUserCtrl.getTopByGroupId
+.on 'groupUsers.getMeSettingsByGroupId',
+  authed GroupUserCtrl.getMeSettingsByGroupId
+.on 'groupUsers.updateMeSettingsByGroupId',
+  authed GroupUserCtrl.updateMeSettingsByGroupId
+.on 'groupUsers.getOnlineCountByGroupId',
+  authed GroupUserCtrl.getOnlineCountByGroupId
 
-.on 'groupRoles.getAllByGroupUuid', authed GroupRoleCtrl.getAllByGroupUuid
-.on 'groupRoles.createByGroupUuid', authed GroupRoleCtrl.createByGroupUuid
+.on 'groupRoles.getAllByGroupId', authed GroupRoleCtrl.getAllByGroupId
+.on 'groupRoles.createByGroupId', authed GroupRoleCtrl.createByGroupId
 .on 'groupRoles.updatePermissions', authed GroupRoleCtrl.updatePermissions
-.on 'groupRoles.deleteByGroupUuidAndRoleUuid',
-  authed GroupRoleCtrl.deleteByGroupUuidAndRoleUuid
+.on 'groupRoles.deleteByGroupIdAndRoleId',
+  authed GroupRoleCtrl.deleteByGroupIdAndRoleId
 
-.on 'items.getByUuid', authed ItemCtrl.getByUuid
+.on 'items.getById', authed ItemCtrl.getById
 .on 'items.getAll', authed ItemCtrl.getAll
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
 .on 'items.search', authed ItemCtrl.search
 
-.on 'places.getByUuid', authed PlaceCtrl.getByUuid
+.on 'places.getById', authed PlaceCtrl.getById
 .on 'places.search', authed PlaceCtrl.search
 
-.on 'products.getByUuid', authed ProductCtrl.getByUuid
-.on 'products.getAllByItemId', authed ProductCtrl.getAllByItemId
+.on 'products.getById', authed ProductCtrl.getById
+.on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
 
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert
 .on 'pushTokens.subscribeToTopic', authed PushTokenCtrl.subscribeToTopic
 
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll
-.on 'threads.getByUuid', authed ThreadCtrl.getByUuid
 .on 'threads.getById', authed ThreadCtrl.getById
-.on 'threads.voteByUuid', authed ThreadCtrl.voteByUuid
-.on 'threads.pinByUuid', authed ThreadCtrl.pinByUuid
-.on 'threads.unpinByUuid', authed ThreadCtrl.unpinByUuid
-.on 'threads.deleteByUuid', authed ThreadCtrl.deleteByUuid
+.on 'threads.getBySlug', authed ThreadCtrl.getBySlug
+.on 'threads.voteById', authed ThreadCtrl.voteById
+.on 'threads.pinById', authed ThreadCtrl.pinById
+.on 'threads.unpinById', authed ThreadCtrl.unpinById
+.on 'threads.deleteById', authed ThreadCtrl.deleteById
 
 .on 'threadVotes.upsertByParent',
   authed ThreadVoteCtrl.upsertByParent
 
 .on 'threadComments.create', authed ThreadCommentCtrl.create
 .on 'threadComments.flag', authed ThreadCommentCtrl.flag
-.on 'threadComments.getAllByThreadUuid',
-  authed ThreadCommentCtrl.getAllByThreadUuid
+.on 'threadComments.getAllByThreadId',
+  authed ThreadCommentCtrl.getAllByThreadId
 .on 'threadComments.deleteByThreadComment',
   authed ThreadCommentCtrl.deleteByThreadComment
-.on 'threadComments.deleteAllByGroupUuidAndUserUuid',
-  authed ThreadCommentCtrl.deleteAllByGroupUuidAndUserUuid
+.on 'threadComments.deleteAllByGroupIdAndUserId',
+  authed ThreadCommentCtrl.deleteAllByGroupIdAndUserId
 
 .on 'time.get', authed -> {now: new Date()}
 

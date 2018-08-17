@@ -5,11 +5,11 @@ Item = require '../models/item'
 EmbedService = require '../services/embed'
 config = require '../config'
 
-defaultEmbed = [EmbedService.TYPES.ITEM.FIRST_PRODUCT_ID]
+defaultEmbed = [EmbedService.TYPES.ITEM.FIRST_PRODUCT_SLUG]
 
 class ItemCtrl
-  getById: ({id}, {user}) ->
-    Item.getById id
+  getBySlug: ({slug}, {user}) ->
+    Item.getBySlug slug
     .then EmbedService.embed {embed: defaultEmbed}
 
   getAll: ({}, {user}) ->

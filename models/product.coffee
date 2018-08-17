@@ -6,12 +6,12 @@ cknex = require '../services/cknex'
 
 tables = [
   {
-    name: 'products_by_id'
+    name: 'products_by_slug'
     keyspace: 'free_roam'
     fields:
-      id: 'text' # eg: kebab-case name
-      uuid: 'timeuuid'
-      itemId: 'text'
+      slug: 'text' # eg: kebab-case name
+      id: 'timeuuid'
+      itemSlug: 'text'
       source: 'text' # eg amazon
       sourceId: 'text' # eg amazon
       name: 'text'
@@ -21,15 +21,15 @@ tables = [
       reviewersDisliked: {type: 'set', subType: 'text'}
       data: 'text'
     primaryKey:
-      partitionKey: ['id']
+      partitionKey: ['slug']
   }
   {
-    name: 'products_by_itemId'
+    name: 'products_by_itemSlug'
     keyspace: 'free_roam'
     fields:
-      id: 'text' # eg: az-amazonid
-      uuid: 'timeuuid'
-      itemId: 'text'
+      slug: 'text' # eg: az-amazonid
+      id: 'timeuuid'
+      itemSlug: 'text'
       source: 'text' # eg amazon
       sourceId: 'text' # eg amazon
       name: 'text'
@@ -38,8 +38,8 @@ tables = [
       reviewersDisliked: {type: 'set', subType: 'text'}
       data: 'text'
     primaryKey:
-      partitionKey: ['itemId']
-      clusteringColumns: ['id']
+      partitionKey: ['itemSlug']
+      clusteringColumns: ['slug']
   }
 ]
 
@@ -77,39 +77,39 @@ class Product
     product = defaultProduct product
 
     Promise.all [
-      cknex().update 'products_by_id'
-      .set _.omit product, ['id']
-      .where 'id', '=', product.id
+      cknex().update 'products_by_slug'
+      .set _.omit product, ['slug']
+      .where 'slug', '=', product.slug
       .run()
 
-      cknex().update 'products_by_itemId'
-      .set _.omit product, ['itemId', 'id']
-      .where 'itemId', '=', product.itemId
-      .andWhere 'id', '=', product.id
+      cknex().update 'products_by_itemSlug'
+      .set _.omit product, ['itemSlug', 'slug']
+      .where 'itemSlug', '=', product.itemSlug
+      .andWhere 'slug', '=', product.slug
       .run()
     ]
 
-  getByUuid: (id) ->
+  getBySlug: (id) ->
     cknex().select '*'
-    .from 'products_by_id'
-    .where 'id', '=', id
+    .from 'products_by_slug'
+    .where 'slug', '=', slug
     .run {isSingle: true}
     .then defaultProductOutput
 
-  getAllByItemId: (itemId, {limit} = {}) ->
+  getAllByItemSlug: (itemSlug, {limit} = {}) ->
     limit ?= 10
 
     cknex().select '*'
-    .from 'products_by_itemId'
-    .where 'itemId', '=', itemId
+    .from 'products_by_itemSlug'
+    .where 'itemSlug', '=', itemSlug
     .limit limit
     .run()
     .map defaultProductOutput
 
-  getFirstByItemId: (itemId) ->
+  getFirstByItemSlug: (itemSlug) ->
     cknex().select '*'
-    .from 'products_by_itemId'
-    .where 'itemId', '=', itemId
+    .from 'products_by_itemSlug'
+    .where 'itemSlug', '=', itemSlug
     .limit 1
     .run {isSingle: true}
     .then defaultProductOutput

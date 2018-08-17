@@ -6,36 +6,36 @@ User = require '../models/user'
 
 class GroupUserEmbed
   roles: (groupUser) ->
-    GroupRole.getAllByGroupUuid(
-      groupUser.groupUuid, {preferCache: true}
+    GroupRole.getAllByGroupId(
+      groupUser.groupId, {preferCache: true}
     ).then (roles) ->
       everyoneRole = _.find roles, {name: 'everyone'}
-      groupUserRoles = _.filter _.map groupUser.roleUuids, (roleUuid) ->
+      groupUserRoles = _.filter _.map groupUser.roleIds, (roleId) ->
         _.find roles, (role) ->
-          "#{role.roleUuid}" is "#{roleUuid}"
+          "#{role.roleId}" is "#{roleId}"
       if everyoneRole
         groupUserRoles = groupUserRoles.concat everyoneRole
 
   roleNames: (groupUser) ->
-    GroupRole.getAllByGroupUuid(
-      groupUser.groupUuid, {preferCache: true}
+    GroupRole.getAllByGroupId(
+      groupUser.groupId, {preferCache: true}
     ).then (roles) ->
-      groupUserRoleNames = _.filter _.map groupUser.roleUuids, (roleUuid) ->
+      groupUserRoleNames = _.filter _.map groupUser.roleIds, (roleId) ->
         _.find(roles, (role) ->
-          "#{role.roleUuid}" is "#{roleUuid}")?.name
+          "#{role.roleId}" is "#{roleId}")?.name
       groupUserRoleNames = groupUserRoleNames.concat 'everyone'
 
   karma: (groupUser) ->
     return Promise.resolve 0 # TODO
 
-    if groupUser.userUuid
-      GroupUser.getKarmaByGroupUuidAndUserUuid(
-        groupUser.groupUuid, groupUser.userUuid
+    if groupUser.userId
+      GroupUser.getKarmaByGroupIdAndUserId(
+        groupUser.groupId, groupUser.userId
       )
 
   user: (groupUser) ->
-    if groupUser.userUuid
-      User.getByUuid groupUser.userUuid
+    if groupUser.userId
+      User.getById groupUser.userId
       .then User.sanitizePublic(null)
 
 

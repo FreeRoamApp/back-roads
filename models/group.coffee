@@ -15,11 +15,11 @@ defaultGroup = (group) ->
     return null
 
   group = _.defaults group, {
-    uuid: cknex.getTimeUuid()
+    id: cknex.getTimeUuid()
     id: null
     name: null
     description: null
-    userUuid: null
+    userId: null
     data:
       language: 'en'
   }
@@ -42,30 +42,30 @@ defaultGroupOutput = (group) ->
 
 tables = [
   {
-    name: 'groups_by_uuid'
-    keyspace: 'free_roam'
-    fields:
-      uuid: 'timeuuid'
-      id: 'text'
-      name: 'text'
-      description: 'text'
-      userUuid: 'uuid'
-      data: 'text'
-    primaryKey:
-      partitionKey: ['uuid']
-  }
-  {
     name: 'groups_by_id'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      id: 'text'
+      id: 'timeuuid'
+      slug: 'text'
       name: 'text'
       description: 'text'
-      userUuid: 'uuid'
+      userId: 'uuid'
       data: 'text'
     primaryKey:
       partitionKey: ['id']
+  }
+  {
+    name: 'groups_by_slug'
+    keyspace: 'free_roam'
+    fields:
+      id: 'timeuuid'
+      slug: 'text'
+      name: 'text'
+      description: 'text'
+      userId: 'uuid'
+      data: 'text'
+    primaryKey:
+      partitionKey: ['slug']
   }
 ]
 
@@ -76,23 +76,15 @@ class GroupModel
     group = defaultGroup group
 
     Promise.all [
-      cknex().update 'groups_by_uuid'
-      .set _.omit group, ['uuid']
-      .where 'uuid', '=', group.uuid
-      .run()
       cknex().update 'groups_by_id'
       .set _.omit group, ['id']
       .where 'id', '=', group.id
       .run()
+      cknex().update 'groups_by_slug'
+      .set _.omit group, ['slug']
+      .where 'slug', '=', group.slug
+      .run()
     ]
-
-  getByUuid: (uuid) ->
-    cknex().select '*'
-    .from 'groups_by_uuid'
-    .where 'uuid', '=', uuid
-    .run {isSingle: true}
-    .then defaultGroupOutput
-
 
   getById: (id) ->
     cknex().select '*'
@@ -101,7 +93,15 @@ class GroupModel
     .run {isSingle: true}
     .then defaultGroupOutput
 
-  # getAllByUuids: (ids, {limit} = {}) ->
+
+  getBySlug: (slug) ->
+    cknex().select '*'
+    .from 'groups_by_slug'
+    .where 'slug', '=', slug
+    .run {isSingle: true}
+    .then defaultGroupOutput
+
+  # getAllByIds: (ids, {limit} = {}) ->
   #   limit ?= 50
   #
   #   # TODO
@@ -121,32 +121,32 @@ class GroupModel
   #   .run()
   #   .map defaultGroupOutput
 
-  addUser: (groupUuid, userUuid) ->
-    GroupUser.create {groupUuid, userUuid}
+  addUser: (groupId, userId) ->
+    GroupUser.create {groupId, userId}
     .tap ->
-      key = "#{CacheService.PREFIXES.GROUP_UUID}:#{groupUuid}"
+      key = "#{CacheService.PREFIXES.GROUP_ID}:#{groupId}"
       CacheService.deleteByKey key
-      category = "#{CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY}:#{userUuid}"
+      category = "#{CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY}:#{userId}"
       CacheService.deleteByCategory category
 
-  removeUser: (groupUuid, userUuid) ->
-    GroupUser.deleteByGroupUuidAndUserUuid groupUuid, userUuid
+  removeUser: (groupId, userId) ->
+    GroupUser.deleteByGroupIdAndUserId groupId, userId
     .tap ->
-      key = "#{CacheService.PREFIXES.GROUP_UUID}:#{groupUuid}"
+      key = "#{CacheService.PREFIXES.GROUP_ID}:#{groupId}"
       CacheService.deleteByKey key
-      category = "#{CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY}:#{userUuid}"
+      category = "#{CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY}:#{userId}"
       CacheService.deleteByCategory category
 
-  deleteByUuid: (uuid) ->
+  deleteById: (id) ->
     Promise.all [
-      cknex().delete()
-      .from 'groups_by_uuid'
-      .where 'uuid', '=', uuid
-      .run()
-
       cknex().delete()
       .from 'groups_by_id'
       .where 'id', '=', id
+      .run()
+
+      cknex().delete()
+      .from 'groups_by_slug'
+      .where 'slug', '=', slug
       .run()
     ]
 

@@ -5,12 +5,12 @@ cknex = require '../services/cknex'
 config = require '../config'
 
 tables = [
-  # TODO: separate table for last_session_by_userUuid: lastActiveTime, lastActiveIp
+  # TODO: separate table for last_session_by_userId: lastActiveTime, lastActiveIp
   {
-    name: 'users_by_uuid'
+    name: 'users_by_id'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
+      id: 'timeuuid'
       username: 'text'
       password: 'text'
       email: 'text'
@@ -19,13 +19,13 @@ tables = [
       language: 'text'
       flags: 'text'
     primaryKey:
-      partitionKey: ['uuid']
+      partitionKey: ['id']
   }
   {
     name: 'users_by_username'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
+      id: 'timeuuid'
       username: 'text'
       password: 'text'
       email: 'text'
@@ -40,7 +40,7 @@ tables = [
     name: 'users_by_email'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
+      id: 'timeuuid'
       username: 'text'
       password: 'text'
       email: 'text'
@@ -60,7 +60,7 @@ defaultUser = (user) ->
   user.flags = JSON.stringify user.flags
 
   _.defaults user, {
-    uuid: cknex.getTimeUuid()
+    id: cknex.getTimeUuid()
     language: 'en'
   }
 
@@ -77,7 +77,7 @@ defaultUserOutput = (user) ->
     user.flags = {}
 
   user = _.defaults user, {
-    uuid: "#{user.uuid}"
+    id: "#{user.id}"
     username: null
     language: 'en'
   }
@@ -85,10 +85,10 @@ defaultUserOutput = (user) ->
 class UserModel
   SCYLLA_TABLES: tables
 
-  getByUuid: (uuid) ->
+  getById: (id) ->
     cknex().select '*'
-    .from 'users_by_uuid'
-    .where 'uuid', '=', uuid
+    .from 'users_by_id'
+    .where 'id', '=', id
     .run {isSingle: true}
     .then defaultUserOutput
 
@@ -106,9 +106,9 @@ class UserModel
     user = defaultUser user
 
     Promise.all _.filter [
-      cknex().update 'users_by_uuid'
-      .set _.omit user, ['uuid']
-      .where 'uuid', '=', user.uuid
+      cknex().update 'users_by_id'
+      .set _.omit user, ['id']
+      .where 'id', '=', user.id
       .run()
 
       if user.username
@@ -130,9 +130,9 @@ class UserModel
     newUser = defaultUser newUser
 
     Promise.all _.filter [
-      cknex().update 'users_by_uuid'
-      .set _.omit newUser, ['uuid']
-      .where 'uuid', '=', user.uuid
+      cknex().update 'users_by_id'
+      .set _.omit newUser, ['id']
+      .where 'id', '=', user.id
       .run()
 
       if user.username
@@ -165,7 +165,7 @@ class UserModel
     unless user
       return null
     sanitizedUser = _.pick user, [
-      'uuid'
+      'id'
       'username'
       'name'
       'avatarImage'

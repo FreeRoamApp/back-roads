@@ -15,9 +15,9 @@ defaultConversationMessage = (conversationMessage) ->
     return null
 
   conversationMessage = _.defaults _.pickBy(conversationMessage), {
-    uuid: cknex.getTimeUuid()
-    clientUuid: uuid.v4()
-    groupUuid: config.EMPTY_UUID
+    id: cknex.getTimeUuid()
+    clientId: uuid.v4()
+    groupId: config.EMPTY_UUID
     timeBucket: TimeService.getScaledTimeByTimeScale 'week'
     lastUpdateTime: new Date()
     body: ''
@@ -33,8 +33,8 @@ defaultConversationMessageOutput = (conversationMessage) ->
   unless conversationMessage?
     return null
 
-  if conversationMessage.groupUuid is config.EMPTY_UUID
-    conversationMessage.groupUuid = null
+  if conversationMessage.groupId is config.EMPTY_UUID
+    conversationMessage.groupId = null
 
   if conversationMessage.card
     conversationMessage.card = try
@@ -46,58 +46,58 @@ defaultConversationMessageOutput = (conversationMessage) ->
 
 tables = [
   {
-    name: 'conversation_messages_by_conversationUuid'
+    name: 'conversation_messages_by_conversationId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      conversationUuid: 'uuid'
-      clientUuid: 'uuid'
-      userUuid: 'uuid'
-      groupUuid: 'uuid'
+      id: 'timeuuid'
+      conversationId: 'uuid'
+      clientId: 'uuid'
+      userId: 'uuid'
+      groupId: 'uuid'
       body: 'text'
       card: 'text'
       timeBucket: 'text'
       lastUpdateTime: 'timestamp'
     primaryKey:
-      partitionKey: ['conversationUuid', 'timeBucket']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['conversationId', 'timeBucket']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   # for showing all of a user's messages, and potentially deleting all
   {
-    name: 'conversation_messages_by_groupUuid_and_userUuid'
+    name: 'conversation_messages_by_groupId_and_userId'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      conversationUuid: 'uuid'
-      clientUuid: 'uuid'
-      userUuid: 'uuid'
-      groupUuid: 'uuid'
+      id: 'timeuuid'
+      conversationId: 'uuid'
+      clientId: 'uuid'
+      userId: 'uuid'
+      groupId: 'uuid'
       body: 'text'
       card: 'text'
       timeBucket: 'text'
       lastUpdateTime: 'timestamp'
     primaryKey:
-      partitionKey: ['groupUuid', 'userUuid', 'timeBucket']
-      clusteringColumns: ['uuid']
-    withClusteringOrderBy: ['uuid', 'desc']
+      partitionKey: ['groupId', 'userId', 'timeBucket']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: ['id', 'desc']
   }
   # for deleting by id
   {
-    name: 'conversation_messages_by_uuid'
+    name: 'conversation_messages_by_id'
     keyspace: 'free_roam'
     fields:
-      uuid: 'timeuuid'
-      conversationUuid: 'uuid'
-      clientUuid: 'uuid'
-      userUuid: 'uuid'
-      groupUuid: 'uuid'
+      id: 'timeuuid'
+      conversationId: 'uuid'
+      clientId: 'uuid'
+      userId: 'uuid'
+      groupId: 'uuid'
       body: 'text'
       card: 'text'
       timeBucket: 'text'
       lastUpdateTime: 'timestamp'
     primaryKey:
-      partitionKey: ['uuid']
+      partitionKey: ['id']
   }
 ]
 
@@ -106,7 +106,7 @@ class ConversationMessageModel extends Stream
 
   constructor: ->
     @streamChannelKey = 'conversation_message'
-    @streamChannelsBy = ['conversationUuid']
+    @streamChannelsBy = ['conversationId']
 
   default: defaultConversationMessageOutput
 
@@ -114,30 +114,30 @@ class ConversationMessageModel extends Stream
     conversationMessage = defaultConversationMessage conversationMessage
 
     Promise.all [
-      cknex().update 'conversation_messages_by_conversationUuid'
+      cknex().update 'conversation_messages_by_conversationId'
       .set _.omit conversationMessage, [
-        'conversationUuid', 'timeBucket', 'uuid'
+        'conversationId', 'timeBucket', 'id'
       ]
-      .where 'conversationUuid', '=', conversationMessage.conversationUuid
+      .where 'conversationId', '=', conversationMessage.conversationId
       .andWhere 'timeBucket', '=', conversationMessage.timeBucket
-      .andWhere 'uuid', '=', conversationMessage.uuid
+      .andWhere 'id', '=', conversationMessage.id
       .run()
 
-      cknex().update 'conversation_messages_by_groupUuid_and_userUuid'
+      cknex().update 'conversation_messages_by_groupId_and_userId'
       .set _.omit conversationMessage, [
-        'groupUuid', 'userUuid', 'timeBucket', 'uuid'
+        'groupId', 'userId', 'timeBucket', 'id'
       ]
-      .where 'groupUuid', '=', conversationMessage.groupUuid
-      .andWhere 'userUuid', '=', conversationMessage.userUuid
+      .where 'groupId', '=', conversationMessage.groupId
+      .andWhere 'userId', '=', conversationMessage.userId
       .andWhere 'timeBucket', '=', conversationMessage.timeBucket
-      .andWhere 'uuid', '=', conversationMessage.uuid
+      .andWhere 'id', '=', conversationMessage.id
       .run()
 
-      cknex().update 'conversation_messages_by_uuid'
+      cknex().update 'conversation_messages_by_id'
       .set _.omit conversationMessage, [
-        'uuid'
+        'id'
       ]
-      .where 'uuid', '=', conversationMessage.uuid
+      .where 'id', '=', conversationMessage.id
       .run()
     ]
     .then ->
@@ -147,16 +147,16 @@ class ConversationMessageModel extends Stream
         @streamCreate conversationMessage
       conversationMessage
 
-  getAllByConversationUuid: (conversationUuid, options = {}) =>
+  getAllByConversationId: (conversationId, options = {}) =>
     {limit, isStreamed, emit, socket, route, initialPostFn, postFn,
-      minUuid, minUuid, reverse} = options
+      minId, minId, reverse} = options
 
-    minTime = if minUuid \
-              then cknex.getTimeUuidFromString(minUuid).getDate()
+    minTime = if minId \
+              then cknex.getTimeUuidFromString(minId).getDate()
               else undefined
 
-    maxTime = if minUuid \
-              then cknex.getTimeUuidFromString(minUuid).getDate()
+    maxTime = if minId \
+              then cknex.getTimeUuidFromString(minId).getDate()
               else undefined
 
     timeBucket = TimeService.getScaledTimeByTimeScale(
@@ -165,16 +165,16 @@ class ConversationMessageModel extends Stream
 
     get = (timeBucket) ->
       q = cknex().select '*'
-      .from 'conversation_messages_by_conversationUuid'
-      .where 'conversationUuid', '=', conversationUuid
+      .from 'conversation_messages_by_conversationId'
+      .where 'conversationId', '=', conversationId
       .andWhere 'timeBucket', '=', timeBucket
 
-      if minUuid
-        q.andWhere 'uuid', '>=', minUuid
-        q.orderBy 'uuid', 'ASC'
+      if minId
+        q.andWhere 'id', '>=', minId
+        q.orderBy 'id', 'ASC'
 
-      if minUuid
-        q.andWhere 'uuid', '<', minUuid
+      if minId
+        q.andWhere 'id', '<', minId
 
       q.limit limit
       .run()
@@ -204,69 +204,69 @@ class ConversationMessageModel extends Stream
         initial
         initialPostFn
         postFn
-        channelBy: 'conversationUuid'
-        channelByUuid: conversationUuid
+        channelBy: 'conversationId'
+        channelById: conversationId
       }
     else
       initial
-      .map (initialPostFn or _.uuidentity)
+      .map (initialPostFn or _.identity)
 
-  unsubscribeByConversationUuid: (conversationUuid, {socket}) =>
+  unsubscribeByConversationId: (conversationId, {socket}) =>
     @unsubscribe {
       socket: socket
-      channelBy: 'conversationUuid'
-      channelByUuid: conversationUuid
+      channelBy: 'conversationId'
+      channelById: conversationId
     }
 
-  getAllByGroupUuidAndUserUuidAndTimeBucket: (groupUuid, userUuid, timeBucket) ->
+  getAllByGroupIdAndUserIdAndTimeBucket: (groupId, userId, timeBucket) ->
     cknex().select '*'
-    .from 'conversation_messages_by_groupUuid_and_userUuid'
-    .where 'groupUuid', '=', groupUuid
-    .andWhere 'userUuid', '=', userUuid
+    .from 'conversation_messages_by_groupId_and_userId'
+    .where 'groupId', '=', groupId
+    .andWhere 'userId', '=', userId
     .andWhere 'timeBucket', '=', timeBucket
     .run()
     .map defaultConversationMessageOutput
 
-  getByUuid: (uuid) ->
+  getById: (id) ->
     cknex().select '*'
-    .from 'conversation_messages_by_uuid'
-    .where 'uuid', '=', uuid
+    .from 'conversation_messages_by_id'
+    .where 'id', '=', id
     .run {isSingle: true}
     .then defaultConversationMessageOutput
 
   deleteByConversationMessage: (conversationMessage) =>
     Promise.all [
       cknex().delete()
-      .from 'conversation_messages_by_conversationUuid'
-      .where 'conversationUuid', '=', conversationMessage.conversationUuid
+      .from 'conversation_messages_by_conversationId'
+      .where 'conversationId', '=', conversationMessage.conversationId
       .andWhere 'timeBucket', '=', conversationMessage.timeBucket
-      .andWhere 'uuid', '=', conversationMessage.uuid
+      .andWhere 'id', '=', conversationMessage.id
       .run()
 
       cknex().delete()
-      .from 'conversation_messages_by_groupUuid_and_userUuid'
-      .where 'groupUuid', '=', conversationMessage.groupUuid
-      .andWhere 'userUuid', '=', conversationMessage.userUuid
+      .from 'conversation_messages_by_groupId_and_userId'
+      .where 'groupId', '=', conversationMessage.groupId
+      .andWhere 'userId', '=', conversationMessage.userId
       .andWhere 'timeBucket', '=', conversationMessage.timeBucket
-      .andWhere 'uuid', '=', conversationMessage.uuid
+      .andWhere 'id', '=', conversationMessage.id
       .run()
 
       cknex().delete()
-      .from 'conversation_messages_by_uuid'
-      .where 'uuid', '=', conversationMessage.uuid
+      .from 'conversation_messages_by_id'
+      .where 'id', '=', conversationMessage.id
       .run()
     ]
     .tap =>
-      @streamDeleteByUuid conversationMessage.uuid, conversationMessage
+      @streamDeleteById conversationMessage.id, conversationMessage
 
-  getLastByConversationUuid: (conversationUuid) =>
-    @getAllByConversationUuid conversationUuid, {limit: 1}
+  getLastByConversationId: (conversationId) =>
+    @getAllByConversationId conversationId, {limit: 1}
     .then (messages) ->
       messages?[0]
     .then defaultConversationMessageOutput
 
-  updateByUuid: (uuid, diff, {prepareFn}) =>
-    @getByUuid uuid
+  updateById: (id, diff, {prepareFn}) =>
+    @getById id
     .then defaultConversationMessageOutput
     .then (conversationMessage) =>
       updatedMessage = _.defaults(diff, conversationMessage)
@@ -280,13 +280,13 @@ class ConversationMessageModel extends Stream
 
       @upsert updatedMessage, {isUpdate: true, prepareFn}
     .tap (conversationMessage) =>
-      @streamUpdateByUuid uuid, conversationMessage
+      @streamUpdateById id, conversationMessage
 
-  deleteAllByGroupUuidAndUserUuid: (groupUuid, userUuid, {duration} = {}) =>
+  deleteAllByGroupIdAndUserId: (groupId, userId, {duration} = {}) =>
     duration ?= '7d' # TODO (doesn't actually do anything)
 
     del = (timeBucket) =>
-      @getAllByGroupUuidAndUserUuidAndTimeBucket groupUuid, userUuid, timeBucket
+      @getAllByGroupIdAndUserIdAndTimeBucket groupId, userId, timeBucket
       .map @deleteByConversationMessage
 
     del TimeService.getScaledTimeByTimeScale 'week'

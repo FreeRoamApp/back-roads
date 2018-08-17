@@ -4,15 +4,15 @@ User = require '../models/user'
 
 class GroupAuditLogEmbed
   user: (groupAuditLog) ->
-    if groupAuditLog.userUuid
-      groupAuditLog.user = User.getById groupAuditLog.userUuid, {preferCache: true}
+    if groupAuditLog.userId
+      groupAuditLog.user = User.getById groupAuditLog.userId, {preferCache: true}
       .then User.sanitizePublic(null)
 
   time: (groupAuditLog) ->
-    uuid = if typeof groupAuditLog.uuid is 'string' \
-               then cknex.getTimeUuidFromString groupAuditLog.uuid
-               else groupAuditLog.uuid
-    groupAuditLog.time = uuid.getDate()
+    id = if typeof groupAuditLog.id is 'string' \
+               then cknex.getTimeUuidFromString groupAuditLog.id
+               else groupAuditLog.id
+    groupAuditLog.time = id.getDate()
 
 
 module.exports = new GroupAuditLogEmbed()

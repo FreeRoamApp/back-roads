@@ -10,20 +10,20 @@ cknex = require '../services/cknex'
 
 tables = [
   {
-    name: 'push_topics_by_userUuid'
+    name: 'push_topics_by_userId'
     keyspace: 'free_roam'
     fields:
-      userUuid: 'uuid'
-      groupUuid: 'uuid' # config.EMPTY_UUID for all
+      userId: 'uuid'
+      groupId: 'uuid' # config.EMPTY_UUID for all
       sourceType: 'text' # conversation, video, thread, etc...
       sourceId: 'text' # id or 'all'
       token: 'text'
       deviceId: 'text'
       lastUpdateTime: 'timestamp'
     primaryKey:
-      partitionKey: ['userUuid']
+      partitionKey: ['userId']
       clusteringColumns: [
-        'token', 'groupUuid', 'sourceType', 'sourceId'
+        'token', 'groupId', 'sourceType', 'sourceId'
       ]
   }
 ]
@@ -42,7 +42,7 @@ defaultPushTopicOutput = (pushTopic) ->
   unless pushTopic?
     return null
 
-  pushTopic.groupUuid = "#{pushTopic.groupUuid}"
+  pushTopic.groupId = "#{pushTopic.groupId}"
   pushTopic
 
 class PushTopic
@@ -58,13 +58,13 @@ class PushTopic
     pushTopic = defaultPushTopic pushTopic
 
     Promise.all [
-      cknex().update 'push_topics_by_userUuid'
+      cknex().update 'push_topics_by_userId'
       .set _.omit pushTopic, [
-        'userUuid', 'token', 'groupUuid', 'sourceType', 'sourceId'
+        'userId', 'token', 'groupId', 'sourceType', 'sourceId'
       ]
-      .where 'userUuid', '=', pushTopic.userUuid
+      .where 'userId', '=', pushTopic.userId
       .andWhere 'token', '=', pushTopic.token
-      .andWhere 'groupUuid', '=', pushTopic.groupUuid
+      .andWhere 'groupId', '=', pushTopic.groupId
       .andWhere 'sourceType', '=', pushTopic.sourceType
       .andWhere 'sourceId', '=', pushTopic.sourceId
       .run()
@@ -72,35 +72,35 @@ class PushTopic
     .then ->
       pushTopic
 
-  getAllByUserUuid: (userUuid) ->
+  getAllByUserId: (userId) ->
     cknex().select '*'
-    .from 'push_topics_by_userUuid'
-    .where 'userUuid', '=', userUuid
+    .from 'push_topics_by_userId'
+    .where 'userId', '=', userId
     .run()
     .map defaultPushTopicOutput
 
-  getAllByUserUuidAndToken: (userUuid, token) ->
+  getAllByUserIdAndToken: (userId, token) ->
     cknex().select '*'
-    .from 'push_topics_by_userUuid'
-    .where 'userUuid', '=', userUuid
+    .from 'push_topics_by_userId'
+    .where 'userId', '=', userId
     .andWhere 'token', '=', token
     .run()
     .map defaultPushTopicOutput
 
   deleteByPushTopic: (pushTopic) ->
     cknex().delete()
-    .from 'push_topics_by_userUuid'
-    .where 'userUuid', '=', pushTopic.userUuid
+    .from 'push_topics_by_userId'
+    .where 'userId', '=', pushTopic.userId
     .andWhere 'token', '=', pushTopic.token
-    .andWhere 'groupUuid', '=', pushTopic.groupUuid
+    .andWhere 'groupId', '=', pushTopic.groupId
     .andWhere 'sourceType', '=', pushTopic.sourceType
     .andWhere 'sourceId', '=', pushTopic.sourceId
     .run()
 
   deleteByPushToken: (pushToken) ->
     cknex().delete()
-    .from 'push_topics_by_userUuid'
-    .where 'userUuid', '=', pushToken.userUuid
+    .from 'push_topics_by_userId'
+    .where 'userId', '=', pushToken.userId
     .andWhere 'token', '=', pushToken.token
     .run()
 

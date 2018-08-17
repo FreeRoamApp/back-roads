@@ -24,64 +24,64 @@ userDataEmbed = [
 THIRTY_MINUTES_SECONDS = 60 * 5
 
 class GroupCtrl
-  create: ({name, description, badgeUuid, background, mode}, {user}) ->
+  create: ({name, description, badgeId, background, mode}, {user}) ->
     Group.create {
-      name, description, badgeUuid, background, mode
+      name, description, badgeId, background, mode
     }
-    .tap ({uuid}) ->
+    .tap ({id}) ->
       Promise.all [
-        Group.addUser uuid, user.uuid
+        Group.addUser id, user.id
         GroupRole.upsert {
-          groupUuid: uuid
+          groupId: id
           name: 'everyone'
           globalPermissions: {}
         }
         Conversation.upsert {
-          groupUuid: uuid
+          groupId: id
           data:
             name: 'general'
           type: 'channel'
         }
       ]
 
-  updateByUuid: ({uuid, name, description, badgeUuid, background, mode}, {user}) ->
-    Group.hasPermissionByUuidAndUserUuid uuid, user.uuid, {level: 'admin'}
+  updateById: ({id, name, description, badgeId, background, mode}, {user}) ->
+    Group.hasPermissionByIdAndUserId id, user.id, {level: 'admin'}
     .then (hasPermission) ->
       unless hasPermission
         router.throw {status: 400, info: 'You don\'t have permission'}
 
-      Group.updateByUuid uuid, {name, description, badgeUuid, background, mode}
+      Group.updateById id, {name, description, badgeId, background, mode}
 
-  leaveByUuid: ({uuid}, {user}) ->
-    groupUuid = uuid
-    userUuid = user.uuid
+  leaveById: ({id}, {user}) ->
+    groupId = id
+    userId = user.id
 
-    unless groupUuid
+    unless groupId
       router.throw {status: 404, info: 'Group not found'}
 
-    Group.getByUuid groupUuid
+    Group.getById groupId
     .then (group) ->
       unless group
         router.throw {status: 404, info: 'Group not found'}
 
-      Group.removeUser groupUuid, userUuid
+      Group.removeUser groupId, userId
 
-  joinByUuid: ({uuid, id}, {user}) ->
-    console.log 'join group', uuid, id
-    userUuid = user.uuid
+  joinById: ({id, slug}, {user}) ->
+    console.log 'join group', id, slug
+    userId = user.id
 
-    unless uuid or id
+    unless id or slug
       router.throw {status: 404, info: 'Group not found'}
 
-    (if uuid
-      Group.getByUuid uuid
-    else
+    (if id
       Group.getById id
+    else
+      Group.getBySlug slug
     ).then (group) ->
       unless group
         router.throw {status: 404, info: 'Group not found'}
 
-      if group.privacy is 'private' and group.invitedUuids.indexOf(userUuid) is -1
+      if group.privacy is 'private' and group.invitedIds.indexOf(userId) is -1
         router.throw {status: 401, info: 'Not invited'}
 
       name = User.getDisplayName user
@@ -100,26 +100,26 @@ class GroupCtrl
       #       params:
       #         id: group.id
       #         gameKey: config.DEFAULT_GAME_KEY
-      #   }, {skipMe: true, meUserUuid: user.uuid}).catch -> null
+      #   }, {skipMe: true, meUserId: user.id}).catch -> null
 
-      console.log 'add', group.uuid, userUuid
+      console.log 'add', group.id, userId
 
-      Group.addUser group.uuid, userUuid
+      Group.addUser group.id, userId
       .then ->
         PushNotificationService.subscribeToGroupTopics {
-          userUuid, groupUuid: group.id
+          userId, groupId: group.id
         }
 
         prefix = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY
-        category = "#{prefix}:#{userUuid}"
+        category = "#{prefix}:#{userId}"
         CacheService.deleteByCategory category
 
-  sendNotificationByUuid: ({title, description, pathKey, uuid}, {user}) ->
-    groupUuid = uuid
+  sendNotificationById: ({title, description, pathKey, id}, {user}) ->
+    groupId = id
     pathKey or= 'groupHome'
 
-    # GroupUser.hasPermissionByGroupUuidAndUser groupUuid, user, permissions
-    Group.getByUuid groupUuid
+    # GroupUser.hasPermissionByGroupIdAndUser groupId, user, permissions
+    Group.getById groupId
     .then (group) ->
       Group.hasPermission group, user, {level: 'admin'}
       .then (hasPermission) ->
@@ -133,28 +133,28 @@ class GroupCtrl
             path:
               key: pathKey
               params:
-                groupUuid: groupUuid
+                groupId: groupId
         }
 
-  getAllByUserUuid: ({language, user, userUuid, embed}) ->
+  getAllByUserId: ({language, user, userId, embed}) ->
     embed = _.map embed, (item) ->
       EmbedService.TYPES.GROUP[_.snakeCase(item).toUpperCase()]
 
     (if user
       Promise.resolve user
     else
-      User.getByUuid userUuid
+      User.getById userId
     ).then (user) ->
       key = CacheService.PREFIXES.GROUP_GET_ALL + ':' + [
-        user.uuid, 'mine_lite', language, embed.join(',')
+        user.id, 'mine_lite', language, embed.join(',')
       ].join(':')
-      category = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY + ':' + user.uuid
+      category = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY + ':' + user.id
 
       CacheService.preferCache key, ->
-        GroupUser.getAllByUserUuid user.uuid, {preferCache: true}
-        .map ({groupUuid}) -> groupUuid
-        .then (groupUuids) ->
-          Group.getAllByUuids groupUuids
+        GroupUser.getAllByUserId user.id, {preferCache: true}
+        .map ({groupId}) -> groupId
+        .then (groupIds) ->
+          Group.getAllByIds groupIds
         .map EmbedService.embed {embed, options: {user}}
       , {
         expireSeconds: THIRTY_MINUTES_SECONDS
@@ -165,9 +165,9 @@ class GroupCtrl
     embed = _.map embed, (item) ->
       EmbedService.TYPES.GROUP[_.snakeCase(item).toUpperCase()]
     key = CacheService.PREFIXES.GROUP_GET_ALL + ':' + [
-      user.uuid, filter, language, embed.join(',')
+      user.id, filter, language, embed.join(',')
     ].join(':')
-    category = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY + ':' + user.uuid
+    category = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY + ':' + user.id
 
     CacheService.preferCache key, ->
       Group.getAll {filter, language}
@@ -182,19 +182,19 @@ class GroupCtrl
       category: category
     }
 
-  getAllChannelsByUuid: ({uuid}, {user}) ->
-    GroupUser.getByGroupUuidAndUserUuid(
-      uuid, user.uuid
+  getAllChannelsById: ({id}, {user}) ->
+    GroupUser.getByGroupIdAndUserId(
+      id, user.id
     )
     .then EmbedService.embed {embed: [EmbedService.TYPES.GROUP_USER.ROLES]}
     .then (meGroupUser) ->
-      Conversation.getAllByGroupUuid uuid
+      Conversation.getAllByGroupId id
       .then (conversations) ->
         _.filter conversations, (conversation) ->
           GroupUser.hasPermission {
             meGroupUser
             permissions: [GroupUser.PERMISSIONS.MANAGE_CHANNEL]
-            channelUuid: conversation.uuid
+            channelId: conversation.id
             me: user
           }
 
@@ -202,35 +202,35 @@ class GroupCtrl
     EmbedService.embed {embed: defaultEmbed, options: {user}}, group
     .then (group) =>
       getGroupUser = ->
-        GroupUser.getByGroupUuidAndUserUuid group.uuid, user.uuid
+        GroupUser.getByGroupIdAndUserId group.id, user.id
         .then EmbedService.embed {embed: [EmbedService.TYPES.GROUP_USER.ROLES]}
 
       getGroupUser()
       .then (groupUser) =>
-        if groupUser.userUuid
+        if groupUser.userId
           groupUser
         else
-          @joinByUuid {uuid: group.uuid}, {user}
+          @joinById {id: group.id}, {user}
           .then getGroupUser
       .then (groupUser) ->
         group.meGroupUser = groupUser
         group
 
-  getByUuid: ({uuid, autoJoin}, {user}) =>
-    Group.getByUuid uuid
+  getById: ({id, autoJoin}, {user}) =>
+    Group.getById id
     .then (group) =>
       unless group
-        console.log 'missing group uuid', uuid
+        console.log 'missing group id', id
         return
       @_setupGroup group, {autoJoin, user}
 
-  getById: ({id, autoJoin}, {user}) =>
+  getBySlug: ({slug, autoJoin}, {user}) =>
     console.log 'get group'
-    Group.getById id
+    Group.getBySlug slug
     .then (group) =>
       console.log 'group', group
       unless group
-        console.log 'missing group id', id
+        console.log 'missing group slug', slug
         return
       @_setupGroup group, {autoJoin, user}
 

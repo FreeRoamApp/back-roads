@@ -32,18 +32,18 @@ STREAMABLE_ID_REGEX = /https?:\/\/streamable\.com\/([a-zA-Z0-9]+)/i
 
 
 class ThreadCtrl
-  checkIfBanned: (groupUuid, ipAddr, userUuid, router) ->
+  checkIfBanned: (groupId, ipAddr, userId, router) ->
     ipAddr ?= 'n/a'
     Promise.all [
-      Ban.getByGroupUuidAndIp groupUuid, ipAddr, {preferCache: true}
-      Ban.getByGroupUuidAndUserUuid groupUuid, userUuid, {preferCache: true}
+      Ban.getByGroupIdAndIp groupId, ipAddr, {preferCache: true}
+      Ban.getByGroupIdAndUserId groupId, userId, {preferCache: true}
       Ban.isHoneypotBanned ipAddr, {preferCache: true}
     ]
-    .then ([bannedIp, bannedUserUuid, isHoneypotBanned]) ->
-      if bannedIp?.ip or bannedUserUuid?.userUuid or isHoneypotBanned
+    .then ([bannedIp, bannedUserId, isHoneypotBanned]) ->
+      if bannedIp?.ip or bannedUserId?.userId or isHoneypotBanned
         router.throw
           status: 403
-          info: "unable to post, banned #{userUuid}, #{ipAddr}"
+          info: "unable to post, banned #{userId}, #{ipAddr}"
 
   getAttachment: (body) ->
     if youtubeId = body?.match(YOUTUBE_ID_REGEX)?[1]
@@ -84,14 +84,14 @@ class ThreadCtrl
           aspectRatio: aspectRatio
         }
 
-  upsert: ({thread, groupUuid, language}, {user, headers, connection}) =>
+  upsert: ({thread, groupId, language}, {user, headers, connection}) =>
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
 
     thread.category ?= 'general'
 
-    @checkIfBanned groupUuid, ip, user.uuid, router
+    @checkIfBanned groupId, ip, user.id, router
     .then =>
       msPlayed = Date.now() - user.joinTime?.getTime()
 
@@ -107,7 +107,7 @@ class ThreadCtrl
       if thread.data.title.match /like si\b/i
         router.throw status: 400, info: 'title must not contain that phrase'
 
-      unless thread.uuid
+      unless thread.id
         thread.category ?= 'general'
 
       if user.flags?.isStar
@@ -141,32 +141,32 @@ class ThreadCtrl
 
         thread = _.defaultsDeep deckDiff, thread
 
-        Group.getByUuid groupUuid
+        Group.getById groupId
         .then (group) =>
           @validateAndCheckPermissions thread, {user}
           .then (thread) ->
-            if thread.uuid
+            if thread.id
               Thread.upsert thread
               .then ->
-                deckKey = CacheService.PREFIXES.THREAD_DECK + ':' + thread.uuid
-                key = CacheService.PREFIXES.THREAD + ':' + thread.uuid
+                deckKey = CacheService.PREFIXES.THREAD_DECK + ':' + thread.id
+                key = CacheService.PREFIXES.THREAD + ':' + thread.id
                 Promise.all [
                   CacheService.deleteByKey deckKey
                   CacheService.deleteByKey key
                 ]
-                {uuid: thread.uuid}
+                {id: thread.id}
             else
               Thread.upsert _.defaults thread, {
-                userUuid: user.uuid
-                groupUuid: group?.uuid or config.GROUPS.CLASH_ROYALE_EN.ID
+                userId: user.id
+                groupId: group?.id or config.GROUPS.CLASH_ROYALE_EN.ID
               }
       .tap ->
-        # TODO: groupUuid
+        # TODO: groupId
         CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
 
   validateAndCheckPermissions: (thread, {user}) ->
-    if thread.uuid
-      threadPromise = Thread.getByUuid thread.uuid
+    if thread.id
+      threadPromise = Thread.getById thread.id
       hasPermission = threadPromise.then (existingThread) ->
         Thread.hasPermission existingThread, user, {
           level: 'member'
@@ -186,26 +186,26 @@ class ThreadCtrl
       thread
 
   getAll: (options, {user}) ->
-    {category, language, sort, maxUuid, skip, limit, groupUuid} = options
+    {category, language, sort, maxId, skip, limit, groupId} = options
 
     if category is 'all'
       category = null
 
     key = CacheService.PREFIXES.THREADS_CATEGORY + ':' + [
-      groupUuid, category, language, sort, skip, maxUuid, limit
+      groupId, category, language, sort, skip, maxId, limit
     ].join(':')
 
     CacheService.preferCache key, ->
-      Group.getByUuid groupUuid, {preferCache: true}
+      Group.getById groupId, {preferCache: true}
       Thread.getAll {
-        category, sort, language, groupUuid, skip, maxUuid, limit
+        category, sort, language, groupId, skip, maxId, limit
       }
       .map (thread) ->
         EmbedService.embed {
           embed: defaultEmbed
           options: {
-            groupUuid
-            userUuid: user.uuid
+            groupId
+            userId: user.id
           }
         }, thread
       .map Thread.sanitize null
@@ -217,115 +217,115 @@ class ThreadCtrl
       if _.isEmpty threads
         return threads
       console.log 'threads', threads
-      parents = _.map threads, ({uuid}) -> {type: 'thread', uuid}
-      ThreadVote.getAllByUserUuidAndParents user.uuid, parents
+      parents = _.map threads, ({id}) -> {type: 'thread', id}
+      ThreadVote.getAllByUserIdAndParents user.id, parents
       .then (threadVotes) ->
         threads = _.map threads, (thread) ->
-          thread.myVote = _.find threadVotes, ({parentUuid}) ->
-            "#{parentUuid}" is "#{thread.uuid}"
+          thread.myVote = _.find threadVotes, ({parentId}) ->
+            "#{parentId}" is "#{thread.id}"
           thread
         threads
 
-  getByUuid: ({uuid, language}, {user}) ->
-    key = CacheService.PREFIXES.THREAD_WITH_EMBEDS_BY_UUID + ':' + uuid
-
-    CacheService.preferCache key, ->
-      Thread.getByUuid uuid
-      .then EmbedService.embed {
-        embed: defaultEmbed
-        options:
-          userUuid: user.uuid
-      }
-      .then Thread.sanitize null
-    , {expireSeconds: ONE_MINUTE_SECONDS}
-    .then (thread) ->
-      ThreadVote.getByUserUuidAndParent user.uuid, {uuid, type: 'thread'}
-      .then (myVote) ->
-        thread.myVote = myVote
-        thread
-
-  getById: ({id, language}, {user}) =>
-    key = CacheService.PREFIXES.THREAD_WITH_EMBEDS_BY_ID + ':' + uuid
+  getById: ({id, language}, {user}) ->
+    key = CacheService.PREFIXES.THREAD_WITH_EMBEDS_BY_ID + ':' + id
 
     CacheService.preferCache key, ->
       Thread.getById id
       .then EmbedService.embed {
-        embed: defaultEmbed,
+        embed: defaultEmbed
         options:
-          userUuid: user.uuid
+          userId: user.id
       }
       .then Thread.sanitize null
     , {expireSeconds: ONE_MINUTE_SECONDS}
     .then (thread) ->
-      ThreadVote.getByUserUuidAndParent user.uuid, {
-        uuid: thread.uuid, type: 'thread'
+      ThreadVote.getByUserIdAndParent user.id, {id, type: 'thread'}
+      .then (myVote) ->
+        thread.myVote = myVote
+        thread
+
+  getBySlug: ({slug, language}, {user}) =>
+    key = CacheService.PREFIXES.THREAD_WITH_EMBEDS_BY_SLUG + ':' + slug
+
+    CacheService.preferCache key, ->
+      Thread.getBySlug slug
+      .then EmbedService.embed {
+        embed: defaultEmbed,
+        options:
+          userId: user.id
+      }
+      .then Thread.sanitize null
+    , {expireSeconds: ONE_MINUTE_SECONDS}
+    .then (thread) ->
+      ThreadVote.getByUserIdAndParent user.id, {
+        id: thread.id, type: 'thread'
       }
       .then (myVote) ->
         thread.myVote = myVote
         thread
 
-  deleteByUuid: ({uuid}, {user}) ->
-    Thread.getByUuid uuid
+  deleteById: ({id}, {user}) ->
+    Thread.getById id
     .then (thread) ->
       permission = GroupUser.PERMISSIONS.DELETE_FORUM_THREAD
-      GroupUser.hasPermissionByGroupUuidAndUser thread.groupUuid, user, [permission]
+      GroupUser.hasPermissionByGroupIdAndUser thread.groupId, user, [permission]
       .then (hasPermission) ->
         unless hasPermission
           router.throw
             status: 400, info: 'You don\'t have permission to do that'
 
-        Thread.deleteByUuid uuid
+        Thread.deleteById id
         .tap ->
           CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
 
-  pinByUuid: ({uuid}, {user}) ->
-    Thread.getByUuid uuid
+  pinById: ({id}, {user}) ->
+    Thread.getById id
     .then (thread) ->
       permission = GroupUser.PERMISSIONS.PIN_FORUM_THREAD
-      GroupUser.hasPermissionByGroupUuidAndUser thread.groupUuid, user, [permission]
+      GroupUser.hasPermissionByGroupIdAndUser thread.groupId, user, [permission]
       .then (hasPermission) ->
         unless hasPermission
           router.throw
             status: 400, info: 'You don\'t have permission to do that'
 
         Thread.upsert {
-          groupUuid: thread.groupUuid
-          userUuid: thread.userUuid
+          groupId: thread.groupId
+          userId: thread.userId
           category: thread.category
-          uuid: thread.uuid
+          id: thread.id
           timeBucket: thread.timeBucket
           data: _.defaults {isPinned: true}, thread.data
         }
         .tap ->
-          Thread.setPinnedThreadUuid uuid
+          Thread.setPinnedThreadId id
           Promise.all [
             CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
-            CacheService.deleteByKey CacheService.PREFIXES.THREAD + ':' + uuid
+            CacheService.deleteByKey CacheService.PREFIXES.THREAD + ':' + id
           ]
 
-  unpinByUuid: ({uuid}, {user}) ->
-    Thread.getByUuid uuid
+  unpinById: ({id}, {user}) ->
+    Thread.getById id
     .then (thread) ->
       permission = GroupUser.PERMISSIONS.PIN_FORUM_THREAD
-      GroupUser.hasPermissionByGroupUuidAndUser thread.groupUuid, user, [permission]
+      GroupUser.hasPermissionByGroupIdAndUser thread.groupId, user, [permission]
       .then (hasPermission) ->
         unless hasPermission
           router.throw
             status: 400, info: 'You don\'t have permission to do that'
 
         Thread.upsert {
-          groupUuid: thread.groupUuid
-          userUuid: thread.userUuid
+          groupId: thread.groupId
+          userId: thread.userId
           category: thread.category
-          uuid: thread.uuid
+          id: thread.id
           timeBucket: thread.timeBucket
           data: _.defaults {isPinned: false}, thread.data
         }
         .tap ->
-          Thread.deletePinnedThreadUuid uuid
+          Thread.deletePinnedThreadId id
           Promise.all [
             CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
-            CacheService.deleteByKey CacheService.PREFIXES.THREAD + ':' + uuid
+            CacheService.deleteByKey CacheService.PREFIXES.THREAD + ':' + id
           ]
 
 module.exports = new ThreadCtrl()

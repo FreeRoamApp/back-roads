@@ -168,5 +168,5 @@ With complex products like batteries, it's best to watch a video or two to learn
   #   why: "" # 30A to 15A
   #   what: ""
 
-module.exports = _.map items, (value, id) -> _.defaults {id}, value
+module.exports = _.map items, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity
