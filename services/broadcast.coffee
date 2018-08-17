@@ -29,13 +29,13 @@ class BroadcastService
     (if isTestRun
       r.table 'users'
       .getAll 'austin', {index: 'username'}
-      .pluck ['id', 'country', 'language']
+      .pluck ['uuid', 'country', 'language']
     else
       r.table('users')
       .between([true, minId], [true, 'ZZZZ'], {index: 'pushToken'})
       .orderBy {index: r.asc 'pushToken'}
       .limit AMOUNT_PER_GET
-      .pluck(['id', 'country', 'language'])
+      .pluck(['uuid', 'country', 'language'])
     )
     .then (users) =>
       if message.filterLang and not isTestRun
@@ -44,16 +44,16 @@ class BroadcastService
           language or= @getLangCode(country)
           language is message.filterLang
 
-      userIds = _.map users, 'id'
-      console.log 'sending to ', userIds.length
+      userUuids = _.map users, 'uuid'
+      console.log 'sending to ', userUuids.length
 
-      userGroups = _.values _.chunk(userIds, AMOUNT_PER_BATCH)
+      userGroups = _.values _.chunk(userUuids, AMOUNT_PER_BATCH)
 
       delay = 0
-      _.map userGroups, (groupUserIds, i) ->
+      _.map userGroups, (groupUserUuids, i) ->
         KueCreateService.createJob
           job: {
-            userIds: groupUserIds
+            userUuids: groupUserUuids
             message: message
             percentage: i / userGroups.length
           }
@@ -61,18 +61,18 @@ class BroadcastService
           type: KueCreateService.JOB_TYPES.BATCH_NOTIFICATION
         delay += TIME_PER_BATCH_SECONDS
       console.log 'batch done'
-      if userIds.length >= AMOUNT_PER_GET
-        @batch message, {isTestRun, minId: _.last userIds}
+      if userUuids.length >= AMOUNT_PER_GET
+        @batch message, {isTestRun, minId: _.last userUuids}
 
-  batchNotify: ({userIds, message, percentage}) ->
-    console.log 'batch', userIds.length, percentage
+  batchNotify: ({userUuids, message, percentage}) ->
+    console.log 'batch', userUuids.length, percentage
     CacheService.get CacheService.KEYS.BROADCAST_FAILSAFE
     .then (failSafe) ->
       if failSafe
         console.log 'skipping (failsafe)'
       else
-        Promise.map userIds, (userId) ->
-          User.getById userId
+        Promise.map userUuids, (userUuid) ->
+          User.getByUuid userUuid
           .then (user) ->
             langCode = Language.getLanguageByCountry user.country
             lang = message.lang[langCode] or message.lang['en']

@@ -27,8 +27,8 @@ class UserCtrl
     isServerSide = ip?.indexOf('::ffff:10.') isnt -1
     if isServerSide then null else geoip.lookup(ip)?.country?.toLowerCase()
 
-  getById: ({id}) ->
-    User.getById id
+  getByUuid: ({uuid}) ->
+    User.getByUuid uuid
     .then User.sanitizePublic(null)
 
   getByUsername: ({username}) ->
@@ -36,7 +36,8 @@ class UserCtrl
     .then User.sanitizePublic(null)
 
   upsert: ({newUser}, {user}) ->
-    null # TODO
+    User.upsert _.defaults newUser, {uuid: user.uuid}
+
   #
   # setAvatarImage: ({}, {user, file}) ->
   #   router.assert {file}, {
@@ -44,7 +45,7 @@ class UserCtrl
   #   }
   #
   #   # bust cache
-  #   keyPrefix = "images/freeroam/u/#{user.id}/avatar_#{Date.now()}"
+  #   keyPrefix = "images/freeroam/u/#{user.uuid}/avatar_#{Date.now()}"
   #
   #   Promise.all [
   #     ImageService.uploadImage
@@ -85,13 +86,13 @@ class UserCtrl
   #           url: largeUrl
   #         }
   #       ]
-  #     User.updateById user.id, {avatarImage: avatarImage}
+  #     User.updateByUser user, {avatarImage: avatarImage}
   #   .then (response) ->
-  #     key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.id}"
+  #     key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.uuid}"
   #     CacheService.deleteByKey key
   #     response
   #   .then ->
-  #     User.getById user.id
-  #   .then User.sanitize(user.id)
+  #     User.getByUuid user.uuid
+  #   .then User.sanitize(user.uuid)
 
 module.exports = new UserCtrl()

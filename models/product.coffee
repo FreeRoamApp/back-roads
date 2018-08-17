@@ -10,6 +10,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'text' # eg: kebab-case name
+      uuid: 'timeuuid'
       itemId: 'text'
       source: 'text' # eg amazon
       sourceId: 'text' # eg amazon
@@ -27,6 +28,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'text' # eg: az-amazonid
+      uuid: 'timeuuid'
       itemId: 'text'
       source: 'text' # eg amazon
       sourceId: 'text' # eg amazon
@@ -87,7 +89,7 @@ class Product
       .run()
     ]
 
-  getById: (id) ->
+  getByUuid: (id) ->
     cknex().select '*'
     .from 'products_by_id'
     .where 'id', '=', id

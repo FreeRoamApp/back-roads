@@ -6,10 +6,11 @@ cknex = require '../services/cknex'
 
 tables = [
   {
-    name: 'categories'
+    name: 'categories_by_id'
     keyspace: 'free_roam'
     fields:
       id: 'text' # eg: starting-out
+      uuid: 'timeuuid'
       name: 'text'
       description: 'text'
       type: 'text'
@@ -56,7 +57,7 @@ class Category
     category = defaultCategory category
 
     Promise.all [
-      cknex().update 'categories'
+      cknex().update 'categories_by_id'
       .set _.omit category, ['type', 'id']
       .where 'type', '=', category.type
       .where 'id', '=', category.id
@@ -67,7 +68,7 @@ class Category
     limit ?= 30
 
     cknex().select '*'
-    .from 'categories'
+    .from 'categories_by_id'
     .limit limit
     .run()
     .then (categories) ->

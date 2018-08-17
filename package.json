@@ -91,6 +91,7 @@
     "request-promise": "^4.1.1",
     "rx-lite": "^4.0.8",
     "semver": "^5.4.1",
+    "short-uuid": "^3.0.0",
     "shortid": "^2.2.8",
     "socket.io": "^2.0.4",
     "socket.io-redis": "^5.2.0",

@@ -23,11 +23,11 @@ class StreamService
   create: (obj, channels) ->
     PubSubService.publish channels, {action: 'create', obj}
 
-  updateById: (id, obj, channels) ->
-    PubSubService.publish channels, {id, action: 'update', obj}
+  updateByUuid: (uuid, obj, channels) ->
+    PubSubService.publish channels, {uuid, action: 'update', obj}
 
-  deleteById: (id, channels) ->
-    PubSubService.publish channels, {id, action: 'delete'}
+  deleteByUuid: (uuid, channels) ->
+    PubSubService.publish channels, {uuid, action: 'delete'}
 
   # postFn called when received (many times)
   # best to put in the create method if possible

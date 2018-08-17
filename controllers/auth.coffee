@@ -25,7 +25,7 @@ class AuthCtrl
 
     User.upsert {language: language?.toLowerCase?()}
     .then (user) ->
-      Auth.fromUserId user.id
+      Auth.fromUserUuid user.uuid
 
   join: ({email, username, password}, {user}) ->
     insecurePassword = password
@@ -74,9 +74,9 @@ class AuthCtrl
 
         Promise.promisify(bcrypt.hash)(insecurePassword, BCRYPT_ROUNDS)
         .then (password) ->
-          User.updateById user.id, {username, password, email, isMember: true}
+          User.updateByUser user, {username, password, email}
       .then ->
-        Auth.fromUserId user.id
+        Auth.fromUserUuid user.uuid
 
   loginUsername: ({username, password}) ->
     insecurePassword = password
@@ -137,7 +137,7 @@ class AuthCtrl
         }
 
     .then (user) ->
-      Auth.fromUserId user.id
+      Auth.fromUserUuid user.uuid
 
 
 module.exports = new AuthCtrl()
