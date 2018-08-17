@@ -202,9 +202,11 @@ class ThreadCtrl
       }
       .map (thread) ->
         EmbedService.embed {
-          userUuid: user.uuid
-          groupUuid
           embed: defaultEmbed
+          options: {
+            groupUuid
+            userUuid: user.uuid
+          }
         }, thread
       .map Thread.sanitize null
     , {
@@ -229,7 +231,11 @@ class ThreadCtrl
 
     CacheService.preferCache key, ->
       Thread.getByUuid uuid
-      .then EmbedService.embed {embed: defaultEmbed, userUuid: user.uuid}
+      .then EmbedService.embed {
+        embed: defaultEmbed
+        options:
+          userUuid: user.uuid
+      }
       .then Thread.sanitize null
     , {expireSeconds: ONE_MINUTE_SECONDS}
     .then (thread) ->
@@ -243,7 +249,11 @@ class ThreadCtrl
 
     CacheService.preferCache key, ->
       Thread.getById id
-      .then EmbedService.embed {embed: defaultEmbed, userUuid: user.uuid}
+      .then EmbedService.embed {
+        embed: defaultEmbed,
+        options:
+          userUuid: user.uuid
+      }
       .then Thread.sanitize null
     , {expireSeconds: ONE_MINUTE_SECONDS}
     .then (thread) ->

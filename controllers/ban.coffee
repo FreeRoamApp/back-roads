@@ -35,7 +35,8 @@ class BanCtrl
           EmbedService.TYPES.BAN.USER
           EmbedService.TYPES.BAN.BANNED_BY_USER
         ]
-        groupUuid: groupUuid
+        options:
+          groupUuid: groupUuid
       }
 
   banByGroupUuidAndUserUuid: ({userUuid, groupUuid, duration, type}, {user}) ->

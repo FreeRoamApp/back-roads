@@ -37,3 +37,5 @@ class BaseMessageEmbed
           groupUser.roleNames = roleNames
           groupuser
     , {expireSeconds: FIVE_MINUTES_SECONDS}
+
+module.exports = new BaseMessageEmbed()

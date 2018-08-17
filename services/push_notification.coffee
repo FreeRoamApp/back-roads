@@ -254,7 +254,11 @@ class PushNotificationService
       unless userUuid is fromUserUuid
         user = User.getByUuid userUuid, {preferCache: true}
         if groupUuid
-          user = user.then EmbedService.embed {embed: defaultUserEmbed, groupUuid}
+          user = user.then EmbedService.embed {
+            embed: defaultUserEmbed
+            options:
+              groupUuid
+          }
         user
         .then (user) =>
           @send user, message, {fromUserUuid, groupUuid, conversation}
@@ -321,14 +325,6 @@ class PushNotificationService
 
       pushTokenDevices = _.groupBy pushTokens, 'deviceId'
       pushTokens = _.map pushTokenDevices, (tokens) ->
-        if message.groupUuid
-          groupAppKey = _.find(config.GROUPS, {ID: message.groupUuid})?.APP_KEY
-          groupAppToken = _.find tokens, {appKey: config.GROUPS.MAIN.APP_KEY}
-          if groupAppToken
-            return groupAppToken
-        mainAppToken = _.find tokens, {appKey: config.GROUPS.MAIN.APP_KEY}
-        if mainAppToken
-          return mainAppToken
         return tokens[0]
 
       Promise.map pushTokens, (pushToken) =>
@@ -380,76 +376,32 @@ class PushNotificationService
       Promise.resolve()
 
   subscribeToAllUserTopics: ({userUuid, appKey, token, deviceId}) ->
-    isMainApp = appKey is config.GROUPS.MAIN.APP_KEY
-    appGroupUuid = _.find(config.GROUPS, {APP_KEY: appKey})?.ID
-
     Promise.all [
       PushToken.getAllByUserUuid userUuid
       PushTopic.getAllByUserUuid userUuid
     ]
     .then ([pushTokens, pushTopics]) =>
-      appKeyPushTokens = _.filter pushTokens, {appKey}
-      appKeyPushTopics = _.filter pushTopics, {appKey}
+      topics = _.filter pushTopics, {
+        appKey
+      }
+      uniqueTopics = _.uniqBy topics, (topic) ->
+        _.omit topic, ['token']
 
-      if isMainApp
-        mainAppTopics = _.filter pushTopics, {
-          appKey: config.GROUPS.MAIN.APP_KEY
-        }
-        uniqueMainAppTopics = _.uniqBy mainAppTopics, (topic) ->
-          _.omit topic, ['token']
-        Promise.map uniqueMainAppTopics, (topic) =>
-          @subscribeToTopicByToken token, topic
-          .then ->
-            PushTopic.upsert _.defaults {
-              token: token
-              deviceId: deviceId
-            }, topic
-      else if appGroupUuid
-        mainAppGroupTopics = _.filter pushTopics, {
-          appKey: config.GROUPS.MAIN.APP_KEY
-          groupUuid: appGroupUuid
-        }
-        uniqueMainAppGroupTopics = _.uniqBy mainAppGroupTopics, (topic) ->
-          _.omit topic, ['token']
-        # move main app subscription topics to this appKey
-        # delete/unsub all main app id ones
-        Promise.map mainAppGroupTopics, (topic) =>
-          @unsubscribeToTopicByPushTopic topic
-          .then ->
-            PushTopic.deleteByPushTopic topic
-
-        # move main app id ones to group app
-        Promise.map uniqueMainAppGroupTopics, (topic) =>
-          newTopic = _.defaults {appKey}, topic
-          Promise.map appKeyPushTokens, (pushToken) =>
-            @subscribeToTopicByToken pushToken.token, topic
-            .then ->
-              PushTopic.upsert _.defaults {
-                token: pushToken.token
-                deviceId: pushToken.deviceId
-              }, newTopic
+      Promise.map uniqueTopics, (topic) =>
+        @subscribeToTopicByToken token, topic
+        .then ->
+          PushTopic.upsert _.defaults {
+            token: token
+            deviceId: deviceId
+          }, topic
 
   _getBestTokens: ({pushTokens, appKey, groupUuid}) ->
-    groupAppKey = _.find(config.GROUPS, {ID: groupUuid})?.APP_KEY
-
     deviceIds = _.groupBy pushTokens, 'deviceId'
     bestTokens = _.mapValues deviceIds, (tokens, deviceId) ->
       # check if one for appKey (app currently being used) exists
       appKeyToken = _.find tokens, {appKey, errorCount: 0}
       if appKey and appKeyToken
         return appKeyToken
-
-      # check for group app
-      groupAppKeyToken = _.find tokens, {appKey: groupAppKey, errorCount: 0}
-      if groupAppKeyToken
-        return groupAppKeyToken
-
-      # main fr app
-      mainAppKeyToken = _.find tokens, {
-        appKey: config.GROUPS.MAIN.APP_KEY, errorCount: 0
-      }
-      if mainAppKeyToken
-        return mainAppKeyToken
 
       noErrorToken = _.find tokens, {errorCount: 0}
       if noErrorToken

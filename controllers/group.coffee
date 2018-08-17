@@ -155,7 +155,7 @@ class GroupCtrl
         .map ({groupUuid}) -> groupUuid
         .then (groupUuids) ->
           Group.getAllByUuids groupUuids
-        .map EmbedService.embed {embed, user}
+        .map EmbedService.embed {embed, options: {user}}
       , {
         expireSeconds: THIRTY_MINUTES_SECONDS
         category: category
@@ -176,7 +176,7 @@ class GroupCtrl
           Group.getAll {filter}
         else
           groups
-      .map EmbedService.embed {embed, user}
+      .map EmbedService.embed {embed, options: {user}}
     , {
       expireSeconds: THIRTY_MINUTES_SECONDS
       category: category
@@ -199,7 +199,7 @@ class GroupCtrl
           }
 
   _setupGroup: (group, {autoJoin, user}) =>
-    EmbedService.embed {embed: defaultEmbed, user}, group
+    EmbedService.embed {embed: defaultEmbed, options: {user}}, group
     .then (group) =>
       getGroupUser = ->
         GroupUser.getByGroupUuidAndUserUuid group.uuid, user.uuid
