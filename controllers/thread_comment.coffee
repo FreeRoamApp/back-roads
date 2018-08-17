@@ -123,7 +123,7 @@ class ThreadCommentCtrl
     category = "#{categoryPrefix}:#{threadUuid}"
     CacheService.preferCache key, ->
       ThreadComment.getAllByThreadUuid threadUuid
-      .map EmbedService.embed {embed: defaultEmbed, groupUuid}
+      .map EmbedService.embed {embed: defaultEmbed, options: {groupUuid}}
       .then (allComments) ->
         getCommentsTree allComments, threadUuid, {sort, skip, limit}
     , {category, expireSeconds: TEN_MINUTES_SECONDS}

@@ -530,6 +530,7 @@ class ThreadModel
   sanitize: _.curry (requesterId, thread) ->
     _.pick thread, [
       'uuid'
+      'id'
       'category'
       'userUuid'
       'user'
