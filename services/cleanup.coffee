@@ -12,16 +12,11 @@ TWO_MIN_MS = 60 * 2 * 1000
 MIN_KUE_STUCK_TIME_MS = 60 * 10 * 1000 # 10 minutes
 
 TRIMMABLE_LEADERBOARDS = _.flatten [
-  _.map ['3xChallenge', '2v2', 'rampUp', 'modernRoyale', 'youtubeDecks'], (gameType) ->
-    {
-      key: "#{CacheService.STATIC_PREFIXES.GAME_TYPE_DECK_LEADERBOARD}:#{gameType}"
-      trimLength: 20000
-    }
-  _.map ['magic_archer', 'royal_ghost'], (cardKey) ->
-    {
-      key: "#{CacheService.STATIC_PREFIXES.CARD_DECK_LEADERBOARD}:#{cardKey}"
-      trimLength: 20000
-    }
+  # _.map [], (gameType) ->
+  #   {
+  #     key: "#{CacheService.STATIC_PREFIXES.GAME_TYPE_DECK_LEADERBOARD}:#{gameType}"
+  #     trimLength: 20000
+  #   }
 ]
 
 class CleanupService

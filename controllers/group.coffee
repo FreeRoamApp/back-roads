@@ -67,7 +67,6 @@ class GroupCtrl
       Group.removeUser groupId, userId
 
   joinById: ({id, slug}, {user}) ->
-    console.log 'join group', id, slug
     userId = user.id
 
     unless id or slug
@@ -102,7 +101,6 @@ class GroupCtrl
       #         gameKey: config.DEFAULT_GAME_KEY
       #   }, {skipMe: true, meUserId: user.id}).catch -> null
 
-      console.log 'add', group.id, userId
 
       Group.addUser group.id, userId
       .then ->
@@ -182,7 +180,7 @@ class GroupCtrl
       category: category
     }
 
-  getAllChannelsById: ({id}, {user}) ->
+  getAllConversationsById: ({id}, {user}) ->
     GroupUser.getByGroupIdAndUserId(
       id, user.id
     )
@@ -225,10 +223,8 @@ class GroupCtrl
       @_setupGroup group, {autoJoin, user}
 
   getBySlug: ({slug, autoJoin}, {user}) =>
-    console.log 'get group'
     Group.getBySlug slug
     .then (group) =>
-      console.log 'group', group
       unless group
         console.log 'missing group slug', slug
         return

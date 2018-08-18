@@ -10,8 +10,8 @@ class GroupAuditLogEmbed
 
   time: (groupAuditLog) ->
     id = if typeof groupAuditLog.id is 'string' \
-               then cknex.getTimeUuidFromString groupAuditLog.id
-               else groupAuditLog.id
+         then cknex.getTimeUuidFromString groupAuditLog.id
+         else groupAuditLog.id
     groupAuditLog.time = id.getDate()
 
 

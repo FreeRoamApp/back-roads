@@ -13,11 +13,11 @@ User = require '../models/user'
 Notification = require '../models/notification'
 PushToken = require '../models/push_token'
 PushTopic = require '../models/push_topic'
-# Group = require '../models/group'
-# GroupUser = require '../models/group_user'
-# GroupRole = require '../models/group_role'
+Group = require '../models/group'
+GroupUser = require '../models/group_user'
+GroupRole = require '../models/group_role'
 Language = require '../models/language'
-# UserBlock = require '../models/user_block'
+UserBlock = require '../models/user_block'
 
 ONE_DAY_SECONDS = 3600 * 24
 RETRY_COUNT = 10

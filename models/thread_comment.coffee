@@ -148,12 +148,6 @@ class ThreadCommentModel
     ]
 
   getAllByThreadId: (threadId) ->
-    # legacy. rm in mid feb 2018
-    if threadId is 'b3d49e6f-3193-417e-a584-beb082196a2c' # cr-es
-      threadId = '7a39b079-e6ce-11e7-9642-4b5962cd09d3'
-    else if threadId is 'fcb35890-f40e-11e7-9af5-920aa1303bef' # bruno
-      threadId = '90c06cb0-86ce-4ed6-9257-f36633db59c2'
-
     Promise.all [
       cknex().select '*'
       .from 'thread_comments_by_threadId'
@@ -172,12 +166,6 @@ class ThreadCommentModel
         _.merge comment, voteCount
 
   getCountByThreadId: (threadId) ->
-    # legacy. rm in mid feb 2018
-    if "#{threadId}" is 'b3d49e6f-3193-417e-a584-beb082196a2c' # cr-es
-      threadId = '7a39b079-e6ce-11e7-9642-4b5962cd09d3'
-    else if "#{threadId}" is 'fcb35890-f40e-11e7-9af5-920aa1303bef' # bruno
-      threadId = '90c06cb0-86ce-4ed6-9257-f36633db59c2'
-
     cknex().select '*'
     .from 'thread_comments_by_threadId'
     .where 'threadId', '=', threadId

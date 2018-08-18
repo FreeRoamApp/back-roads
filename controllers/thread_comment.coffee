@@ -124,6 +124,8 @@ class ThreadCommentCtrl
     CacheService.preferCache key, ->
       ThreadComment.getAllByThreadId threadId
       .map EmbedService.embed {embed: defaultEmbed, options: {groupId}}
+      .catch (err) ->
+        console.log err
       .then (allComments) ->
         getCommentsTree allComments, threadId, {sort, skip, limit}
     , {category, expireSeconds: TEN_MINUTES_SECONDS}

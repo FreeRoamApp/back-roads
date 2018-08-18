@@ -1,6 +1,7 @@
 _ = require 'lodash'
 
 GroupUserEmbed = require './group_user'
+GroupUser = require '../models/group_user'
 User = require '../models/user'
 CacheService = require '../services/cache'
 
@@ -35,7 +36,7 @@ class BaseMessageEmbed
         .then ([karma, roleNames]) ->
           groupUser.karma = karma
           groupUser.roleNames = roleNames
-          groupuser
+          groupUser
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
 module.exports = new BaseMessageEmbed()

@@ -9,7 +9,6 @@ Group = require '../models/group'
 GroupAuditLog = require '../models/group_audit_log'
 GroupUser = require '../models/group_user'
 Language = require '../models/language'
-Event = require '../models/event'
 EmbedService = require '../services/embed'
 config = require '../config'
 

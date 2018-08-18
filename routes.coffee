@@ -3,6 +3,8 @@ router = require 'exoid-router'
 AuthCtrl = require './controllers/auth'
 BanCtrl = require './controllers/ban'
 CategoryCtrl = require './controllers/category'
+ConversationMessageCtrl = require './controllers/conversation_message'
+ConversationCtrl = require './controllers/conversation'
 GroupCtrl = require './controllers/group'
 GroupAuditLogCtrl = require './controllers/group_audit_log'
 GroupUserCtrl = require './controllers/group_user'
@@ -17,6 +19,8 @@ ThreadCtrl = require './controllers/thread'
 ThreadCommentCtrl = require './controllers/thread_comment'
 ThreadVoteCtrl = require './controllers/thread_vote'
 UserCtrl = require './controllers/user'
+UserBlockCtrl = require './controllers/user_block'
+UserFollowerCtrl = require './controllers/user_follower'
 
 authed = (handler) ->
   unless handler?
@@ -39,12 +43,26 @@ module.exports = router
 ###################
 # Authed Routes   #
 ###################
-.on 'users.getMe', authed UserCtrl.getMe
-.on 'users.getById', authed UserCtrl.getById
-.on 'users.getByUsername', authed UserCtrl.getByUsername
-.on 'users.getCountry', authed UserCtrl.getCountry
-
 .on 'categories.getAll', authed CategoryCtrl.getAll
+
+.on 'conversations.create', authed ConversationCtrl.create
+.on 'conversations.updateById', authed ConversationCtrl.updateById
+.on 'conversations.markReadById', authed ConversationCtrl.markReadById
+.on 'conversations.getAll', authed ConversationCtrl.getAll
+.on 'conversations.getAllByGroupId', authed ConversationCtrl.getAllByGroupId
+.on 'conversations.getById', authed ConversationCtrl.getById
+
+.on 'conversationMessages.create', authed ConversationMessageCtrl.create
+.on 'conversationMessages.deleteById', authed ConversationMessageCtrl.deleteById
+.on 'conversationMessages.deleteAllByGroupIdAndUserId',
+  authed ConversationMessageCtrl.deleteAllByGroupIdAndUserId
+.on 'conversationMessages.getLastTimeByMeAndConversationId',
+  authed ConversationMessageCtrl.getLastTimeByMeAndConversationId
+.on 'conversationMessages.uploadImage', authed ConversationMessageCtrl.uploadImage
+.on 'conversationMessages.getAllByConversationId',
+  authed ConversationMessageCtrl.getAllByConversationId
+.on 'conversationMessages.unsubscribeByConversationId',
+  authed ConversationMessageCtrl.unsubscribeByConversationId
 
 .on 'groups.create', authed GroupCtrl.create
 .on 'groups.updateById', authed GroupCtrl.updateById
@@ -52,7 +70,7 @@ module.exports = router
 .on 'groups.leaveById', authed GroupCtrl.leaveById
 .on 'groups.getAll', authed GroupCtrl.getAll
 .on 'groups.getAllByUserId', authed GroupCtrl.getAllByUserId
-.on 'groups.getAllConversationById', authed GroupCtrl.getAllConversationById
+.on 'groups.getAllConversationsById', authed GroupCtrl.getAllConversationsById
 .on 'groups.getById', authed GroupCtrl.getById
 .on 'groups.getBySlug', authed GroupCtrl.getBySlug
 .on 'groups.sendNotificationById', authed GroupCtrl.sendNotificationById
@@ -87,6 +105,10 @@ module.exports = router
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
 .on 'items.search', authed ItemCtrl.search
 
+.on 'notifications.getAll', authed NotificationCtrl.getAll
+
+.on 'nps.create', authed NpsCtrl.create
+
 .on 'places.getById', authed PlaceCtrl.getById
 .on 'places.search', authed PlaceCtrl.search
 
@@ -119,6 +141,21 @@ module.exports = router
 
 .on 'time.get', authed -> {now: new Date()}
 
-.on 'notifications.getAll', authed NotificationCtrl.getAll
+.on 'users.getMe', authed UserCtrl.getMe
+.on 'users.getById', authed UserCtrl.getById
+.on 'users.getByUsername', authed UserCtrl.getByUsername
+.on 'users.getCountry', authed UserCtrl.getCountry
 
-.on 'nps.create', authed NpsCtrl.create
+.on 'userFollowers.getAllFollowingIds',
+  authed UserFollowerCtrl.getAllFollowingIds
+.on 'userFollowers.getAllFollowerIds',
+  authed UserFollowerCtrl.getAllFollowerIds
+.on 'userFollowers.getAllFollowing', authed UserFollowerCtrl.getAllFollowing
+.on 'userFollowers.getAllFollowers', authed UserFollowerCtrl.getAllFollowers
+.on 'userFollowers.followByUserId', authed UserFollowerCtrl.followByUserId
+.on 'userFollowers.unfollowByUserId', authed UserFollowerCtrl.unfollowByUserId
+
+.on 'userBlocks.getAll', authed UserBlockCtrl.getAll
+.on 'userBlocks.getAllIds', authed UserBlockCtrl.getAllIds
+.on 'userBlocks.blockByUserId', authed UserBlockCtrl.blockByUserId
+.on 'userBlocks.unblockByUserId', authed UserBlockCtrl.unblockByUserId

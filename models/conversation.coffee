@@ -185,6 +185,9 @@ class ConversationModel
     .andWhere 'id', '=', id
     .run()
 
+  pmHasPermission: (conversation, userId) ->
+    Promise.resolve userId and conversation.userIds.indexOf(userId) isnt -1
+
   sanitize: _.curry (requesterId, conversation) ->
     _.pick conversation, [
       'id'

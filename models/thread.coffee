@@ -19,6 +19,9 @@ defaultThread = (thread) ->
   thread.data?.lastUpdateTime = new Date()
   thread.data = JSON.stringify thread.data
 
+  threadByIdTable = _.find tables, {name: 'threads_by_id'}
+  thread = _.pick thread, _.keys threadByIdTable.fields
+
   _.defaults thread, {
     id: cknex.getTimeUuid()
     userId: null
@@ -37,7 +40,10 @@ defaultThreadOutput = (thread) ->
     {}
 
   thread.userId = "#{thread.userId}"
-  thread.time = thread.id.getDate()
+  id = if typeof thread.id is 'string' \
+       then cknex.getTimeUuidFromString thread.id
+       else thread.id
+  thread.time = id.getDate()
 
   thread
 
@@ -239,7 +245,10 @@ class ThreadModel
 
     if preferCache
       key = "#{CacheService.PREFIXES.THREAD_BY_ID}:#{id}:#{Boolean omitCounter}"
-      CacheService.preferCache key, get, {expireSeconds: ONE_HOUR_SECONDS}
+      CacheService.preferCache key, get, {
+        expireSeconds: ONE_HOUR_SECONDS
+        category: CacheService.PREFIXES.THREAD_BY_ID_CATEGORY + ':' + id
+      }
     else
       get()
 
@@ -261,7 +270,10 @@ class ThreadModel
 
     if preferCache
       key = "#{CacheService.PREFIXES.THREAD_BY_SLUG}:#{slug}:#{Boolean omitCounter}"
-      CacheService.preferCache key, get, {expireSeconds: ONE_HOUR_SECONDS}
+      CacheService.preferCache key, get, {
+        expireSeconds: ONE_HOUR_SECONDS
+        category: CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY + ':' + slug
+      }
     else
       get()
 
