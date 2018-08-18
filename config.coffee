@@ -37,6 +37,16 @@ config =
   VAPID_PUBLIC_KEY: env.BACK_ROADS_VAPID_PUBLIC_KEY
   VAPID_PRIVATE_KEY: env.BACK_ROADS_VAPID_PRIVATE_KEY
   HONEYPOT_ACCESS_KEY: env.HONEYPOT_ACCESS_KEY
+  # also in free-roam
+  DEFAULT_PERMISSIONS:
+    readMessage: true
+    manageChannel: false
+    sendMessage: true
+    sendLink: true
+    sendImage: true
+  DEFAULT_NOTIFICATIONS:
+    chatMessage: true
+    chatMention: true
   GA_ID: env.BACK_ROADS_GA_ID
   GOOGLE:
     CLIENT_ID: env.GOOGLE_CLIENT_ID

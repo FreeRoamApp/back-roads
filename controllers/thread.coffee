@@ -83,6 +83,8 @@ class ThreadCtrl
           previewSrc: data.thumbnail_url
           aspectRatio: aspectRatio
         }
+    else
+      return Promise.resolve null
 
   upsert: ({thread, groupId, language}, {user, headers, connection}) =>
     userAgent = headers['user-agent']
@@ -128,18 +130,10 @@ class ThreadCtrl
           type: 'image', src: firstImageSrc
         }
 
-      Promise.all [
-        @getAttachment thread.data.body
-        if thread.data.deck
-          @addDeck thread.data.deck
-        else
-          Promise.resolve {}
-      ]
-      .then ([attachment, deckDiff]) =>
+      @getAttachment thread.data.body
+      .then (attachment) =>
         if attachment
           thread.data.attachments.push attachment
-
-        thread = _.defaultsDeep deckDiff, thread
 
         Group.getById groupId
         .then (group) =>
@@ -148,21 +142,27 @@ class ThreadCtrl
             if thread.id
               Thread.upsert thread
               .then ->
-                deckKey = CacheService.PREFIXES.THREAD_DECK + ':' + thread.id
                 key = CacheService.PREFIXES.THREAD + ':' + thread.id
                 Promise.all [
-                  CacheService.deleteByKey deckKey
                   CacheService.deleteByKey key
                 ]
                 {id: thread.id}
             else
               Thread.upsert _.defaults thread, {
                 userId: user.id
-                groupId: group?.id or config.GROUPS.CLASH_ROYALE_EN.ID
+                groupId: group?.id
               }
       .tap ->
-        # TODO: groupId
-        CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
+        {category} = thread
+        CacheService.deleteByCategory(
+          "#{CacheService.PREFIXES.THREADS_CATEGORY}:#{groupId}:#{category}"
+        )
+        CacheService.deleteByCategory(
+          "#{CacheService.PREFIXES.THREAD_BY_ID_CATEGORY}:#{thread.id}"
+        )
+        CacheService.deleteByCategory(
+          "#{CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY}:#{thread.slug}"
+        )
 
   validateAndCheckPermissions: (thread, {user}) ->
     if thread.id
@@ -191,7 +191,7 @@ class ThreadCtrl
     if category is 'all'
       category = null
 
-    key = CacheService.PREFIXES.THREADS_CATEGORY + ':' + [
+    key = CacheService.PREFIXES.THREADS_BY_CATEGORY + ':' + [
       groupId, category, language, sort, skip, maxId, limit
     ].join(':')
 
@@ -211,12 +211,12 @@ class ThreadCtrl
       .map Thread.sanitize null
     , {
       expireSeconds: ONE_MINUTE_SECONDS
-      category: CacheService.PREFIXES.THREADS_CATEGORY
+      category:
+        "#{CacheService.PREFIXES.THREADS_CATEGORY}:#{groupId}:#{category}"
     }
     .then (threads) ->
       if _.isEmpty threads
         return threads
-      console.log 'threads', threads
       parents = _.map threads, ({id}) -> {type: 'thread', id}
       ThreadVote.getAllByUserIdAndParents user.id, parents
       .then (threadVotes) ->
@@ -237,7 +237,10 @@ class ThreadCtrl
           userId: user.id
       }
       .then Thread.sanitize null
-    , {expireSeconds: ONE_MINUTE_SECONDS}
+    , {
+      expireSeconds: ONE_MINUTE_SECONDS
+      category: "#{CacheService.PREFIXES.THREAD_BY_ID_CATEGORY}:#{id}"
+    }
     .then (thread) ->
       ThreadVote.getByUserIdAndParent user.id, {id, type: 'thread'}
       .then (myVote) ->
@@ -255,7 +258,10 @@ class ThreadCtrl
           userId: user.id
       }
       .then Thread.sanitize null
-    , {expireSeconds: ONE_MINUTE_SECONDS}
+    , {
+      expireSeconds: ONE_MINUTE_SECONDS
+      category: "#{CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY}:#{slug}"
+    }
     .then (thread) ->
       ThreadVote.getByUserIdAndParent user.id, {
         id: thread.id, type: 'thread'
@@ -276,7 +282,16 @@ class ThreadCtrl
 
         Thread.deleteById id
         .tap ->
-          CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
+          {groupId, category} = thread
+          CacheService.deleteByCategory(
+            "#{CacheService.PREFIXES.THREADS_CATEGORY}:#{groupId}:#{category}"
+          )
+          CacheService.deleteByCategory(
+            "#{CacheService.PREFIXES.THREAD_BY_ID_CATEGORY}:#{id}"
+          )
+          CacheService.deleteByCategory(
+            "#{CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY}:#{thread.slug}"
+          )
 
   pinById: ({id}, {user}) ->
     Thread.getById id
@@ -298,9 +313,17 @@ class ThreadCtrl
         }
         .tap ->
           Thread.setPinnedThreadId id
+          {groupId, category} = thread
           Promise.all [
-            CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
-            CacheService.deleteByKey CacheService.PREFIXES.THREAD + ':' + id
+            CacheService.deleteByCategory(
+              "#{CacheService.PREFIXES.THREADS_CATEGORY}:#{groupId}:#{category}"
+            )
+            CacheService.deleteByCategory(
+              "#{CacheService.PREFIXES.THREAD_BY_ID_CATEGORY}:#{id}"
+            )
+            CacheService.deleteByCategory(
+              "#{CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY}:#{thread.slug}"
+            )
           ]
 
   unpinById: ({id}, {user}) ->
@@ -322,10 +345,18 @@ class ThreadCtrl
           data: _.defaults {isPinned: false}, thread.data
         }
         .tap ->
+          {groupId, category} = thread
           Thread.deletePinnedThreadId id
           Promise.all [
-            CacheService.deleteByCategory CacheService.PREFIXES.THREADS_CATEGORY
-            CacheService.deleteByKey CacheService.PREFIXES.THREAD + ':' + id
+            CacheService.deleteByCategory(
+              "#{CacheService.PREFIXES.THREADS_CATEGORY}:#{groupId}:#{category}"
+            )
+            CacheService.deleteByCategory(
+              "#{CacheService.PREFIXES.THREAD_BY_ID_CATEGORY}:#{id}"
+            )
+            CacheService.deleteByCategory(
+              "#{CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY}:#{thread.slug}"
+            )
           ]
 
 module.exports = new ThreadCtrl()

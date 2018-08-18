@@ -20,7 +20,7 @@ class ThreadCommentEmbed
     id = if typeof threadComment.id is 'string' \
                then cknex.getTimeUuidFromString threadComment.id
                else threadComment.id
-    threadComment.time = id.getDate()
+    id.getDate()
 
 
 module.exports = new ThreadCommentEmbed()

@@ -52,7 +52,6 @@ class GroupUserCtrl
             }
           }
 
-        console.log 'add role'
         PushNotificationService.subscribeToPushTopic {
           userId, groupId, sourceType: 'role', sourceId: role.name
         }
@@ -134,7 +133,9 @@ class GroupUserCtrl
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
   getMeSettingsByGroupId: ({groupId}, {user}) ->
-    Group.hasPermissionByIdAndUserId groupId, user.id, {level: 'member'}
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
+      GroupUser.PERMISSIONS.READ_MESSAGE
+    ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
@@ -142,7 +143,9 @@ class GroupUserCtrl
       GroupUser.getSettingsByGroupIdAndUserId groupId, user.id
 
   updateMeSettingsByGroupId: ({groupId, globalNotifications}, {user}) ->
-    Group.hasPermissionByIdAndUserId groupId, user.id, {level: 'member'}
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
+      GroupUser.PERMISSIONS.READ_MESSAGE
+    ]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
@@ -162,4 +165,4 @@ class GroupUserCtrl
   #   else
   #     0
 
-module.ekarmaorts = new GroupUserCtrl()
+module.exports = new GroupUserCtrl()

@@ -7,6 +7,8 @@ cknex = require '../services/cknex'
 EmbedClasses =
   user: require '../embeds/user'
   category: require '../embeds/category'
+  conversation: require '../embeds/conversation'
+  conversationMessage: require '../embeds/conversation_message'
   group: require '../embeds/group'
   groupAuditLog: require '../embeds/group_audit_log'
   groupUser: require '../embeds/group_user'
@@ -17,8 +19,6 @@ EmbedClasses =
 
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
-  USER:
-    DATA: 'user:data'
   CATEGORY:
     FIRST_ITEM_PRODUCT_SLUG: 'category:firstItemFirstProductSlug'
   CONVERSATION_MESSAGE:
@@ -53,6 +53,13 @@ TYPES =
   THREAD:
     USER: 'thread:user'
     COMMENT_COUNT: 'thread:commentCount'
+  USER:
+    DATA: 'user:data'
+  USER_FOLLOWER:
+    USER: 'userFollower:user'
+    FOLLOWED: 'userFollower:followed'
+  USER_BLOCK:
+    USER: 'userBlock:user'
 
 embedFn = _.curry (props, object) ->
   {embed, options} = props

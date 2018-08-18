@@ -18,7 +18,7 @@ CacheService = require '../services/cache'
 PushNotificationService = require '../services/push_notification'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
-schemas = require '../schemas'
+cknex = require '../services/cknex'
 config = require '../config'
 
 defaultEmbed = [
@@ -88,20 +88,6 @@ class ConversationMessageCtrl
         router.throw
           status: 403
           info: "unable to post, banned #{userId}, #{ipAddr}"
-
-  _checkSlowMode: (conversation, userId, router) ->
-    isSlowMode = conversation?.data?.isSlowMode
-    slowModeCooldownSeconds = conversation?.data?.slowModeCooldown
-    if isSlowMode and slowModeCooldownSeconds
-      ConversationMessage.getLastTimeByUserIdAndConversationId userId, conversation.id
-      .then (lastMeMessageTime) ->
-        msSinceLastMessage = Date.now() - lastMeMessageTime
-        cooldownSecondsLeft = slowModeCooldownSeconds -
-                                Math.floor(msSinceLastMessage / 1000)
-        if cooldownSecondsLeft > 0
-          router.throw status: 403, info: 'unable to post, slow'
-    else
-      Promise.resolve null
 
   _getMentions: (conversation, body) ->
     mentions = _.map _.uniq(body.match /\@[a-zA-Z0-9_-]+/g), (find) ->
@@ -193,15 +179,11 @@ class ConversationMessageCtrl
         console.log 'err getting conversation', conversationId, body
         throw err
     .then EmbedService.embed {embed: defaultConversationEmbed}
-    .then (conversation) =>
-      (if conversation.groupId
-        groupId = conversation.groupId
-
-        GroupUsersOnline.upsert {userId: user.id, groupId}
-
+    .tap (conversation) =>
+      groupId = conversation.groupId
+      (if groupId
         Promise.all [
           @_checkIfBanned groupId, ip, user.id, router
-          @_checkSlowMode conversation, user.id, router
         ]
         .then ->
           permissions = [GroupUser.PERMISSIONS.SEND_MESSAGE]
@@ -212,24 +194,19 @@ class ConversationMessageCtrl
           GroupUser.hasPermissionByGroupIdAndUser groupId, user, permissions, {
             channelId: conversationId
           }
-          .then (hasPermission) ->
-            unless hasPermission
-              router.throw status: 400, info: 'no permission'
-        .then ->
-          if groupId
-            Group.getById groupId, {preferCache: true}
-          else
-            Promise.resolve null
-
-
-      else Promise.resolve null)
+      else
+        Conversation.pmHasPermission conversation, user.id)
+      .then (hasPermission) ->
+        unless hasPermission
+          router.throw status: 400, info: 'no permission'
+    .then (conversation) =>
+      groupId = conversation.groupId
+      (if groupId
+        Group.getById groupId, {preferCache: true}
+      else
+        Promise.resolve null)
       .then (group) =>
-        Conversation.hasPermission conversation, user.id
-        .then (hasPermission) =>
-          unless hasPermission
-            router.throw status: 401, info: 'unauthorized'
-
-          conversationMessageId = uuid.v4()
+          conversationMessageId = cknex.getTimeUuid()
 
           @_createCards body, isImage, conversationMessageId
           .then ({card} = {}) ->
@@ -246,24 +223,6 @@ class ConversationMessageCtrl
               prepareFn: (item) ->
                 prepareFn item
             }
-      .tap ->
-        if conversation.data?.isSlowMode
-          ConversationMessage.upsertSlowModeLog {
-            userId: user.id, conversationId: conversation.id
-          }
-      .tap  ->
-        (if conversation.groupId
-          EarnAction.completeActionByGroupIdAndUserId(
-            conversation.groupId
-            user.id
-            'conversationMessage'
-          )
-          .catch -> null
-        else
-          Promise.resolve null
-        )
-        .then (rewards) ->
-          {rewards}
       .then (conversationMessage) =>
         userIds = conversation.userIds
         pickedConversation = _.pick conversation, [
@@ -377,7 +336,7 @@ class ConversationMessageCtrl
             channelId: conversationId
           }
         else
-          Conversation.hasPermission conversation, user.id)
+          Conversation.pmHasPermission conversation, user.id)
       ]
       .then ([group, hasPermission]) =>
         unless hasPermission
@@ -400,9 +359,6 @@ class ConversationMessageCtrl
 
 
   uploadImage: ({}, {user, file}) ->
-    router.assert {file}, {
-      file: Joi.object().unknown().keys schemas.imageFile
-    }
     ImageService.getSizeByBuffer (file.buffer)
     .then (size) ->
       key = "#{user.id}_#{uuid.v4()}"
