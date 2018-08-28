@@ -41,6 +41,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'timeuuid' # not unique - 1 row per userId
+      slug: 'text'
       userId: 'uuid'
       userIds: {type: 'set', subType: 'uuid'}
       groupId: 'uuid'
@@ -58,6 +59,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'timeuuid' # not unique - 1 row per userId
+      slug: 'text'
       userId: 'uuid'
       userIds: {type: 'set', subType: 'uuid'}
       groupId: 'uuid'
@@ -75,6 +77,7 @@ tables = [
     keyspace: 'free_roam'
     fields:
       id: 'timeuuid'
+      slug: 'text'
       userId: 'uuid'
       userIds: {type: 'set', subType: 'uuid'}
       groupId: 'uuid'
@@ -84,6 +87,23 @@ tables = [
       lastUpdateTime: 'timestamp'
     primaryKey:
       partitionKey: ['id']
+      clusteringColumns: null
+  }
+  {
+    name: 'conversations_by_slug'
+    keyspace: 'free_roam'
+    fields:
+      id: 'timeuuid'
+      slug: 'text'
+      userId: 'uuid'
+      userIds: {type: 'set', subType: 'uuid'}
+      groupId: 'uuid'
+      type: 'text'
+      data: 'text' # json: name, description, slowMode, slowModeCooldown
+      isRead: 'boolean'
+      lastUpdateTime: 'timestamp'
+    primaryKey:
+      partitionKey: ['slug']
       clusteringColumns: null
   }
 ]

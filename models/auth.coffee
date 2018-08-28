@@ -23,7 +23,7 @@ decodeAccessToken = (token) ->
 
 class AuthModel
   fromUserId: (userId) ->
-    {accessToken: generateAccessToken(userId)}
+    {accessToken: generateAccessToken("#{userId}")}
 
   userIdFromAccessToken: (token) ->
     decodeAccessToken(token)

@@ -89,7 +89,7 @@ class Product
       .run()
     ]
 
-  getBySlug: (id) ->
+  getBySlug: (slug) ->
     cknex().select '*'
     .from 'products_by_slug'
     .where 'slug', '=', slug

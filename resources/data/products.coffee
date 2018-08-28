@@ -323,6 +323,8 @@ The levelers can also be used as a support base for other stabilizing equipment"
     itemSlug: 'charge-controller'
     source: 'amazon'
     sourceId: 'B01GMUPH0O'
+    reviewersLiked: []
+    reviewersDisliked: []
     data:
       countryOfOrigin: 'China'
 
@@ -336,6 +338,8 @@ The levelers can also be used as a support base for other stabilizing equipment"
     itemSlug: 'charge-controller'
     source: 'amazon'
     sourceId: 'B00BCTLIHC'
+    reviewersLiked: ['Simplicity', 'Good for small installs']
+    reviewersDisliked: ['Not as efficient as MPPT']
     data:
       countryOfOrigin: 'China'
 
@@ -350,6 +354,8 @@ The levelers can also be used as a support base for other stabilizing equipment"
     itemSlug: 'generator'
     source: 'amazon'
     sourceId: 'B079YF1HF6'
+    reviewersLiked: ['Reliable', 'Lightweight', 'Very quiet']
+    reviewersDisliked: ['Price']
     data:
       countryOfOrigin: 'Thailand'
 
@@ -363,6 +369,8 @@ The levelers can also be used as a support base for other stabilizing equipment"
     itemSlug: 'generator'
     source: 'amazon'
     sourceId: 'B01MTGJGCN'
+    reviewersLiked: ['Quiet', 'Lightweight', 'Cost-effective']
+    reviewersDisliked: ['Some complaints of mistakes made by factory', 'Not as reliable as a Honda generator']
     data:
       countryOfOrigin: 'China'
 

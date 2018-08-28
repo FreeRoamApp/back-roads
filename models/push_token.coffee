@@ -13,6 +13,7 @@ tables = [
     fields:
       userId: 'uuid'
       token: 'text'
+      deviceId: 'text'
       sourceType: 'text'
       isActive: 'boolean'
       errorCount: 'int'

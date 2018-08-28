@@ -32,7 +32,6 @@ class CacheService
     GROUP_SLUG: 'group:slug'
     GROUP_GET_ALL: 'group:getAll1'
     GROUP_GET_ALL_CATEGORY: 'group:getAll:category9'
-    GROUP_STAR: 'group:star2'
     GROUP_USER_COUNT: 'group:user_count1'
     GROUP_ROLE_GROUP_ID_USER_ID: 'group_role:groupId:userId3'
     GROUP_ROLES: 'group_role:groupId1'
@@ -54,6 +53,7 @@ class CacheService
     THREAD_CREATOR: 'thread:creator'
     THREAD_USER: 'thread:user'
     USER_ID: 'user:id'
+    USER_BLOCKS: 'user_blocks:all'
   STATIC_PREFIXES: # anything that's persistent (leaderboards, etc...)
     # these should stay, don't add a number to end to clear
     GROUP_LEADERBOARD: 'group:leaderboard'
