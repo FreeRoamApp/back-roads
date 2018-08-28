@@ -100,7 +100,7 @@ module.exports = router
 .on 'groupRoles.deleteByGroupIdAndRoleId',
   authed GroupRoleCtrl.deleteByGroupIdAndRoleId
 
-.on 'items.getById', authed ItemCtrl.getById
+.on 'items.getBySlug', authed ItemCtrl.getBySlug
 .on 'items.getAll', authed ItemCtrl.getAll
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
 .on 'items.search', authed ItemCtrl.search
@@ -109,10 +109,10 @@ module.exports = router
 
 .on 'nps.create', authed NpsCtrl.create
 
-.on 'places.getById', authed PlaceCtrl.getById
+.on 'places.getBySlug', authed PlaceCtrl.getBySlug
 .on 'places.search', authed PlaceCtrl.search
 
-.on 'products.getById', authed ProductCtrl.getById
+.on 'products.getBySlug', authed ProductCtrl.getBySlug
 .on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
 
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert

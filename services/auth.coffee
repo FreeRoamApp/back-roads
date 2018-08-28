@@ -41,13 +41,5 @@ class AuthService
     else
       Promise.resolve req
 
-  getAppKeyFromUserAgent: (userAgent) ->
-    unless userAgent
-      return 'freeroam'
-    regex = new RegExp '(freeroam)\/([a-zA-Z0-9]+/)?([0-9\.]+)'
-    matches = userAgent.match(regex)
-    appKey = matches?[2]?.replace('/', '') or 'freeroam'
-    appKey
-
 
 module.exports = new AuthService()

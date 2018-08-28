@@ -59,6 +59,12 @@ defaultUser = (user) ->
 
   user.flags = JSON.stringify user.flags
 
+  # hacky https://github.com/datastax/nodejs-driver/pull/243
+  delete user.get
+  delete user.values
+  delete user.keys
+  delete user.forEach
+
   _.defaults user, {
     id: cknex.getTimeUuid()
     language: 'en'
@@ -127,7 +133,11 @@ class UserModel
       defaultUserOutput user
 
   updateByUser: (user, newUser) ->
+    newUser = _.defaults newUser, user
     newUser = defaultUser newUser
+
+    username = user.username or newUser.username
+    email = user.email or newUser.email
 
     Promise.all _.filter [
       cknex().update 'users_by_id'
@@ -135,10 +145,16 @@ class UserModel
       .where 'id', '=', user.id
       .run()
 
-      if user.username
+      if username
         cknex().update 'users_by_username'
         .set _.omit newUser, ['username']
-        .where 'username', '=', user.username
+        .where 'username', '=', username
+        .run()
+
+      if email
+        cknex().update 'users_by_email'
+        .set _.omit newUser, ['email']
+        .where 'email', '=', email
         .run()
     ]
     .then ->

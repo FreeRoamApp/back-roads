@@ -11,13 +11,13 @@ PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
 class PushTokensCtrl
-  upsert: ({token, sourceType, language, deviceId}, {user, appKey}) =>
+  upsert: ({token, sourceType, language, deviceId}, {user}) =>
     userId = user.id
 
     Promise.all [
-      User.updateByUser user, {
-        hasPushToken: true
-      }
+      # User.updateByUser user, {
+      #   hasPushToken: true
+      # }
       # get any token obj associated with this token
       PushToken.getAllByToken token
       .then (pushTokens) =>
@@ -33,7 +33,7 @@ class PushTokensCtrl
             ]
 
         PushToken.upsert {
-          token, deviceId, appKey
+          token, deviceId
           userId: user.id
           sourceType: sourceType or pushTokens?[0]?.sourceType or 'android'
         }
@@ -41,7 +41,6 @@ class PushTokensCtrl
         PushNotificationService.subscribeToAllUserTopics {
           userId
           token
-          appKey
           deviceId
         }
     ]

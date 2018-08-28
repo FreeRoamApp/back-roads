@@ -157,17 +157,17 @@ class ThreadModel
     if suffix is 1
       suffix = parseInt(Math.random() * 10000) # random # between 0 and 9999
 
-    id = if suffix \
+    slug = if suffix \
          then "#{baseSlug}-#{suffix}"
          else baseSlug
-    @getBySlug baseSlug
+    @getBySlug slug, {preferCache: true}
     .then (existingThread) =>
       if attempts > MAX_UNIQUE_ID_ATTEMPTS
-        return uuid.v4()
+        return "#{baseSlug}-#{Date.now()}"
       if existingThread
         @getUniqueSlug baseSlug, (suffix or 0) + 1, attempts  + 1
       else
-        baseSlug
+        slug
 
   upsert: (thread) ->
     slug = _.kebabCase(thread.data.title)
@@ -446,7 +446,7 @@ class ThreadModel
 
   incrementById: (id, diff) =>
     @getById id, {preferCache: true, omitCounter: true}
-    .then @setStaleByThrea
+    .then @setStaleByThread
 
     q = cknex().update 'threads_counter_by_id'
     _.forEach diff, (amount, key) ->

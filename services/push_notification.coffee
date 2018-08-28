@@ -357,13 +357,13 @@ class PushNotificationService
               errorCount: newErrorCount
             }, pushToken)
 
-          if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
-            PushToken.getAllByUserId user.id
-            .then (tokens) ->
-              if _.isEmpty tokens
-                User.updateByUser user, {
-                  hasPushToken: false
-                }
+          # if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
+          #   PushToken.getAllByUserId user.id
+          #   .then (tokens) ->
+          #     if _.isEmpty tokens
+          #       User.updateByUser user, {
+          #         hasPushToken: false
+          #       }
 
   _checkIfBlocked: (user, fromUserId) ->
     if fromUserId
@@ -375,15 +375,13 @@ class PushNotificationService
     else
       Promise.resolve()
 
-  subscribeToAllUserTopics: ({userId, appKey, token, deviceId}) ->
+  subscribeToAllUserTopics: ({userId, token, deviceId}) ->
     Promise.all [
       PushToken.getAllByUserId userId
       PushTopic.getAllByUserId userId
     ]
     .then ([pushTokens, pushTopics]) =>
-      topics = _.filter pushTopics, {
-        appKey
-      }
+      topics = pushTopics
       uniqueTopics = _.uniqBy topics, (topic) ->
         _.omit topic, ['token']
 
@@ -395,25 +393,10 @@ class PushNotificationService
             deviceId: deviceId
           }, topic
 
-  _getBestTokens: ({pushTokens, appKey, groupId}) ->
-    deviceIds = _.groupBy pushTokens, 'deviceId'
-    bestTokens = _.mapValues deviceIds, (tokens, deviceId) ->
-      # check if one for appKey (app currently being used) exists
-      appKeyToken = _.find tokens, {appKey, errorCount: 0}
-      if appKey and appKeyToken
-        return appKeyToken
-
-      noErrorToken = _.find tokens, {errorCount: 0}
-      if noErrorToken
-        return noErrorToken
-
-      return tokens[0]
-
   # go through all pushTokens a user has and subscribe them to the topic.
   # max 1 subscription per device,
-  # prefer the app they're currently using (appKey, then the group appKey)
   subscribeToPushTopic: (topic) =>
-    {userId, groupId, appKey, sourceType, sourceId} = topic
+    {userId, groupId, sourceType, sourceId} = topic
 
     Promise.all [
       PushToken.getAllByUserId userId
@@ -423,11 +406,9 @@ class PushNotificationService
       # still store push topics if a token isn't set, that way when one does get
       # set, the user will subscribe to correct topics
       if _.isEmpty pushTokens
-        pushTokens = [{userId, appKey, deviceId: 'none', token: 'none'}]
+        pushTokens = [{userId, deviceId: 'none', token: 'none'}]
 
-      bestTokens = @_getBestTokens {pushTokens, appKey, groupId}
-
-      Promise.all _.map bestTokens, (token) =>
+      Promise.all _.map pushTokens, (token) =>
         upsertTopic = _.defaults {
           token: token.token
           deviceId: token.deviceId
@@ -438,17 +419,15 @@ class PushNotificationService
             @subscribeToTopicByToken token.token, upsertTopic
         ]
 
-  subscribeToGroupTopics: ({userId, groupId, appKey}) =>
+  subscribeToGroupTopics: ({userId, groupId}) =>
     Promise.all [
       @subscribeToPushTopic {
         userId
         groupId
-        appKey
       }
       @subscribeToPushTopic {
         userId
         groupId
-        appKey
         sourceType: 'role'
         sourceId: 'everyone'
       }
