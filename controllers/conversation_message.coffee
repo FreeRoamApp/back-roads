@@ -138,7 +138,8 @@ class ConversationMessageCtrl
           mentionUserIds: mentionUserIds
           mentionRoles: roleMentions
           conversationMessage: conversationMessage
-        }).catch -> null
+        }).catch (err) ->
+          console.log 'push err', err
 
   _createCards: (body, isImage, conversationMessageId) =>
     urls = not isImage and body.match(URL_REGEX)
