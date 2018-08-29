@@ -37,6 +37,7 @@ cdnUrl = "https://#{config.CDN_HOST}/d/images/freeroam"
 
 class PushNotificationService
   constructor: ->
+    console.log 'new gcm'
     @gcmConn = new gcm.Sender(config.GOOGLE_API_KEY)
 
     webpush.setVapidDetails(
@@ -122,7 +123,9 @@ class PushNotificationService
         toObj = {topic: "/topics/#{to}"}
         # toObj = {condition: "'#{to}' in topics || '#{to}2' in topics"}
 
+      console.log 'try gcm'
       @gcmConn.send notification, toObj, RETRY_COUNT, (err, result) ->
+        console.log 'gcm', err, result
         successes = result?.success or result?.message_id
         if err or not successes
           reject err
@@ -268,8 +271,6 @@ class PushNotificationService
       message.title or message.text or message.titleObj or message.textObj
     )
       return Promise.reject new Error 'missing message'
-
-    StatsService.sendEvent user.id, 'push_notification', message.type, 'send'
 
     language = user.language or Language.getLanguageByCountry user.country
 
