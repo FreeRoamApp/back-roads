@@ -4,6 +4,7 @@ Joi = require 'joi'
 geoip = require 'geoip-lite'
 
 User = require '../models/user'
+Partner = require '../models/partner'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 CacheService = require '../services/cache'
@@ -34,6 +35,21 @@ class UserCtrl
   getByUsername: ({username}) ->
     User.getByUsername username
     .then User.sanitizePublic(null)
+
+  # problem: partner user account may not exist before partner link can.
+  #
+  getPartner: ({}, {user}) ->
+    User.getPartnerSlugByUserId user.id
+    .then (partnerSlug) ->
+      if partnerSlug
+        Partner.getBySlug partnerSlug
+    .then (partner) ->
+      _.defaults partner, {
+          amazonAffiliateCode: config.AMAZON_AFFILIATE_CODE
+      }
+
+  setPartner: ({partner}, {user}) ->
+    User.setPartner user.id, partner
 
   upsert: ({newUser}, {user}) ->
     User.upsert _.defaults newUser, {id: user.id}

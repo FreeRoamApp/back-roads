@@ -147,12 +147,13 @@ class CacheService
     @redlock.lock key, expireSeconds * 1000
     .then (lock) ->
       fnResult = fn(lock)
-      if not fnResult?.tap
+      if not fnResult?.then
         return fnResult
       else
-        fnResult.tap ->
+        fnResult.then (result) ->
           if unlockWhenCompleted
             lock.unlock()
+          result
         .catch (err) ->
           lock.unlock()
           throw {fnError: err}
@@ -168,6 +169,8 @@ class CacheService
   # if we want to reduce load / network on pubsub, we could have it be
   # an option to use pubsub
   preferCache: (key, fn, {expireSeconds, ignoreNull, category} = {}) =>
+    unless key
+      console.log 'missing cache key'
     rawKey = key
     key = config.REDIS.PREFIX + ':' + key
     expireSeconds ?= DEFAULT_CACHE_EXPIRE_SECONDS
@@ -189,11 +192,15 @@ class CacheService
 
       @lock "#{key}:run_lock", ->
         fn().then (value) ->
+          unless rawKey
+            console.log 'missing cache key value', value
           if (value isnt null and value isnt undefined) or not ignoreNull
             RedisService.set key, JSON.stringify value
             .then ->
               RedisService.expire key, expireSeconds
-          PubSub.publish [pubSubChannel], value
+          setTimeout ->
+            PubSub.publish [pubSubChannel], value
+          , 100 # account for however long it takes for other instances to acquire / check lock / subscribe
           return value
       , {
         unlockWhenCompleted: true, expireSeconds: ONE_MINUTE_SECONDS

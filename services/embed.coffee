@@ -72,10 +72,9 @@ embedFn = _.curry (props, object) ->
     unless key
       console.log 'missing embed', props, object
     [embedClassKey, embedKey] = key.split ':'
-    try
-      embedded[embedKey] = EmbedClasses[embedClassKey][embedKey] embedded, options
-    catch err
-      console.log key, err
+    embedded[embedKey] = EmbedClasses[embedClassKey][embedKey](
+      embedded, options
+    )
 
   return Promise.props embedded
 

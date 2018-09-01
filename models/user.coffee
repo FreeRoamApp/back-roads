@@ -51,6 +51,29 @@ tables = [
     primaryKey:
       partitionKey: ['email']
   }
+
+  # referrals / partners
+  {
+    name: 'user_partners_by_userId'
+    keyspace: 'free_roam'
+    fields:
+      userId: 'timeuuid'
+      partnerSlug: 'text'
+    primaryKey:
+      partitionKey: ['userId']
+  }
+  # TODO: switch to use partnerUserId once we have a system setup where every
+  # partner has a user account
+  {
+    name: 'user_partners_by_partnerSlug'
+    keyspace: 'free_roam'
+    fields:
+      userId: 'timeuuid'
+      partnerSlug: 'text'
+    primaryKey:
+      partitionKey: ['partnerSlug']
+      clusteringColumns: ['userId']
+  }
 ]
 
 defaultUser = (user) ->
@@ -88,6 +111,8 @@ defaultUserOutput = (user) ->
     language: 'en'
   }
 
+PARTNER_TTL_S = 3600 * 24 * 31
+
 class UserModel
   SCYLLA_TABLES: tables
 
@@ -107,6 +132,38 @@ class UserModel
 
   getAllByUsername: (username, {limit} = {}) ->
     null # TODO: search using >= operator on username?
+
+  setPartner: (userId, partnerSlug) =>
+    console.log 'set partner', userId, partnerSlug
+    @getPartnerSlugByUserId userId
+    .then (oldPartnerSlug) ->
+      if oldPartnerSlug
+        cknex().delete()
+        .from 'user_partners_by_partnerSlug'
+        .where 'partnerSlug', '=', oldPartnerSlug
+        .andWhere 'userId', '=', userId
+        .run()
+    .then ->
+      Promise.all [
+        cknex().update 'user_partners_by_userId'
+        .set {partnerSlug}
+        .where 'userId', '=', userId
+        .usingTTL PARTNER_TTL_S
+        .run()
+
+        cknex().insert {userId, partnerSlug}
+        .into 'user_partners_by_partnerSlug'
+        .usingTTL PARTNER_TTL_S
+        .run()
+      ]
+
+  getPartnerSlugByUserId: (userId) ->
+    cknex().select '*'
+    .from 'user_partners_by_userId'
+    .where 'userId', '=', userId
+    .run {isSingle: true}
+    .then (partner) ->
+      partner?.partnerSlug
 
   upsert: (user) ->
     user = defaultUser user
