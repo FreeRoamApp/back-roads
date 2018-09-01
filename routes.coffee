@@ -145,6 +145,8 @@ module.exports = router
 .on 'users.getById', authed UserCtrl.getById
 .on 'users.getByUsername', authed UserCtrl.getByUsername
 .on 'users.getCountry', authed UserCtrl.getCountry
+.on 'users.setPartner', authed UserCtrl.setPartner
+.on 'users.getPartner', authed UserCtrl.getPartner
 
 .on 'userFollowers.getAllFollowingIds',
   authed UserFollowerCtrl.getAllFollowingIds

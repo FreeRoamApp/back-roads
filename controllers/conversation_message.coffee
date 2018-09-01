@@ -47,6 +47,7 @@ defaultConversationEmbed = [EmbedService.TYPES.CONVERSATION.USERS]
 prepareFn = (item) ->
   EmbedService.embed {
     embed: defaultEmbed
+    # FIXME: pass groupId for groupUser embed. don't embed groupUser for pm
   }, ConversationMessage.default(item)
   .then (item) ->
     # TODO: rm?
@@ -323,23 +324,15 @@ class ConversationMessageCtrl
 
     Conversation.getById conversationId, {preferCache: true}
     .then (conversation) =>
-
-      Promise.all [
-        if conversation.groupId
-          Group.getById conversation.groupId, {preferCache: true}
-        else
-          Promise.resolve null
-
-        (if conversation.groupId
-          groupId = conversation.groupId
-          permissions = [GroupUser.PERMISSIONS.READ_MESSAGE]
-          GroupUser.hasPermissionByGroupIdAndUser groupId, user, permissions, {
-            channelId: conversationId
-          }
-        else
-          Conversation.pmHasPermission conversation, user.id)
-      ]
-      .then ([group, hasPermission]) =>
+      (if conversation.groupId
+        groupId = conversation.groupId
+        permissions = [GroupUser.PERMISSIONS.READ_MESSAGE]
+        GroupUser.hasPermissionByGroupIdAndUser groupId, user, permissions, {
+          channelId: conversationId
+        }
+      else
+        Conversation.pmHasPermission conversation, user.id)
+      .then (hasPermission) =>
         unless hasPermission
           router.throw status: 401, info: 'unauthorized'
 

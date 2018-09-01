@@ -13,6 +13,7 @@ config =
 
   # also in free-roam
   BASE_NAME_COLORS: ['#2196F3', '#8BC34A', '#FFC107', '#f44336', '#673AB7']
+  AMAZON_AFFILIATE_CODE: 'freeroam-20'
   VERBOSE: if env.VERBOSE then env.VERBOSE is '1' else true
   PORT: env.BACK_ROADS_PORT or 50000
   ENV: env.DEBUG_ENV or env.NODE_ENV
