@@ -31,7 +31,8 @@ class CronService
       Thread.updateScores 'stale'
       # FIXME: running these every minute seems to cause memory leak?
       if config.ENV is config.ENVS.DEV
-        Group.upsert _.cloneDeep allGroups[0]
+        Promise.map allGroups, (group) ->
+          Group.upsert _.cloneDeep group
         Item.batchUpsert _.cloneDeep allItems
         Place.batchUpsert _.cloneDeep allPlaces
         Product.batchUpsert _.cloneDeep allProducts
