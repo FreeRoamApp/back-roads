@@ -149,14 +149,14 @@ class ConversationMessageModel extends Stream
 
   getAllByConversationId: (conversationId, options = {}) =>
     {limit, isStreamed, emit, socket, route, initialPostFn, postFn,
-      minId, minId, reverse} = options
+      minId, maxId, reverse} = options
 
     minTime = if minId \
               then cknex.getTimeUuidFromString(minId).getDate()
               else undefined
 
-    maxTime = if minId \
-              then cknex.getTimeUuidFromString(minId).getDate()
+    maxTime = if maxId \
+              then cknex.getTimeUuidFromString(maxId).getDate()
               else undefined
 
     timeBucket = TimeService.getScaledTimeByTimeScale(
@@ -173,8 +173,8 @@ class ConversationMessageModel extends Stream
         q.andWhere 'id', '>=', minId
         q.orderBy 'id', 'ASC'
 
-      if minId
-        q.andWhere 'id', '<', minId
+      if maxId
+        q.andWhere 'id', '<', maxId
 
       q.limit limit
       .run()
