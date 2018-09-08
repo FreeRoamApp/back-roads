@@ -60,6 +60,9 @@ tables = [
       # 0 no shade, 5 shade if you want it, 10 all shade
       shadeLevel: 'int'
 
+      # 0 you might get murdered, 10 no worries at all
+      safetyLevel: 'int'
+
       cellSignal: 'text' # json {verizon: {signal: 7, type: '4g'}, att: {signal: 3, type: '3g'}} 0-10 signal
       maxDays: 'int'
       hasFreshWater: 'boolean'
@@ -105,6 +108,7 @@ elasticSearchIndices = [
       crowdLevel: {type: 'object'}
       noiseLevel: {type: 'object'}
       shadeLevel: {type: 'integer'}
+      safetyLevel: {type: 'integer'}
       cellSignal: {type: 'object'}
       maxDays: {type: 'integer'}
       hasFreshWater: {type: 'boolean'}

@@ -57,6 +57,57 @@ places =
       {sourceType: 'youtube', sourceId: 'rH3wRuU3xNk'}
     ]
 
+  'scaddan-wash-blm-campground':
+    name: 'Scaddan Wash BLM'
+    location: [33.661132, -114.186548]
+    siteCount:
+      99: 50
+    crowdLevel: {winter: 8, spring: 5, summer: 2, fall: 5}
+    noiseLevel: {day: 6, night: 6}
+    shadeLevel: 0
+    roadDifficulty: 0
+    cellSignal: {att: {signal: 5, type: '4g'}, verizon: {signal: 8, type: '4g', speed: 'slow'}, sprint: {signal: 6, type: '3g'}, tmobile: {signal: 5, type: '4g'}}
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    videos: [
+      {sourceType: 'youtube', sourceId: 'rH3wRuU3xNk'}
+    ]
+
+  # 'forest-road-687':
+  #   name: 'Forest Road 687'
+  #   location: [31.8557, -110.0084]
+  #   siteCount:
+  #     35: 5
+  #     25: 5
+  #   crowdLevel: {winter: 3, spring: 3, summer: 2, fall: 3}
+  #   noiseLevel: {day: 1, night: 1}
+  #   shadeLevel: 3
+  #   roadDifficulty: 7
+  #   cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 6, type: '4g'}, tmobile: {signal: 6, type: '4g'}}
+  #   minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+  #   maxDays: 14
+    # videos: [
+    #   {sourceType: 'youtube', sourceId: 'rH3wRuU3xNk'}
+    # ]
+
+  'darby-well-road':
+    name: 'Darby Well Road'
+    location: [32.3393, -112.8495]
+    siteCount:
+      35: 5
+      25: 15
+    crowdLevel: {winter: 3, spring: 3, summer: 2, fall: 3}
+    noiseLevel: {day: 3, night: 2}
+    shadeLevel: 0
+    roadDifficulty: 3
+    cellSignal: {att: {signal: 6, type: '4g'}, verizon: {signal: 6, type: '4g'}, tmobile: {signal: 4, type: '4g'}}
+    safetyLevel: 5
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    videos: [
+      {sourceType: 'youtube', sourceId: 'pwYfAMLVTsQ'}
+    ]
+
 
 module.exports = _.map places, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity
