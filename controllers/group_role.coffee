@@ -85,7 +85,7 @@ class GroupRoleCtrl
       }
       diff = {
         groupId
-        roleId
+        id: roleId
       }
       if not channelId
         diff.globalPermissions = permissions

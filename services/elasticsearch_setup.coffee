@@ -9,7 +9,7 @@ config = require '../config'
 
 class ElasticsearchSetupService
   setup: (indices) =>
-    CacheService.lock 'elasticsearch_setup8', =>
+    CacheService.lock 'elasticsearch_setup6', =>
       Promise.each indices, @createIndexIfNotExist
     , {expireSeconds: 300}
 
@@ -27,7 +27,17 @@ class ElasticsearchSetupService
             number_of_replicas: 2
       }
       .catch (err) ->
-        console.log err
+        # add any new mappings
+        Promise.all _.map index.mappings, (value, key) ->
+          elasticsearch.indices.putMapping {
+            index: index.name
+            type: "#{index.name}"
+            body:
+              "#{index.name}":
+                properties:
+                  "#{key}": value
+          }
+        .catch -> null
     # Promise.resolve null
 
 module.exports = new ElasticsearchSetupService()

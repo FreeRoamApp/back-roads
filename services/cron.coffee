@@ -42,11 +42,13 @@ class CronService
       Thread.updateScores 'time'
 
 
-    @addCron 'oneHour', '0 20 * * * *', ->
+    @addCron 'oneHour', '0 3 * * * *', ->
       CleanupService.trimLeaderboards()
       Category.batchUpsert _.cloneDeep allCategories
       Product.batchUpsert _.cloneDeep allProducts
       Item.batchUpsert _.cloneDeep allItems
+      Promise.map allGroups, (group) ->
+        Group.upsert _.cloneDeep group
 
 
   addCron: (key, time, fn) =>

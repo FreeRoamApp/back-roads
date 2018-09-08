@@ -30,7 +30,7 @@ elasticsearch = require '../services/elasticsearch'
 #   categories: ['']
 # }
 
-
+# searching done in elasticsearch
 
 tables = [
   {
@@ -40,13 +40,43 @@ tables = [
       slug: 'text' # eg: old-settlers-rv-park
       id: 'timeuuid'
       name: 'text'
+
+      details: 'text' # wikipedia style info. can be stylized with markdown
+      drivingInstructions: 'text'
+
       location: {type: 'set', subType: 'double'} # coordinates
-      thoroughfare: 'text' # address
-      premise: 'text' # apt, suite, etc...
-      locality: 'text' # city / town
-      administrative_area: 'text' # state / province / region. iso when avail
-      postal_code: 'text'
-      country: 'text' # 2 char iso
+      siteCount: 'text' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
+      distanceTo: 'text' # json {groceries: 25, walmart: 10} all in miles
+
+      # 0 my prius could get there, 5 need a truck, 10 need 4x4 high clearance van
+      roadDifficulty: 'int'
+
+      # 0 private spot, closest human 100yd+ away, 5 can see others, > 50 ft, 10 sardines
+      crowdLevel: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
+
+      # 0 silence, 5 occassional train / some road noise, 10 constant trains, highway noise
+      noiseLevel: 'text' # json {day: 3, night: 0}
+
+      # 0 no shade, 5 shade if you want it, 10 all shade
+      shadeLevel: 'int'
+
+      cellSignal: 'text' # json {verizon: {signal: 7, type: '4g'}, att: {signal: 3, type: '3g'}} 0-10 signal
+      maxDays: 'int'
+      hasFreshWater: 'boolean'
+      hasSewage: 'boolean'
+      has30Amp: 'boolean'
+      has50Amp: 'boolean'
+      minPrice: 'int'
+      maxPrice: 'int'
+      maxLength: 'int'
+      videos: 'text' # json
+      address: 'text' # json:
+        # thoroughfare: 'text' # address
+        # premise: 'text' # apt, suite, etc...
+        # locality: 'text' # city / town
+        # administrative_area: 'text' # state / province / region. iso when avail
+        # postal_code: 'text'
+        # country: 'text' # 2 char iso
     primaryKey:
       partitionKey: ['slug']
   }
@@ -71,6 +101,19 @@ elasticSearchIndices = [
     mappings:
       name: {type: 'text'}
       location: {type: 'geo_point'}
+      roadDifficulty: {type: 'integer'}
+      crowdLevel: {type: 'object'}
+      noiseLevel: {type: 'object'}
+      shadeLevel: {type: 'integer'}
+      cellSignal: {type: 'object'}
+      maxDays: {type: 'integer'}
+      hasFreshWater: {type: 'boolean'}
+      hasSewage: {type: 'boolean'}
+      has30Amp: {type: 'boolean'}
+      has50Amp: {type: 'boolean'}
+      minPrice: {type: 'integer'}
+      maxPrice: {type: 'integer'}
+      maxLength: {type: 'integer'}
   }
 ]
 
@@ -86,10 +129,11 @@ class Place
     place = defaultPlace place
 
     Promise.all [
-      cknex().update 'places_by_slug'
-      .set _.omit place, ['slug']
-      .where 'slug', '=', place.slug
-      .run()
+      # FIXME
+      # cknex().update 'places_by_slug'
+      # .set _.omit place, ['slug']
+      # .where 'slug', '=', place.slug
+      # .run()
 
       @index place
     ]
@@ -100,7 +144,7 @@ class Place
       index: 'places'
       type: 'places'
       id: place.slug
-      body: _.pick place, ['name', 'location']
+      body: _.pick place, _.keys elasticSearchIndices[0].mappings
     }
 
   search: ({query}) ->
@@ -113,7 +157,8 @@ class Place
         size : 250
     }
     .then ({hits}) ->
-      _.map hits.hits, '_source'
+      _.map hits.hits, ({_id, _source}) ->
+        {slug: _id, name: _source.name, location: _source.location}
 
   getBySlug: (slug) ->
     cknex().select '*'
