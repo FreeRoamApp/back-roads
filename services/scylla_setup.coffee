@@ -9,7 +9,7 @@ config = require '../config'
 
 class ScyllaSetupService
   setup: (tables) =>
-    CacheService.lock 'scylla_setup2', =>
+    CacheService.lock 'scylla_setup5', =>
       Promise.all [
         @createKeyspaceIfNotExists 'free_roam'
       ]
@@ -23,6 +23,8 @@ class ScyllaSetupService
           Promise.each createTables, @createTableIfNotExist
         else
           Promise.each tables, @createTableIfNotExist
+      .then ->
+        cknex.enableErrors()
     , {expireSeconds: 300}
 
   createKeyspaceIfNotExists: (keyspaceName) ->
@@ -34,20 +36,36 @@ class ScyllaSetupService
     ###
     Promise.resolve null
 
-  createTableIfNotExist: (table) ->
-    q = cknex(table.keyspace).createColumnFamilyIfNotExists table.name
-    _.map table.fields, (type, key) ->
-      if typeof type is 'object'
-        if type.subType2
-          q[type.type] key, type.subType, type.subType2
-        else
-          q[type.type] key, type.subType
+  addColumnToQuery: (q, type, key) ->
+    if typeof type is 'object'
+      if type.subType2
+        q[type.type] key, type.subType, type.subType2
       else
-        try
-          q[type] key
-        catch err
-          console.log key
-          throw err
+        q[type.type] key, type.subType
+    else
+      try
+        q[type] key
+      catch err
+        console.log key
+        throw err
+
+  createTableIfNotExist: (table) =>
+    primaryColumns = _.filter(
+      table.primaryKey.partitionKey.concat(table.primaryKey.clusteringColumns)
+    )
+    {primaryFields, normalFields} = _.reduce table.fields, (obj, type, key) ->
+      if key in primaryColumns
+        obj.primaryFields.push {key, type}
+      else
+        obj.normalFields.push {key, type}
+      obj
+    , {primaryFields: [], normalFields: []}
+
+    # add primary fields, set as primary, set order
+    q = cknex(table.keyspace).createColumnFamilyIfNotExists table.name
+
+    _.map primaryFields, ({key, type}) =>
+      @addColumnToQuery q, type, key
 
     if table.primaryKey.clusteringColumns
       q.primary(
@@ -64,6 +82,14 @@ class ScyllaSetupService
           orderBy[0]
           orderBy[1]
         )
+
     q.run()
+    .then =>
+
+      # add any new columns
+      Promise.each normalFields, ({key, type}) =>
+        q = cknex(table.keyspace).alterColumnFamily(table.name)
+        @addColumnToQuery q, type, key
+        q.run().catch -> null
 
 module.exports = new ScyllaSetupService()

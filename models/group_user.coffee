@@ -340,7 +340,7 @@ class GroupUserModel
         everyoneRole = _.find roles, {name: 'everyone'}
         groupUserRoles = _.filter _.map groupUser.roleIds, (roleId) ->
           _.find roles, (role) ->
-            "#{role.roleId}" is "#{roleId}"
+            "#{role.id}" is "#{roleId}"
         if everyoneRole
           groupUserRoles = groupUserRoles.concat everyoneRole
         groupUser.roles = groupUserRoles

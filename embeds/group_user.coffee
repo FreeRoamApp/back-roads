@@ -12,7 +12,7 @@ class GroupUserEmbed
       everyoneRole = _.find roles, {name: 'everyone'}
       groupUserRoles = _.filter _.map groupUser.roleIds, (roleId) ->
         _.find roles, (role) ->
-          "#{role.roleId}" is "#{roleId}"
+          "#{role.id}" is "#{roleId}"
       if everyoneRole
         groupUserRoles = groupUserRoles.concat everyoneRole
 
@@ -22,7 +22,7 @@ class GroupUserEmbed
     ).then (roles) ->
       groupUserRoleNames = _.filter _.map groupUser.roleIds, (roleId) ->
         _.find(roles, (role) ->
-          "#{role.roleId}" is "#{roleId}")?.name
+          "#{role.id}" is "#{roleId}")?.name
       groupUserRoleNames = groupUserRoleNames.concat 'everyone'
 
   karma: (groupUser) ->

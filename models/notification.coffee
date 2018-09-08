@@ -1,5 +1,5 @@
 _ = require 'lodash'
-uuid = require 'uuid'
+uuid = require 'node-uuid'
 Promise = require 'bluebird'
 
 cknex = require '../services/cknex'
@@ -44,6 +44,25 @@ trade notification i guess by groupId for now
 tables = [
   {
     name: 'notifications_by_userId'
+    keyspace: 'free_roam'
+    fields:
+      id: 'timeuuid'
+      userId: 'uuid'
+      groupId: 'uuid'
+      uniqueId: 'text' # used so there's not a bunch of dupe messages
+      fromId: 'uuid'
+      title: 'text'
+      text: 'text'
+      isRead: 'boolean'
+      data: 'text' # JSON conversationId
+    primaryKey:
+      partitionKey: ['userId']
+      clusteringColumns: ['id']
+    withClusteringOrderBy: [['id', 'desc']]
+  }
+  # chat notifications
+  {
+    name: 'notifications_by_userId_and_groupId'
     keyspace: 'free_roam'
     fields:
       id: 'timeuuid'
@@ -113,17 +132,9 @@ class NotificationModel
       Promise.resolve notification
     )
     .then (notification) ->
-      # FIXME: i think lodash or cassanknex is adding these, but can't find where...
       setUser = _.omit notification, ['userId', 'groupId', 'id']
+      setUserGroup = _.omit notification, ['userId', 'groupId', 'id']
       setRole = _.omit notification, ['roleId', 'id']
-      delete setUser.get
-      delete setUser.values
-      delete setUser.keys
-      delete setUser.forEach
-      delete setRole.get
-      delete setRole.values
-      delete setRole.keys
-      delete setRole.forEach
 
       if notification.isRead
         ttl = READ_TTL
@@ -134,6 +145,13 @@ class NotificationModel
           [
             cknex().update 'notifications_by_userId'
             .set setUser
+            .where 'userId', '=', notification.userId
+            .andWhere 'id', '=', notification.id
+            .usingTTL ttl
+            .run()
+
+            cknex().update 'notifications_by_userId_and_groupId'
+            .set setUserGroup
             .where 'userId', '=', notification.userId
             .andWhere 'groupId', '=', notification.groupId
             .andWhere 'id', '=', notification.id
@@ -176,7 +194,7 @@ class NotificationModel
 
   getAllByUserIdAndGroupId: (userId, groupId) ->
     cknex().select '*'
-    .from 'notifications_by_userId'
+    .from 'notifications_by_userId_and_groupId'
     .where 'userId', '=', userId
     .andWhere 'groupId', '=', groupId
     .run()
@@ -195,6 +213,12 @@ class NotificationModel
         [
           cknex().delete()
           .from 'notifications_by_userId'
+          .where 'userId', '=', notification.userId
+          .andWhere 'id', '=', notification.id
+          .run()
+
+          cknex().delete()
+          .from 'notifications_by_userId_and_groupId'
           .where 'userId', '=', notification.userId
           .andWhere 'groupId', '=', notification.groupId
           .andWhere 'id', '=', notification.id

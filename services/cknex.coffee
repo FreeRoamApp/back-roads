@@ -1,7 +1,6 @@
-###
-communicating bad alloc errors may be due to batching, but the 1 time it has
-happened so far was due to being oom (based on max memory set for node)
-###
+# may need fix for https://github.com/datastax/nodejs-driver/pull/243
+# if https://github.com/datastax/nodejs-driver/pull/260 didn't do it
+# (.values, .forEach, .keys, .get getting added)
 
 cassanknex = require 'cassanknex'
 cassandra = require 'cassandra-driver'
@@ -41,6 +40,8 @@ ready = new Promise (resolve, reject) ->
 
       resolve res
 
+errorsEnabled = false
+
 cknex = (keyspace = 'free_roam') ->
   instance = cassanknexInstance keyspace
   instance.run = (options = {}) -> # skinny arrow on purpose
@@ -56,7 +57,8 @@ cknex = (keyspace = 'free_roam') ->
         self.exec options, (err, result) ->
           # queryCount += 1
           if err
-            console.log 'scylla err', self._columnFamily, self._statements
+            if errorsEnabled
+              console.log 'scylla err', self._columnFamily, self._statements
             reject err
           else if options.returnPageState
             resolve result
@@ -65,6 +67,9 @@ cknex = (keyspace = 'free_roam') ->
           else
             resolve result.rows
   instance
+
+cknex.enableErrors = ->
+  errorsEnabled = true
 
 cknex.getTimeUuid = (time) ->
   if time

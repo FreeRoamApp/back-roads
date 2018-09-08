@@ -382,7 +382,12 @@ class PushNotificationService
       PushTopic.getAllByUserId userId
     ]
     .then ([pushTokens, pushTopics]) =>
-      topics = pushTopics
+      topics = pushTopics.concat [{
+        userId: userId
+        groupId: config.EMPTY_UUID
+        sourceType: 'all'
+        sourceId: 'all'
+      }]
       uniqueTopics = _.uniqBy topics, (topic) ->
         _.omit topic, ['token']
 
