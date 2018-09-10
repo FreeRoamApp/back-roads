@@ -44,12 +44,13 @@ places =
   'scaddan-wash-blm-campground':
     name: 'Scaddan Wash BLM'
     location: [33.661132, -114.186548]
+    drivingInstructions: ''
     siteCount:
       99: 50
     crowdLevel: {winter: 8, spring: 5, summer: 2, fall: 5}
     noiseLevel: {day: 6, night: 6}
     shadeLevel: 0
-    roadDifficulty: 0
+    roadDifficulty: 1
     cellSignal: {att: {signal: 5, type: '4g'}, verizon: {signal: 8, type: '4g', speed: 'slow'}, sprint: {signal: 6, type: '3g'}, tmobile: {signal: 5, type: '4g'}}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
@@ -75,7 +76,7 @@ places =
 
   # 'forest-road-687':
   #   name: 'Forest Road 687'
-  #   location: [31.8557, -110.0084]
+  #   location: [31.860536, -110.015574]
   #   siteCount:
   #     35: 5
   #     25: 5
@@ -92,7 +93,7 @@ places =
 
   'darby-well-road':
     name: 'Darby Well Road'
-    location: [32.3393, -112.8495]
+    location: [32.339270, -112.849561]
     siteCount:
       35: 5
       25: 15
@@ -107,6 +108,70 @@ places =
     videos: [
       {sourceType: 'youtube', sourceId: 'pwYfAMLVTsQ'}
     ]
+
+  'craggy-wash-blm':
+    name: 'Craggy Wash BLM'
+    location: [34.586301, -114.367222]
+    siteCount:
+      99: 40
+    crowdLevel: {winter: 6, spring: 5, summer: 3, fall: 5}
+    fullnessLevel: {winter: 6, spring: 4, summer: 2, fall: 4}
+    noiseLevel: {day: 3, night: 2}
+    shadeLevel: 0
+    roadDifficulty: 3
+    cellSignal: {att: {signal: 5, type: '4g', speed: 'fast'}, verizon: {signal: 6, type: '4g'}, sprint: {signal: 7, type: '3g'}, tmobile: {signal: 0, type: '4g', speed: 'fast'}}
+    safetyLevel: 8
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    videos: [
+      {sourceType: 'youtube', sourceId: 'Ta9ZMuUSZUg'}
+      {sourceType: 'youtube', sourceId: 'cTZHqYZwpyg'}
+    ]
+
+  'indian-bread-rocks-blm':
+    name: 'Indian Bread Rocks BLM'
+    location: [32.238663, -109.499735]
+    drivingInstructions: 'Turn on to S Happy Camp Canyon (well-maintained gravel road) from Apache Pass Rd. 3 more miles before you get to the BLM area.'
+    siteCount:
+      35: 4
+      25: 15
+    crowdLevel: {winter: 6, spring: 5, summer: 3, fall: 5}
+    fullnessLevel: {winter: 3, spring: 2, summer: 1, fall: 2}
+    noiseLevel: {day: 1, night: 1}
+    shadeLevel: 0
+    roadDifficulty: 3
+    cellSignal: {att: {signal: 7, type: '4g'}, verizon: {signal: 7, type: '4g'},  tmobile: {signal: 3, type: '4g'}}
+    safetyLevel: 8
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    restrooms: {pitToilet: true}
+    videos: [
+      {sourceType: 'youtube', sourceId: '_SXesBB6x8I'}
+    ]
+
+  'bombos-pond':
+    name: 'Bombo\'s Pond'
+    location: [36.881623, -116.753584]
+    drivingInstructions: 'Right off Highway 95. You can go over the hill by the pond for a little more privacy.'
+    siteCount:
+      99: 20
+    crowdLevel: {winter: 7, spring: 7, summer: 5, fall: 7}
+    fullnessLevel: {winter: 4, spring: 4, summer: 2, fall: 4}
+    noiseLevel: {day: 5, night: 4}
+    shadeLevel: 0
+    roadDifficulty: 1
+    cellSignal: {att: {signal: 2, type: '4g'}, verizon: {signal: 2, type: '4g'}}
+    safetyLevel: 5
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    restrooms: null
+    videos: [
+      {sourceType: 'youtube', sourceId: 'NqjCGkeWMjg'}
+    ]
+
+  # rockhouse campground
+  # jumbo rocks joshua tree
+  # joshua tree south
 
 
 module.exports = _.map places, (value, slug) -> _.defaults {slug}, value

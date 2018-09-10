@@ -6,31 +6,8 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 # main should be like yelp, kayak, etc...? search page. when typing, prepopulate: boondocking, rv park, walmart
-
-# TODO: should be camps or locations? locations could have hiking, dump stations, etc...
-
-# TODO: https://qbox.io/blog/tutorial-how-to-geolocation-elasticsearch
-
-# locations_by_price - can't narrow down by location... don't do
-# locations_by_latitude - narrow down to all within y distance of latitude, then client-side filter by longitude?
-
-# probably should just use elastic search for all of it: https://www.elastic.co/blog/geo-location-and-search
-# then get by the id in here
-
-# price:
-# features: true/false (has/doesn't)?
-# type: (walmart, boondocking, etc...)
-
-# probably will narrow down by region, then iterate over each to filter...
-# camp: queryInfo: {
-#   minPrice: 'free', maxPrice: 'free',  amps: ['none'], maxLength: 25,
-# }
-# camp: queryInfo: {
-#   minPrice: '15', maxPrice: '45',  amps: [30, 50], maxLength: 25,
-#   categories: ['']
-# }
-
-# searching done in elasticsearch
+# TODO: places_translations_by_slug_and_language
+# override english values
 
 tables = [
   {
@@ -54,6 +31,9 @@ tables = [
       # 0 private spot, closest human 100yd+ away, 5 can see others, > 50 ft, 10 sardines
       crowdLevel: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
 
+      # 0 no one there / always spots available, 10 almost impossible to get a spot
+      fullnessLevel: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
+
       # 0 silence, 5 occassional train / some road noise, 10 constant trains, highway noise
       noiseLevel: 'text' # json {day: 3, night: 0}
 
@@ -72,6 +52,7 @@ tables = [
       minPrice: 'int'
       maxPrice: 'int'
       maxLength: 'int'
+      restrooms: 'text'
       videos: 'text' # json
       address: 'text' # json:
         # thoroughfare: 'text' # address
@@ -89,12 +70,34 @@ defaultPlace = (place) ->
   unless place?
     return null
 
+  place = _.defaults {
+    siteCount: JSON.stringify place.siteCount
+    crowdLevel: JSON.stringify place.crowdLevel
+    fullnessLevel: JSON.stringify place.fullnessLevel
+    noiseLevel: JSON.stringify place.noiseLevel
+    cellSignal: JSON.stringify place.cellSignal
+    restrooms: JSON.stringify place.restrooms
+    videos: JSON.stringify place.videos
+    address: JSON.stringify place.address
+  }, place
+
+
   _.defaults place, {
   }
 
 defaultPlaceOutput = (place) ->
   unless place?
     return null
+
+  jsonFields = [
+    'siteCount', 'crowdLevel', 'fullnessLevel', 'noiseLevel', 'cellSignal',
+    'restrooms', 'videos', 'address'
+  ]
+  _.forEach jsonFields, (field) ->
+    try
+      place[field] = JSON.parse place[field]
+    catch
+      {}
 
   place
 
@@ -106,6 +109,7 @@ elasticSearchIndices = [
       location: {type: 'geo_point'}
       roadDifficulty: {type: 'integer'}
       crowdLevel: {type: 'object'}
+      fullnessLevel: {type: 'object'}
       noiseLevel: {type: 'object'}
       shadeLevel: {type: 'integer'}
       safetyLevel: {type: 'integer'}
@@ -118,6 +122,7 @@ elasticSearchIndices = [
       minPrice: {type: 'integer'}
       maxPrice: {type: 'integer'}
       maxLength: {type: 'integer'}
+      restrooms: {type: 'object'}
   }
 ]
 
@@ -130,14 +135,13 @@ class Place
       @upsert place
 
   upsert: (place) ->
-    place = defaultPlace place
+    scyllaPlace = defaultPlace place
 
     Promise.all [
-      # FIXME
-      # cknex().update 'places_by_slug'
-      # .set _.omit place, ['slug']
-      # .where 'slug', '=', place.slug
-      # .run()
+      cknex().update 'places_by_slug'
+      .set _.omit scyllaPlace, ['slug']
+      .where 'slug', '=', scyllaPlace.slug
+      .run()
 
       @index place
     ]
