@@ -1,7 +1,3 @@
-# may need fix for https://github.com/datastax/nodejs-driver/pull/243
-# if https://github.com/datastax/nodejs-driver/pull/260 didn't do it
-# (.values, .forEach, .keys, .get getting added)
-
 cassanknex = require 'cassanknex'
 cassandra = require 'cassandra-driver'
 Promise = require 'bluebird'
@@ -55,10 +51,18 @@ cknex = (keyspace = 'free_roam') ->
         # console.log '----------'
         # console.log ''
         self.exec options, (err, result) ->
+          if result and not _.isEmpty result.rows
+            result.rows = _.map result.rows, (row) ->
+              # https://github.com/datastax/nodejs-driver/pull/243
+              # (.values, .forEach, .keys, .get getting added)
+              plainRow = {}
+              for key, value of row
+                plainRow[key] = value
+              plainRow
           # queryCount += 1
           if err
             if errorsEnabled
-              console.log 'scylla err', self._columnFamily, self._statements
+              console.log 'scylla err', self._columnFamily, err#, self._statements
             reject err
           else if options.returnPageState
             resolve result
