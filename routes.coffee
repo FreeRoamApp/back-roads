@@ -12,7 +12,7 @@ GroupRoleCtrl = require './controllers/group_role'
 ItemCtrl = require './controllers/item'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
-PlaceCtrl = require './controllers/place'
+CampgroundCtrl = require './controllers/campground'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 ThreadCtrl = require './controllers/thread'
@@ -109,8 +109,8 @@ module.exports = router
 
 .on 'nps.create', authed NpsCtrl.create
 
-.on 'places.getBySlug', authed PlaceCtrl.getBySlug
-.on 'places.search', authed PlaceCtrl.search
+.on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
+.on 'campgrounds.search', authed CampgroundCtrl.search
 
 .on 'products.getBySlug', authed ProductCtrl.getBySlug
 .on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
