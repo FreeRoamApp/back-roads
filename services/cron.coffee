@@ -8,13 +8,13 @@ Thread = require '../models/thread'
 Category = require '../models/category'
 Group = require '../models/group'
 Item = require '../models/item'
-Place = require '../models/place'
+Campground = require '../models/campground'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
 allCategories = require '../resources/data/categories'
 allGroups = require '../resources/data/groups'
 allItems = require '../resources/data/items'
-allPlaces = require '../resources/data/places'
+allCampgrounds = require '../resources/data/campgrounds'
 allProducts = require '../resources/data/products'
 config = require '../config'
 
@@ -34,7 +34,7 @@ class CronService
         Promise.map allGroups, (group) ->
           Group.upsert _.cloneDeep group
         Item.batchUpsert _.cloneDeep allItems
-        Place.batchUpsert _.cloneDeep allPlaces
+        Campground.batchUpsert _.cloneDeep allCampgrounds
         Product.batchUpsert _.cloneDeep allProducts
         Category.batchUpsert _.cloneDeep allCategories
 

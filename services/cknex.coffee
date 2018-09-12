@@ -57,7 +57,8 @@ cknex = (keyspace = 'free_roam') ->
               # (.values, .forEach, .keys, .get getting added)
               plainRow = {}
               for key, value of row
-                plainRow[key] = value
+                if row.hasOwnProperty key
+                  plainRow[key] = value
               plainRow
           # queryCount += 1
           if err

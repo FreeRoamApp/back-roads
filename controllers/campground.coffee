@@ -1,19 +1,19 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-Place = require '../models/place'
+Campground = require '../models/campground'
 EmbedService = require '../services/embed'
 config = require '../config'
 
-class PlaceCtrl
+class CampgroundCtrl
   getBySlug: ({slug}, {user}) ->
-    Place.getBySlug slug
+    Campground.getBySlug slug
     # .then EmbedService.embed {embed: defaultEmbed}
 
   search: ({query}, {user}) ->
-    Place.search {query}
+    Campground.search {query}
     # .then (results) ->
     #   Promise.map results, EmbedService.embed {embed: defaultEmbed}
 
 
-module.exports = new PlaceCtrl()
+module.exports = new CampgroundCtrl()
