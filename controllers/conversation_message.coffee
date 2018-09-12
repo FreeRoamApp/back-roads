@@ -48,7 +48,7 @@ prepareFn = (item) ->
   EmbedService.embed {
     embed: defaultEmbed
     # FIXME: pass groupId for groupUser embed. don't embed groupUser for pm
-  }, ConversationMessage.default(item)
+  }, ConversationMessage.defaultOutput(item)
   .then (item) ->
     # TODO: rm?
     if item?.user?.flags?.isChatBanned isnt true

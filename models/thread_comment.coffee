@@ -3,6 +3,7 @@ Promise = require 'bluebird'
 uuid = require 'node-uuid'
 moment = require 'moment'
 
+Base = require './base'
 cknex = require '../services/cknex'
 CacheService = require '../services/cache'
 TimeService = require '../services/time'
@@ -11,118 +12,84 @@ User = require './user'
 # TODO: add groupId and thread_comments_by_groupId_by_userId to allow
 # deleteAllByGroupIdAndUserId. should also rename userId to userId
 
-tables = [
-  # sorting done in node
-
-  # needs to have at least the keys that are partition keys from
-  # other by_x tables (for updating all counters)
-  {
-    name: 'thread_comments_by_threadId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      threadId: 'uuid'
-      parentType: 'text'
-      parentId: 'uuid'
-      userId: 'uuid'
-      body: 'text'
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['threadId']
-      clusteringColumns: [ 'parentType', 'parentId', 'id']
-  }
-  {
-    name: 'thread_comments_counter_by_threadId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      threadId: 'uuid'
-      parentType: 'text'
-      parentId: 'uuid'
-      upvotes: 'counter'
-      downvotes: 'counter'
-    primaryKey:
-      partitionKey: ['threadId']
-      clusteringColumns: [ 'parentType', 'parentId', 'id']
-  }
-
-
-  {
-    name: 'thread_comments_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'uuid'
-      threadId: 'uuid'
-      parentType: 'text'
-      parentId: 'uuid'
-      userId: 'uuid'
-      body: 'text'
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['userId', 'timeBucket']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  # do we even need this?
-  {
-    name: 'thread_comments_counter_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      userId: 'uuid'
-      timeBucket: 'text'
-      upvotes: 'counter'
-      downvotes: 'counter'
-    primaryKey:
-      partitionKey: ['userId', 'timeBucket']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-]
-
 ONE_MONTH_MS = 3600 * 24 * 30 * 1000
 
-defaultThreadComment = (threadComment) ->
-  unless threadComment?
-    return null
+class ThreadCommentModel extends Base
+  SCYLLA_TABLES: [
+    # sorting done in node
 
-  _.defaults threadComment, {
-    id: cknex.getTimeUuid()
-    timeBucket: TimeService.getScaledTimeByTimeScale 'month'
-  }
+    # needs to have at least the keys that are partition keys from
+    # other by_x tables (for updating all counters)
+    {
+      name: 'thread_comments_by_threadId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        threadId: 'uuid'
+        parentType: 'text'
+        parentId: 'uuid'
+        userId: 'uuid'
+        body: 'text'
+        timeBucket: 'text'
+      primaryKey:
+        partitionKey: ['threadId']
+        clusteringColumns: [ 'parentType', 'parentId', 'id']
+    }
+    {
+      name: 'thread_comments_counter_by_threadId'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        id: 'timeuuid'
+        threadId: 'uuid'
+        parentType: 'text'
+        parentId: 'uuid'
+        upvotes: 'counter'
+        downvotes: 'counter'
+      primaryKey:
+        partitionKey: ['threadId']
+        clusteringColumns: [ 'parentType', 'parentId', 'id']
+    }
+    {
+      name: 'thread_comments_by_userId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'uuid'
+        threadId: 'uuid'
+        parentType: 'text'
+        parentId: 'uuid'
+        userId: 'uuid'
+        body: 'text'
+        timeBucket: 'text'
+      primaryKey:
+        partitionKey: ['userId', 'timeBucket']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    # do we even need this?
+    {
+      name: 'thread_comments_counter_by_userId'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        id: 'timeuuid'
+        userId: 'uuid'
+        timeBucket: 'text'
+        upvotes: 'counter'
+        downvotes: 'counter'
+      primaryKey:
+        partitionKey: ['userId', 'timeBucket']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+  ]
 
-class ThreadCommentModel
-  SCYLLA_TABLES: tables
-
-  upsert: (threadComment) ->
-    threadComment = defaultThreadComment threadComment
-
-    Promise.all [
-      cknex().update 'thread_comments_by_userId'
-      .set _.omit threadComment, [
-        'userId', 'timeBucket', 'id'
-      ]
-      .where 'userId', '=', threadComment.userId
-      .andWhere 'timeBucket', '=', threadComment.timeBucket
-      .andWhere 'id', '=', threadComment.id
-      .run()
-
-      cknex().update 'thread_comments_by_threadId'
-      .set _.omit threadComment, [
-        'threadId', 'parentType', 'parentId', 'id'
-      ]
-      .where 'threadId', '=', threadComment.threadId
-      .andWhere 'parentType', '=', threadComment.parentType
-      .andWhere 'parentId', '=', threadComment.parentId
-      .andWhere 'id', '=', threadComment.id
-      .run()
-    ]
-    .then ->
+  upsert: (threadComment) =>
+    super threadComment
+    .tap ->
       threadId = threadComment.threadId
       key = "#{CacheService.PREFIXES.THREAD_COMMENTS_THREAD_ID}:#{threadId}"
       CacheService.deleteByKey key
-    .then ->
-      threadComment
 
   voteByThreadComment: (threadComment, values) ->
     qByUserId = cknex().update 'thread_comments_counter_by_userId'
@@ -230,5 +197,14 @@ class ThreadCommentModel
   #   .from 'thread_comments_by_threadId'
   #   .where 'id', '=', id
   #   .run {isSingle: true}
+
+  defaultInput: (threadComment) ->
+    unless threadComment?
+      return null
+
+    _.defaults threadComment, {
+      id: cknex.getTimeUuid()
+      timeBucket: TimeService.getScaledTimeByTimeScale 'month'
+    }
 
 module.exports = new ThreadCommentModel()

@@ -191,7 +191,7 @@ class PushNotificationService
           conversation: conversation
         }
 
-        @sendToUserIds userIds, message, {
+        @sendToUserIds _.filter(userIds), message, {
           skipMe, fromUserId: meUser.id, groupId: conversation.groupId
           conversation: conversation
         }

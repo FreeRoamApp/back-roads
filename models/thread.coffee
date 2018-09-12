@@ -3,6 +3,7 @@ uuid = require 'node-uuid'
 Promise = require 'bluebird'
 moment = require 'moment'
 
+Base = require './base'
 cknex = require '../services/cknex'
 CacheService = require '../services/cache'
 config = require '../config'
@@ -12,146 +13,110 @@ SCORE_UPDATE_TIME_RANGE_S = 3600 * 24 * 10
 ONE_HOUR_SECONDS = 3600
 MAX_UNIQUE_ID_ATTEMPTS = 10
 
-defaultThread = (thread) ->
-  unless thread?
-    return null
-
-  thread.data?.lastUpdateTime = new Date()
-  thread.data = JSON.stringify thread.data
-
-  threadByIdTable = _.find tables, {name: 'threads_by_id'}
-  thread = _.pick thread, _.keys threadByIdTable.fields
-
-  _.defaults thread, {
-    id: cknex.getTimeUuid()
-    userId: null
-    category: 'general'
-    data: {}
-    timeBucket: 'MONTH-' + moment().format 'YYYY-MM'
-  }
-
-defaultThreadOutput = (thread) ->
-  unless thread?.id
-    return null
-
-  thread.data = try
-    JSON.parse thread.data
-  catch error
-    {}
-
-  thread.userId = "#{thread.userId}"
-  id = if typeof thread.id is 'string' \
-       then cknex.getTimeUuidFromString thread.id
-       else thread.id
-  thread.time = id.getDate()
-
-  thread
-
-
-tables = [
-  {
-    name: 'threads_counter_by_id'
-    fields:
-      id: 'timeuuid'
-      upvotes: 'counter'
-      downvotes: 'counter'
-    primaryKey:
-      partitionKey: ['id']
-      clusteringColumns: null
-  }
-  {
-    name: 'threads_recent'
-    keyspace: 'free_roam'
-    fields:
-      partition: 'int' # always 1
-      id: 'timeuuid'
-      groupId: 'uuid'
-      category: 'text'
-    primaryKey:
-      partitionKey: ['partition']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  {
-    name: 'threads_by_groupId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      slug: 'text'
-      groupId: 'uuid'
-      userId: 'uuid'
-      category: 'text'
-      data: 'text'
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['groupId', 'timeBucket']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  {
-    name: 'threads_by_groupId_and_category'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      slug: 'text'
-      groupId: 'uuid'
-      userId: 'uuid'
-      category: 'text'
-      data: 'text'
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['groupId', 'category', 'timeBucket']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  {
-    name: 'threads_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      slug: 'text'
-      groupId: 'uuid'
-      userId: 'uuid'
-      category: 'text'
-      data: 'text' # title, body, type, attachmentIds/attachments?, lastUpdateTime
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['userId'] # may want to restructure with timeBucket
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  {
-    name: 'threads_by_id'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      slug: 'text'
-      groupId: 'uuid'
-      userId: 'uuid'
-      category: 'text'
-      data: 'text' # title, body, type, attachmentIds/attachments?
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['id']
-  }
-  {
-    name: 'threads_by_slug'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      slug: 'text'
-      groupId: 'uuid'
-      userId: 'uuid'
-      category: 'text'
-      data: 'text' # title, body, type, attachmentIds/attachments?
-      timeBucket: 'text'
-    primaryKey:
-      partitionKey: ['slug']
-  }
-]
-
-class ThreadModel
-  SCYLLA_TABLES: tables
+class ThreadModel extends Base
+  SCYLLA_TABLES: [
+    {
+      name: 'threads_counter_by_id'
+      ignoreUpsert: true
+      fields:
+        id: 'timeuuid'
+        upvotes: 'counter'
+        downvotes: 'counter'
+      primaryKey:
+        partitionKey: ['id']
+        clusteringColumns: null
+    }
+    {
+      name: 'threads_recent'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        partition: 'int' # always 1
+        id: 'timeuuid'
+        groupId: 'uuid'
+        category: 'text'
+      primaryKey:
+        partitionKey: ['partition']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    {
+      name: 'threads_by_groupId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        slug: 'text'
+        groupId: 'uuid'
+        userId: 'uuid'
+        category: 'text'
+        data: 'text'
+        timeBucket: 'text'
+      primaryKey:
+        partitionKey: ['groupId', 'timeBucket']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    {
+      name: 'threads_by_groupId_and_category'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        slug: 'text'
+        groupId: 'uuid'
+        userId: 'uuid'
+        category: 'text'
+        data: 'text'
+        timeBucket: 'text'
+      primaryKey:
+        partitionKey: ['groupId', 'category', 'timeBucket']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    {
+      name: 'threads_by_userId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        slug: 'text'
+        groupId: 'uuid'
+        userId: 'uuid'
+        category: 'text'
+        data: 'text' # title, body, type, attachmentIds/attachments?, lastUpdateTime
+        timeBucket: 'text'
+      primaryKey:
+        partitionKey: ['userId'] # may want to restructure with timeBucket
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    {
+      name: 'threads_by_id'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        slug: 'text'
+        groupId: 'uuid'
+        userId: 'uuid'
+        category: 'text'
+        data: 'text' # title, body, type, attachmentIds/attachments?
+        timeBucket: 'text'
+      primaryKey:
+        partitionKey: ['id']
+    }
+    {
+      name: 'threads_by_slug'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        slug: 'text'
+        groupId: 'uuid'
+        userId: 'uuid'
+        category: 'text'
+        data: 'text' # title, body, type, attachmentIds/attachments?
+        timeBucket: 'text'
+      primaryKey:
+        partitionKey: ['slug']
+    }
+  ]
 
   getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
     if suffix is 1
@@ -169,61 +134,31 @@ class ThreadModel
       else
         slug
 
-  upsert: (thread) ->
+  upsert: (thread) =>
     slug = _.kebabCase(thread.data.title)
-    thread = defaultThread thread
-
     (if thread.slug
       Promise.resolve thread.slug
     else
       @getUniqueSlug slug)
-    .then (slug) ->
-      thread.slug = slug
+    .then (slug) =>
+      thread = _.defaults thread, {
+        id: cknex.getTimeUuid()
+        userId: null
+        category: 'general'
+        slug: slug
+      }
 
-      Promise.all [
-        cknex().insert {
-          partition: 1
-          id: thread.id
-          groupId: thread.groupId
-          category: thread.category
-        }
-        .into 'threads_recent'
-        .usingTTL SCORE_UPDATE_TIME_RANGE_S
-        .run()
-
-        cknex().update 'threads_by_groupId'
-        .set _.omit thread, ['groupId', 'timeBucket', 'id']
-        .where 'groupId', '=', thread.groupId
-        .andWhere 'timeBucket', '=', thread.timeBucket
-        .andWhere 'id', '=', thread.id
-        .run()
-
-        cknex().update 'threads_by_groupId_and_category'
-        .set _.omit thread, ['groupId', 'category', 'timeBucket', 'id']
-        .where 'groupId', '=', thread.groupId
-        .andWhere 'category', '=', thread.category
-        .andWhere 'timeBucket', '=', thread.timeBucket
-        .andWhere 'id', '=', thread.id
-        .run()
-
-        cknex().update 'threads_by_userId'
-        .set _.omit thread, ['userId', 'id']
-        .where 'userId', '=', thread.userId
-        .andWhere 'id', '=', thread.id
-        .run()
-
-        cknex().update 'threads_by_id'
-        .set _.omit thread, ['id']
-        .where 'id', '=', thread.id
-        .run()
-
-        cknex().update 'threads_by_slug'
-        .set _.omit thread, ['slug']
-        .where 'slug', '=', thread.slug
-        .run()
-      ]
-    .then ->
-      defaultThreadOutput thread
+      cknex().insert {
+        partition: 1
+        id: thread.id
+        groupId: thread.groupId
+        category: thread.category
+      }
+      .into 'threads_recent'
+      .usingTTL SCORE_UPDATE_TIME_RANGE_S
+      .run()
+      .then =>
+        super thread
 
   getById: (id, {preferCache, omitCounter} = {}) =>
     get = =>
@@ -241,7 +176,7 @@ class ThreadModel
         else
           threadCounter or= {upvotes: 0, downvotes: 0}
           _.defaults thread, threadCounter
-      .then defaultThreadOutput
+      .then @defaultOutput
 
     if preferCache
       key = "#{CacheService.PREFIXES.THREAD_BY_ID}:#{id}:#{Boolean omitCounter}"
@@ -266,7 +201,7 @@ class ThreadModel
           .then (threadCounter) ->
             threadCounter or= {upvotes: 0, downvotes: 0}
             _.defaults thread, threadCounter
-      .then defaultThreadOutput
+      .then @defaultOutput
 
     if preferCache
       key = "#{CacheService.PREFIXES.THREAD_BY_SLUG}:#{slug}:#{Boolean omitCounter}"
@@ -386,7 +321,7 @@ class ThreadModel
       .then (threadCounter) ->
         threadCounter or= {upvotes: 0, downvotes: 0}
         _.defaults thread, threadCounter
-    .map defaultThreadOutput
+    .map @defaultOutput
 
   # need skip for redis-style (score), maxId for scylla-style (time)
   getAllScoreSorted: ({category, groupId, skip, limit} = {}) ->
@@ -538,6 +473,41 @@ class ThreadModel
       return false
 
     return user?.username is 'austin' or thread.userId is user.id
+
+  defaultInput: (thread) =>
+    unless thread?
+      return null
+
+    thread.data?.lastUpdateTime = new Date()
+    thread.data = JSON.stringify thread.data
+
+    threadByIdTable = _.find @SCYLLA_TABLES, {name: 'threads_by_id'}
+    thread = _.pick thread, _.keys threadByIdTable.fields
+
+    _.defaults thread, {
+      id: cknex.getTimeUuid()
+      userId: null
+      category: 'general'
+      data: {}
+      timeBucket: 'MONTH-' + moment().format 'YYYY-MM'
+    }
+
+  defaultOutput: (thread) ->
+    unless thread?.id
+      return null
+
+    thread.data = try
+      JSON.parse thread.data
+    catch error
+      {}
+
+    thread.userId = "#{thread.userId}"
+    id = if typeof thread.id is 'string' \
+         then cknex.getTimeUuidFromString thread.id
+         else thread.id
+    thread.time = id.getDate()
+
+    thread
 
   sanitize: _.curry (requesterId, thread) ->
     _.pick thread, [

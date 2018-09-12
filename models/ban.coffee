@@ -2,106 +2,65 @@ _ = require 'lodash'
 
 uuid = require 'node-uuid'
 
+Base = require './base'
 CacheService = require '../services/cache'
 cknex = require '../services/cknex'
 config = require '../config'
 
 honeypot = require('project-honeypot')(config.HONEYPOT_ACCESS_KEY)
 
-defaultBan = (ban) ->
-  unless ban?
-    return null
-
-  _.defaults ban, {
-    ip: ''
-    id: cknex.getTimeUuid()
-  }
-
 ONE_DAY_SECONDS = 3600 * 24
 ONE_MONTH_SECONDS = 3600 * 24 * 31
 
-tables = [
-  {
-    name: 'bans_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      groupId: 'uuid'
-      userId: 'uuid'
-      bannedById: 'uuid'
-      duration: 'text'
-      ip: 'text'
-    primaryKey:
-      partitionKey: ['groupId']
-      clusteringColumns: ['userId']
-  }
-  {
-    name: 'bans_by_ip'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      groupId: 'uuid'
-      userId: 'uuid'
-      bannedById: 'uuid'
-      duration: 'text'
-      ip: 'text'
-    primaryKey:
-      partitionKey: ['groupId']
-      clusteringColumns: ['ip']
-  }
-  {
-    name: 'bans_by_duration_and_id'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      groupId: 'uuid'
-      userId: 'uuid'
-      bannedById: 'uuid'
-      duration: 'text'
-      ip: 'text'
-    primaryKey:
-      partitionKey: ['groupId', 'duration']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-]
+class BanModel extends Base
+  SCYLLA_TABLES: [
+    {
+      name: 'bans_by_userId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        groupId: 'uuid'
+        userId: 'uuid'
+        bannedById: 'uuid'
+        duration: 'text'
+        ip: 'text'
+      primaryKey:
+        partitionKey: ['groupId']
+        clusteringColumns: ['userId']
+    }
+    {
+      name: 'bans_by_ip'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        groupId: 'uuid'
+        userId: 'uuid'
+        bannedById: 'uuid'
+        duration: 'text'
+        ip: 'text'
+      primaryKey:
+        partitionKey: ['groupId']
+        clusteringColumns: ['ip']
+    }
+    {
+      name: 'bans_by_duration_and_id'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        groupId: 'uuid'
+        userId: 'uuid'
+        bannedById: 'uuid'
+        duration: 'text'
+        ip: 'text'
+      primaryKey:
+        partitionKey: ['groupId', 'duration']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+  ]
 
-class BanModel
-  SCYLLA_TABLES: tables
-
-  upsert: (ban, {ttl} = {}) ->
-    ban = defaultBan ban
-
-    queries = [
-      cknex().update 'bans_by_userId'
-      .set _.omit ban, [
-        'groupId', 'userId'
-      ]
-      .where 'groupId', '=', ban.groupId
-      .andWhere 'userId', '=', ban.userId
-
-      cknex().update 'bans_by_ip'
-      .set _.omit ban, [
-        'groupId', 'ip'
-      ]
-      .where 'groupId', '=', ban.groupId
-      .andWhere 'ip', '=', ban.ip
-
-      cknex().update 'bans_by_duration_and_id'
-      .set _.omit ban, [
-        'groupId', 'duration', 'id'
-      ]
-      .where 'groupId', '=', ban.groupId
-      .andWhere 'duration', '=', ban.duration
-      .andWhere 'id', '=', ban.id
-    ]
-
-    if ttl
-      queries = _.map queries, (query) ->
-        query.usingTTL ttl
-
-    Promise.all _.map queries, (query) ->
-      query.run()
+  upsert: (ban, {ttl} = {}) =>
+    super ban, {ttl}
     .then ->
       if ban.userId
         prefix = CacheService.PREFIXES.BAN_USER_ID
@@ -132,25 +91,25 @@ class BanModel
     else
       get()
 
-  getAllByGroupIdAndDuration: (groupId, duration) ->
+  getAllByGroupIdAndDuration: (groupId, duration) =>
     cknex().select '*'
     .from 'bans_by_duration_and_id'
     .where 'groupId', '=', groupId
     .andWhere 'duration', '=', duration
     .limit 100
     .run()
-    .map defaultBan
+    .map @defaultOutput
 
-  getByGroupIdAndIp: (groupId, ip, {scope, preferCache} = {}) ->
+  getByGroupIdAndIp: (groupId, ip, {scope, preferCache} = {}) =>
     scope ?= 'chat'
 
-    get = ->
+    get = =>
       cknex().select '*'
       .from 'bans_by_ip'
       .where 'groupId', '=', groupId
       .andWhere 'ip', '=', ip
       .run {isSingle: true}
-      .then defaultBan
+      .then @defaultOutput
 
     if preferCache
       key = "#{CacheService.PREFIXES.BAN_IP}:#{groupId}:#{ip}"
@@ -158,14 +117,14 @@ class BanModel
     else
       get()
 
-  getByGroupIdAndUserId: (groupId, userId, {preferCache} = {}) ->
-    get = ->
+  getByGroupIdAndUserId: (groupId, userId, {preferCache} = {}) =>
+    get = =>
       cknex().select '*'
       .from 'bans_by_userId'
       .where 'groupId', '=', groupId
       .andWhere 'userId', '=', userId
       .run {isSingle: true}
-      .then defaultBan
+      .then @defaultOutput
 
     if preferCache
       key = "#{CacheService.PREFIXES.BAN_USER_ID}:#{groupId}:#{userId}"
@@ -219,5 +178,23 @@ class BanModel
       key = "#{CacheService.PREFIXES.BAN_USER_ID}:#{groupId}:#{userId}"
       CacheService.deleteByKey key
     .then -> null
+
+  defaultInput: (ban) ->
+    unless ban?
+      return null
+
+    _.defaults ban, {
+      ip: ''
+      id: cknex.getTimeUuid()
+    }
+
+  defaultOutput: (ban) ->
+    unless ban?
+      return null
+
+    _.defaults ban, {
+      ip: ''
+      id: cknex.getTimeUuid()
+    }
 
 module.exports = new BanModel()

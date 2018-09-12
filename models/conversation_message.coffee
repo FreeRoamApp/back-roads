@@ -7,145 +7,70 @@ StreamService = require '../services/stream'
 TimeService = require '../services/time'
 CacheService = require '../services/cache'
 cknex = require '../services/cknex'
-Stream = require './stream'
+Base = require './base'
 config = require '../config'
 
-defaultConversationMessage = (conversationMessage) ->
-  unless conversationMessage?
-    return null
-
-  conversationMessage = _.defaults _.pickBy(conversationMessage), {
-    id: cknex.getTimeUuid()
-    clientId: uuid.v4()
-    groupId: config.EMPTY_UUID
-    timeBucket: TimeService.getScaledTimeByTimeScale 'week'
-    lastUpdateTime: new Date()
-    body: ''
-  }
-  if conversationMessage.card
-    conversationMessage.card = try
-      JSON.stringify conversationMessage.card
-    catch err
-      ''
-  conversationMessage
-
-defaultConversationMessageOutput = (conversationMessage) ->
-  unless conversationMessage?
-    return null
-
-  if conversationMessage.groupId is config.EMPTY_UUID
-    conversationMessage.groupId = null
-
-  if conversationMessage.card
-    conversationMessage.card = try
-      JSON.parse conversationMessage.card
-    catch err
-      null
-
-  conversationMessage
-
-tables = [
-  {
-    name: 'conversation_messages_by_conversationId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      conversationId: 'uuid'
-      clientId: 'uuid'
-      userId: 'uuid'
-      groupId: 'uuid'
-      body: 'text'
-      card: 'text'
-      timeBucket: 'text'
-      lastUpdateTime: 'timestamp'
-    primaryKey:
-      partitionKey: ['conversationId', 'timeBucket']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  # for showing all of a user's messages, and potentially deleting all
-  {
-    name: 'conversation_messages_by_groupId_and_userId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      conversationId: 'uuid'
-      clientId: 'uuid'
-      userId: 'uuid'
-      groupId: 'uuid'
-      body: 'text'
-      card: 'text'
-      timeBucket: 'text'
-      lastUpdateTime: 'timestamp'
-    primaryKey:
-      partitionKey: ['groupId', 'userId', 'timeBucket']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  # for deleting by id
-  {
-    name: 'conversation_messages_by_id'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      conversationId: 'uuid'
-      clientId: 'uuid'
-      userId: 'uuid'
-      groupId: 'uuid'
-      body: 'text'
-      card: 'text'
-      timeBucket: 'text'
-      lastUpdateTime: 'timestamp'
-    primaryKey:
-      partitionKey: ['id']
-  }
-]
-
-class ConversationMessageModel extends Stream
-  SCYLLA_TABLES: tables
+class ConversationMessageModel extends Base
+  SCYLLA_TABLES: [
+    {
+      name: 'conversation_messages_by_conversationId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        conversationId: 'uuid'
+        clientId: 'uuid'
+        userId: 'uuid'
+        groupId: 'uuid'
+        body: 'text'
+        card: 'text'
+        timeBucket: 'text'
+        lastUpdateTime: 'timestamp'
+      primaryKey:
+        partitionKey: ['conversationId', 'timeBucket']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    # for showing all of a user's messages, and potentially deleting all
+    {
+      name: 'conversation_messages_by_groupId_and_userId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        conversationId: 'uuid'
+        clientId: 'uuid'
+        userId: 'uuid'
+        groupId: 'uuid'
+        body: 'text'
+        card: 'text'
+        timeBucket: 'text'
+        lastUpdateTime: 'timestamp'
+      primaryKey:
+        partitionKey: ['groupId', 'userId', 'timeBucket']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    # for deleting by id
+    {
+      name: 'conversation_messages_by_id'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        conversationId: 'uuid'
+        clientId: 'uuid'
+        userId: 'uuid'
+        groupId: 'uuid'
+        body: 'text'
+        card: 'text'
+        timeBucket: 'text'
+        lastUpdateTime: 'timestamp'
+      primaryKey:
+        partitionKey: ['id']
+    }
+  ]
 
   constructor: ->
     @streamChannelKey = 'conversation_message'
     @streamChannelsBy = ['conversationId']
-
-  default: defaultConversationMessageOutput
-
-  upsert: (conversationMessage, {prepareFn, isUpdate} = {}) =>
-    conversationMessage = defaultConversationMessage conversationMessage
-
-    Promise.all [
-      cknex().update 'conversation_messages_by_conversationId'
-      .set _.omit conversationMessage, [
-        'conversationId', 'timeBucket', 'id'
-      ]
-      .where 'conversationId', '=', conversationMessage.conversationId
-      .andWhere 'timeBucket', '=', conversationMessage.timeBucket
-      .andWhere 'id', '=', conversationMessage.id
-      .run()
-
-      cknex().update 'conversation_messages_by_groupId_and_userId'
-      .set _.omit conversationMessage, [
-        'groupId', 'userId', 'timeBucket', 'id'
-      ]
-      .where 'groupId', '=', conversationMessage.groupId
-      .andWhere 'userId', '=', conversationMessage.userId
-      .andWhere 'timeBucket', '=', conversationMessage.timeBucket
-      .andWhere 'id', '=', conversationMessage.id
-      .run()
-
-      cknex().update 'conversation_messages_by_id'
-      .set _.omit conversationMessage, [
-        'id'
-      ]
-      .where 'id', '=', conversationMessage.id
-      .run()
-    ]
-    .then ->
-      prepareFn?(conversationMessage) or conversationMessage
-    .then (conversationMessage) =>
-      unless isUpdate
-        @streamCreate conversationMessage
-      conversationMessage
 
   getAllByConversationId: (conversationId, options = {}) =>
     {limit, isStreamed, emit, socket, route, initialPostFn, postFn,
@@ -218,21 +143,21 @@ class ConversationMessageModel extends Stream
       channelById: conversationId
     }
 
-  getAllByGroupIdAndUserIdAndTimeBucket: (groupId, userId, timeBucket) ->
+  getAllByGroupIdAndUserIdAndTimeBucket: (groupId, userId, timeBucket) =>
     cknex().select '*'
     .from 'conversation_messages_by_groupId_and_userId'
     .where 'groupId', '=', groupId
     .andWhere 'userId', '=', userId
     .andWhere 'timeBucket', '=', timeBucket
     .run()
-    .map defaultConversationMessageOutput
+    .map @defaultOutput
 
-  getById: (id) ->
+  getById: (id) =>
     cknex().select '*'
     .from 'conversation_messages_by_id'
     .where 'id', '=', id
     .run {isSingle: true}
-    .then defaultConversationMessageOutput
+    .then @defaultOutput
 
   deleteByConversationMessage: (conversationMessage) =>
     Promise.all [
@@ -261,22 +186,16 @@ class ConversationMessageModel extends Stream
 
   getLastByConversationId: (conversationId) =>
     @getAllByConversationId conversationId, {limit: 1}
-    .then (messages) ->
+    .then (messages) =>
       messages?[0]
-    .then defaultConversationMessageOutput
+    .then @defaultOutput
 
   updateById: (id, diff, {prepareFn}) =>
     @getById id
-    .then defaultConversationMessageOutput
+    .then @defaultOutput
     .then (conversationMessage) =>
       updatedMessage = _.defaults(diff, conversationMessage)
       updatedMessage.lastUpdateTime = new Date()
-
-      # hacky https://github.com/datastax/nodejs-driver/pull/243
-      delete updatedMessage.get
-      delete updatedMessage.values
-      delete updatedMessage.keys
-      delete updatedMessage.forEach
 
       @upsert updatedMessage, {isUpdate: true, prepareFn}
     .tap (conversationMessage) =>
@@ -294,5 +213,39 @@ class ConversationMessageModel extends Stream
       'week'
       moment().subtract(1, 'week')
     )
+
+  defaultInput: (conversationMessage) ->
+    unless conversationMessage?
+      return null
+
+    conversationMessage = _.defaults _.pickBy(conversationMessage), {
+      id: cknex.getTimeUuid()
+      clientId: uuid.v4()
+      groupId: config.EMPTY_UUID
+      timeBucket: TimeService.getScaledTimeByTimeScale 'week'
+      lastUpdateTime: new Date()
+      body: ''
+    }
+    if conversationMessage.card
+      conversationMessage.card = try
+        JSON.stringify conversationMessage.card
+      catch err
+        ''
+    conversationMessage
+
+  defaultOutput: (conversationMessage) ->
+    unless conversationMessage?
+      return null
+
+    if conversationMessage.groupId is config.EMPTY_UUID
+      conversationMessage.groupId = null
+
+    if conversationMessage.card
+      conversationMessage.card = try
+        JSON.parse conversationMessage.card
+      catch err
+        null
+
+    conversationMessage
 
 module.exports = new ConversationMessageModel()

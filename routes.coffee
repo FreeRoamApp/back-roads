@@ -1,8 +1,10 @@
 router = require 'exoid-router'
 
+AmenityCtrl = require './controllers/amenity'
 AuthCtrl = require './controllers/auth'
 BanCtrl = require './controllers/ban'
 CategoryCtrl = require './controllers/category'
+CampgroundCtrl = require './controllers/campground'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
 GroupCtrl = require './controllers/group'
@@ -12,7 +14,6 @@ GroupRoleCtrl = require './controllers/group_role'
 ItemCtrl = require './controllers/item'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
-CampgroundCtrl = require './controllers/campground'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 ThreadCtrl = require './controllers/thread'
@@ -109,8 +110,13 @@ module.exports = router
 
 .on 'nps.create', authed NpsCtrl.create
 
+# places (shared routes for the most part)
+.on 'amenities.getBySlug', authed AmenityCtrl.getBySlug
+.on 'amenities.search', authed AmenityCtrl.search
+
 .on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
 .on 'campgrounds.search', authed CampgroundCtrl.search
+# end places
 
 .on 'products.getBySlug', authed ProductCtrl.getBySlug
 .on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
