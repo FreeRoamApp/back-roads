@@ -2,154 +2,102 @@ _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
 
+Base = require './base'
 cknex = require '../services/cknex'
 CacheService = require '../services/cache'
 Group = require './group'
 
 ONE_DAY_S = 3600 * 24
 
-defaultConversation = (conversation) ->
-  unless conversation?
-    return null
+class ConversationModel extends Base
+  SCYLLA_TABLES: [
+    {
+      name: 'conversations_by_userId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid' # not unique - 1 row per userId
+        slug: 'text'
+        userId: 'uuid'
+        userIds: {type: 'set', subType: 'uuid'}
+        groupId: 'uuid'
+        type: 'text'
+        data: 'text' # json: name, description, slowMode, slowModeCooldown
+        isRead: 'boolean'
+        lastUpdateTime: 'timestamp'
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    {
+      name: 'conversations_by_groupId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid' # not unique - 1 row per userId
+        slug: 'text'
+        userId: 'uuid'
+        userIds: {type: 'set', subType: 'uuid'}
+        groupId: 'uuid'
+        type: 'text'
+        data: 'text' # json: name, description, slowMode, slowModeCooldown
+        isRead: 'boolean'
+        lastUpdateTime: 'timestamp'
+      primaryKey:
+        partitionKey: ['groupId']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
+    }
+    {
+      name: 'conversations_by_id'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        slug: 'text'
+        userId: 'uuid'
+        userIds: {type: 'set', subType: 'uuid'}
+        groupId: 'uuid'
+        type: 'text'
+        data: 'text' # json: name, description, slowMode, slowModeCooldown
+        isRead: 'boolean'
+        lastUpdateTime: 'timestamp'
+      primaryKey:
+        partitionKey: ['id']
+        clusteringColumns: null
+    }
+    {
+      name: 'conversations_by_slug'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        slug: 'text'
+        userId: 'uuid'
+        userIds: {type: 'set', subType: 'uuid'}
+        groupId: 'uuid'
+        type: 'text'
+        data: 'text' # json: name, description, slowMode, slowModeCooldown
+        isRead: 'boolean'
+        lastUpdateTime: 'timestamp'
+      primaryKey:
+        partitionKey: ['slug']
+        clusteringColumns: null
+    }
+  ]
 
-  conversation.id ?= cknex.getTimeUuid conversation.lastUpdateTime
-  conversation.data = JSON.stringify conversation.data
-
-  conversation
-
-defaultConversationOutput = (conversation) ->
-  unless conversation?
-    return null
-
-  conversation.data = try
-    JSON.parse conversation.data
-  catch err
-    {}
-
-  conversation.userIds = _.map conversation.userIds, (userId) -> "#{userId}"
-  conversation.id = "#{conversation.id}"
-  if conversation.userId
-    conversation.userId = "#{conversation.userId}"
-  if conversation.groupId
-    conversation.groupId = "#{conversation.groupId}"
-
-  conversation
-
-tables = [
-  {
-    name: 'conversations_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid' # not unique - 1 row per userId
-      slug: 'text'
-      userId: 'uuid'
-      userIds: {type: 'set', subType: 'uuid'}
-      groupId: 'uuid'
-      type: 'text'
-      data: 'text' # json: name, description, slowMode, slowModeCooldown
-      isRead: 'boolean'
-      lastUpdateTime: 'timestamp'
-    primaryKey:
-      partitionKey: ['userId']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  {
-    name: 'conversations_by_groupId'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid' # not unique - 1 row per userId
-      slug: 'text'
-      userId: 'uuid'
-      userIds: {type: 'set', subType: 'uuid'}
-      groupId: 'uuid'
-      type: 'text'
-      data: 'text' # json: name, description, slowMode, slowModeCooldown
-      isRead: 'boolean'
-      lastUpdateTime: 'timestamp'
-    primaryKey:
-      partitionKey: ['groupId']
-      clusteringColumns: ['id']
-    withClusteringOrderBy: ['id', 'desc']
-  }
-  {
-    name: 'conversations_by_id'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      slug: 'text'
-      userId: 'uuid'
-      userIds: {type: 'set', subType: 'uuid'}
-      groupId: 'uuid'
-      type: 'text'
-      data: 'text' # json: name, description, slowMode, slowModeCooldown
-      isRead: 'boolean'
-      lastUpdateTime: 'timestamp'
-    primaryKey:
-      partitionKey: ['id']
-      clusteringColumns: null
-  }
-  {
-    name: 'conversations_by_slug'
-    keyspace: 'free_roam'
-    fields:
-      id: 'timeuuid'
-      slug: 'text'
-      userId: 'uuid'
-      userIds: {type: 'set', subType: 'uuid'}
-      groupId: 'uuid'
-      type: 'text'
-      data: 'text' # json: name, description, slowMode, slowModeCooldown
-      isRead: 'boolean'
-      lastUpdateTime: 'timestamp'
-    primaryKey:
-      partitionKey: ['slug']
-      clusteringColumns: null
-  }
-]
-
-class ConversationModel
-  SCYLLA_TABLES: tables
-
-  upsert: (conversation, {userId} = {}) ->
-    conversation = defaultConversation conversation
-
-    Promise.all _.filter _.flatten [
-      _.map conversation.userIds, (conversationUserId) ->
-        conversation.isRead = conversationUserId is userId
-        cknex().update 'conversations_by_userId'
-        .set _.omit conversation, ['userId', 'id']
-        .where 'userId', '=', conversationUserId
-        .andWhere 'id', '=', conversation.id
-        .run()
-
-      if conversation.groupId
-        cknex().update 'conversations_by_groupId'
-        .set _.omit conversation, ['groupId', 'id']
-        .where 'groupId', '=', conversation.groupId
-        .andWhere 'id', '=', conversation.id
-        .run()
-
-      cknex().update 'conversations_by_id'
-      .set _.omit conversation, ['id']
-      .where 'id', '=', conversation.id
-      .run()
-    ]
+  upsert: (conversation, {userId} = {}) =>
+    super conversation
     .tap ->
       prefix = CacheService.PREFIXES.CONVERSATION_ID
       key = "#{prefix}:#{conversation.id}"
       CacheService.deleteByKey key
-    .then ->
-      conversation
 
-  getById: (id, {preferCache} = {}) ->
+  getById: (id, {preferCache} = {}) =>
     preferCache ?= true
-    get = ->
+    get = =>
       cknex().select '*'
       .from 'conversations_by_id'
       .where 'id', '=', id
       .run {isSingle: true}
-      .then defaultConversationOutput
+      .then defaultOutput
       .catch (err) ->
         console.log 'covnersation get err', id
         throw err
@@ -165,9 +113,9 @@ class ConversationModel
     @getAllByGroupId groupId
     .then (conversations) ->
       _.find conversations, {name}
-    .then defaultConversationOutput
+    .then @defaultOutput
 
-  getAllByUserId: (userId, {limit} = {}) ->
+  getAllByUserId: (userId, {limit} = {}) =>
     limit ?= 10
 
     # TODO: use a redis leaderboard for sorting by last update?
@@ -181,14 +129,14 @@ class ConversationModel
         conversation.type is 'pm' and conversation.lastUpdateTime
       conversations = _.orderBy conversations, 'lastUpdateTime', 'desc'
       conversations = _.take conversations, limit
-    .map defaultConversationOutput
+    .map @defaultOutput
 
-  getAllByGroupId: (groupId) ->
+  getAllByGroupId: (groupId) =>
     cknex().select '*'
     .from 'conversations_by_groupId'
     .where 'groupId', '=', groupId
     .run()
-    .map defaultConversationOutput
+    .map @defaultOutput
 
   getByUserIds: (checkUserIds, {limit} = {}) =>
     @getAllByUserId checkUserIds[0], {limit: 2500}
@@ -196,7 +144,7 @@ class ConversationModel
       _.find conversations, ({type, userIds}) ->
         type is 'pm' and _.every checkUserIds, (userId) ->
           userIds.indexOf(userId) isnt -1
-    .then defaultConversation
+    .then @defaultOutput
 
   markRead: ({id}, userId) ->
     cknex().update 'conversations_by_userId'
@@ -207,6 +155,33 @@ class ConversationModel
 
   pmHasPermission: (conversation, userId) ->
     Promise.resolve userId and conversation.userIds.indexOf("#{userId}") isnt -1
+
+  defaultInput: (conversation) ->
+    unless conversation?
+      return null
+
+    conversation.id ?= cknex.getTimeUuid conversation.lastUpdateTime
+    conversation.data = JSON.stringify conversation.data
+
+    conversation
+
+  defaultOutput: (conversation) ->
+    unless conversation?
+      return null
+
+    conversation.data = try
+      JSON.parse conversation.data
+    catch err
+      {}
+
+    conversation.userIds = _.map conversation.userIds, (userId) -> "#{userId}"
+    conversation.id = "#{conversation.id}"
+    if conversation.userId
+      conversation.userId = "#{conversation.userId}"
+    if conversation.groupId
+      conversation.groupId = "#{conversation.groupId}"
+
+    conversation
 
   sanitize: _.curry (requesterId, conversation) ->
     _.pick conversation, [

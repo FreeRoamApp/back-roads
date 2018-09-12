@@ -2,122 +2,71 @@ _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
 
+Base = require './base'
 cknex = require '../services/cknex'
 
 TWO_DAYS_SECONDS = 3600 * 24 * 2
 
-tables = [
-  {
-    name: 'push_tokens_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      userId: 'uuid'
-      token: 'text'
-      deviceId: 'text'
-      sourceType: 'text'
-      isActive: 'boolean'
-      errorCount: 'int'
-    primaryKey:
-      partitionKey: ['userId']
-      clusteringColumns: ['token']
-  }
-  {
-    name: 'push_tokens_by_token'
-    keyspace: 'free_roam'
-    fields:
-      userId: 'uuid'
-      token: 'text'
-      deviceId: 'text'
-      sourceType: 'text'
-      isActive: 'boolean'
-      errorCount: 'int'
-    primaryKey:
-      partitionKey: ['token']
-      clusteringColumns: ['userId']
-  }
-]
+class PushToken extends Base
+  SCYLLA_TABLES: [
+    {
+      name: 'push_tokens_by_userId'
+      keyspace: 'free_roam'
+      fields:
+        userId: 'uuid'
+        token: 'text'
+        deviceId: 'text'
+        sourceType: 'text'
+        isActive: 'boolean'
+        errorCount: 'int'
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['token']
+    }
+    {
+      name: 'push_tokens_by_token'
+      keyspace: 'free_roam'
+      fields:
+        userId: 'uuid'
+        token: 'text'
+        deviceId: 'text'
+        sourceType: 'text'
+        isActive: 'boolean'
+        errorCount: 'int'
+      primaryKey:
+        partitionKey: ['token']
+        clusteringColumns: ['userId']
+    }
+  ]
 
-defaultToken = (token) ->
-  unless token?
-    return null
+  upsert: (token) =>
+    if token.isActive
+      ttl = null
+    else
+      ttl = TWO_DAYS_SECONDS
 
-  _.defaults token, {
-    sourceType: null
-    token: null
-    deviceId: null
-    isActive: true
-    userId: null
-    errorCount: 0
-  }
+    super token, {ttl}
 
-defaultTokenOutput = (token) ->
-  unless token?
-    return null
-
-  token.userId = "#{token.userId}"
-
-  _.defaults token, {
-    sourceType: null
-    token: null
-    deviceId: null
-    isActive: true
-    userId: null
-    errorCount: 0
-  }
-
-class PushToken
-  SCYLLA_TABLES: tables
-
-  upsert: (token) ->
-    # TODO: more elegant solution to stripping what lodash adds w/ _.defaults
-    delete token.get
-    delete token.values
-    delete token.keys
-    delete token.forEach
-
-    token = defaultToken token
-
-    qByUserId = cknex().update 'push_tokens_by_userId'
-    .set _.omit token, ['userId', 'token']
-    .where 'userId', '=', token.userId
-    .andWhere 'token', '=', token.token
-
-    qByToken = cknex().update 'push_tokens_by_token'
-    .set _.omit token, ['token', 'userId']
-    .where 'token', '=', token.token
-    .andWhere 'userId', '=', token.userId
-
-    unless token.isActive
-      qByUserId.usingTTL TWO_DAYS_SECONDS
-      qByToken.usingTTL TWO_DAYS_SECONDS
-
-    Promise.all [
-      qByUserId.run()
-      qByToken.run()
-    ]
-    .then ->
-      token
-
-  getByToken: (token) ->
+  getByToken: (token) =>
     cknex().select '*'
     .from 'push_tokens_by_token'
     .where 'token', '=', token
     .run {isSingle: true}
-    .then defaultTokenOutput
+    .then @defaultOutput
 
-  getAllByUserId: (userId) ->
+  getAllByUserId: (userId) =>
     cknex().select '*'
     .from 'push_tokens_by_userId'
     .where 'userId', '=', userId
     .run()
-    .map defaultTokenOutput
+    .map @defaultOutput
 
-  getAllByToken: (token) ->
+  getAllByToken: (token) =>
     cknex().select '*'
     .from 'push_tokens_by_token'
     .where 'token', '=', token
     .run()
-    .map defaultTokenOutput
+    .map @defaultOutput
 
   deleteByPushToken: (pushToken) ->
     Promise.all [
@@ -133,6 +82,35 @@ class PushToken
       .andWhere 'userId', '=', pushToken.userId
       .run()
     ]
+
+  defaultInput: (token) ->
+    unless token?
+      return null
+
+    _.defaults token, {
+      sourceType: null
+      token: null
+      deviceId: null
+      isActive: true
+      userId: null
+      errorCount: 0
+    }
+
+  defaultOutput: (token) ->
+    unless token?
+      return null
+
+    token.userId = "#{token.userId}"
+
+    _.defaults token, {
+      sourceType: null
+      token: null
+      deviceId: null
+      isActive: true
+      userId: null
+      errorCount: 0
+    }
+
 
   sanitizePublic: (token) ->
     _.pick token, [

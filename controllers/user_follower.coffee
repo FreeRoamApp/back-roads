@@ -38,7 +38,7 @@ class UserFollowerCtrl
     UserFollower.getByUserIdAndFollowedId user.id, followedId
     .then (userFollower) ->
       unless userFollower
-        UserFollower.create {userId: user.id, followedId: followedId}
+        UserFollower.upsert {userId: user.id, followedId: followedId}
     .then ->
       User.getById followedId
       .then (otherUser) ->

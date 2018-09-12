@@ -2,6 +2,7 @@ _ = require 'lodash'
 uuid = require 'node-uuid'
 Promise = require 'bluebird'
 
+Base = require './base'
 cknex = require '../services/cknex'
 CacheService = require '../services/cache'
 GroupRole = require './group_role'
@@ -11,104 +12,6 @@ ONE_DAY_SECONDS = 3600 * 24
 ONE_HOUR_SECONDS = 3600
 
 # don't run get all by groupId since some groups have 1m users
-
-defaultGroupUser = (groupUser) ->
-  unless groupUser?
-    return null
-
-  _.defaults groupUser, {
-    time: new Date()
-  }
-
-defaultGroupUserSettings = (groupUserSettings) ->
-  unless groupUserSettings?
-    return null
-
-  groupUserSettings.globalNotifications = JSON.stringify(
-    groupUserSettings.globalNotifications
-  )
-
-  groupUserSettings
-
-defaultGroupUserSettingsOutput = (groupUserSettings) ->
-  unless groupUserSettings?
-    return null
-
-  groupUserSettings.globalNotifications = try
-    JSON.parse groupUserSettings.globalNotifications
-  catch error
-    {}
-
-  groupUserSettings
-
-tables = [
-  {
-    name: 'group_users_by_groupId'
-    keyspace: 'free_roam'
-    fields:
-      groupId: 'uuid'
-      userId: 'uuid'
-      roleIds: {type: 'set', subType: 'uuid'}
-      data: 'text'
-      time: 'timestamp'
-    primaryKey:
-      # a little uneven since some groups will have a lot of users, but each
-      # row is small...
-      # TODO: probably sohuldn't add to group for public groups. dependent
-      # on switching getCountByGroupId to use a counter.
-      # 1/10/2018 largest row (500k users) is 20mb
-      partitionKey: ['groupId']
-      clusteringColumns: ['userId']
-  }
-  {
-    name: 'group_users_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      groupId: 'uuid'
-      userId: 'uuid'
-      roleIds: {type: 'set', subType: 'uuid'}
-      data: 'text'
-      time: 'timestamp'
-    primaryKey:
-      partitionKey: ['userId']
-      clusteringColumns: ['groupId']
-  }
-  {
-    name: 'group_users_karma_counter_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      groupId: 'uuid'
-      userId: 'uuid'
-      karma: 'counter'
-      level: 'counter'
-    primaryKey:
-      partitionKey: ['userId']
-      clusteringColumns: ['groupId']
-  }
-  {
-    name: 'group_users_counter_by_groupId'
-    keyspace: 'free_roam'
-    fields:
-      groupId: 'uuid'
-      userCount: 'counter'
-    primaryKey:
-      partitionKey: ['groupId']
-  }
-  {
-    name: 'group_user_settings'
-    keyspace: 'free_roam'
-    fields:
-      groupId: 'uuid'
-      userId: 'uuid'
-      globalNotifications: 'text'
-      channelNotifications: {
-        type: 'map', subType: 'uuid', subType2: 'text'
-      }
-    primaryKey:
-      partitionKey: ['userId']
-      clusteringColumns: ['groupId']
-  }
-]
 
 PERMISSIONS =
   ADMIN: 'admin'
@@ -133,28 +36,83 @@ PERMISSIONS =
   MANAGE_INFO: 'manageInfo'
   ADD_XP: 'addXp'
 
-class GroupUserModel
-  SCYLLA_TABLES: tables
+class GroupUserModel extends Base
+  SCYLLA_TABLES: [
+    {
+      name: 'group_users_by_groupId'
+      keyspace: 'free_roam'
+      fields:
+        groupId: 'uuid'
+        userId: 'uuid'
+        roleIds: {type: 'set', subType: 'uuid'}
+        data: 'text'
+        time: 'timestamp'
+      primaryKey:
+        # a little uneven since some groups will have a lot of users, but each
+        # row is small...
+        # TODO: probably sohuldn't add to group for public groups. dependent
+        # on switching getCountByGroupId to use a counter.
+        # 1/10/2018 largest row (500k users) is 20mb
+        partitionKey: ['groupId']
+        clusteringColumns: ['userId']
+    }
+    {
+      name: 'group_users_by_userId'
+      keyspace: 'free_roam'
+      fields:
+        groupId: 'uuid'
+        userId: 'uuid'
+        roleIds: {type: 'set', subType: 'uuid'}
+        data: 'text'
+        time: 'timestamp'
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['groupId']
+    }
+    {
+      name: 'group_users_karma_counter_by_userId'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        groupId: 'uuid'
+        userId: 'uuid'
+        karma: 'counter'
+        level: 'counter'
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['groupId']
+    }
+    {
+      name: 'group_users_counter_by_groupId'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        groupId: 'uuid'
+        userCount: 'counter'
+      primaryKey:
+        partitionKey: ['groupId']
+    }
+    {
+      name: 'group_user_settings'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        groupId: 'uuid'
+        userId: 'uuid'
+        globalNotifications: 'text'
+        channelNotifications: {
+          type: 'map', subType: 'uuid', subType2: 'text'
+        }
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['groupId']
+    }
+  ]
+
   PERMISSIONS: PERMISSIONS
 
-  upsert: (groupUser) ->
-    groupUser = defaultGroupUser groupUser
-
-    Promise.all [
-      cknex().update 'group_users_by_groupId'
-      .set _.omit groupUser, ['userId', 'groupId']
-      .where 'groupId', '=', groupUser.groupId
-      .andWhere 'userId', '=', groupUser.userId
-      .run()
-
-      cknex().update 'group_users_by_userId'
-      .set _.omit groupUser, ['userId', 'groupId']
-      .where 'userId', '=', groupUser.userId
-      .andWhere 'groupId', '=', groupUser.groupId
-      .run()
-    ]
-    .then ->
-      groupUser
+  upsert: (groupUser) =>
+    super groupUser
     .tap ->
       prefix = CacheService.PREFIXES.GROUP_USER_USER_ID
       cacheKey = "#{prefix}:#{groupUser.userId}"
@@ -311,16 +269,16 @@ class GroupUserModel
       @incrementCountByGroupId groupId, -1
     ]
 
-  getSettingsByGroupIdAndUserId: (groupId, userId) ->
+  getSettingsByGroupIdAndUserId: (groupId, userId) =>
     cknex().select '*'
     .from 'group_user_settings'
     .where 'groupId', '=', groupId
     .andWhere 'userId', '=', userId
     .run {isSingle: true}
-    .then defaultGroupUserSettingsOutput
+    .then @defaultGroupUserSettingsOutput
 
-  upsertSettings: (settings) ->
-    settings = defaultGroupUserSettings settings
+  upsertSettings: (settings) =>
+    settings = @defaultGroupUserSettings settings
 
     cknex().update 'group_user_settings'
     .set _.omit settings, ['userId', 'groupId']
@@ -363,6 +321,35 @@ class GroupUserModel
           channelPermissions, globalPermissions, config.DEFAULT_PERMISSIONS
         )
         permissions[permission]
+
+  defaultInput: (groupUser) ->
+    unless groupUser?
+      return null
+
+    _.defaults groupUser, {
+      time: new Date()
+    }
+
+  defaultGroupUserSettings: (groupUserSettings) ->
+    unless groupUserSettings?
+      return null
+
+    groupUserSettings.globalNotifications = JSON.stringify(
+      groupUserSettings.globalNotifications
+    )
+
+    groupUserSettings
+
+  defaultGroupUserSettingsOutput: (groupUserSettings) ->
+    unless groupUserSettings?
+      return null
+
+    groupUserSettings.globalNotifications = try
+      JSON.parse groupUserSettings.globalNotifications
+    catch error
+      {}
+
+    groupUserSettings
 
 
 module.exports = new GroupUserModel()

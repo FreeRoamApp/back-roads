@@ -30,9 +30,13 @@ class ThreadVoteCtrl
       voteTime = existingVote?.time or new Date()
 
       Promise.all [
-        ThreadVote.upsertByUserIdAndParent(
-          user.id, parent, {vote: voteNumber}
-        )
+        ThreadVote.upsert {
+          userId: user.id
+          parentTopId: parent.topId
+          parentType: parent.type
+          parentId: parent.id
+          vote: voteNumber
+        }
 
         if parent.type is 'thread'
           Thread.incrementById parent.id, values

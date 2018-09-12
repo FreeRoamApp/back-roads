@@ -5,7 +5,7 @@ Base = require './base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
-module.exports = class PlaceBase extends Base
+module.exports = class ReviewBase extends Base
   search: ({query}) =>
     elasticsearch.search {
       index: @ELASTICSEARCH_INDICES[0].name
@@ -17,7 +17,7 @@ module.exports = class PlaceBase extends Base
     }
     .then ({hits}) ->
       _.map hits.hits, ({_id, _source}) ->
-        {slug: _id, name: _source.name, location: _source.location}
+        {slug: _id, title: _source.title, details: _source.details}
 
   getBySlug: (slug) =>
     cknex().select '*'
@@ -35,6 +35,5 @@ module.exports = class PlaceBase extends Base
     .run()
     .map @defaultOutput
 
-  defaultESInput: (place) ->
-    place.location = {lat: place.location[0], lon: place.location[1]}
-    place
+  defaultESInput: (review) ->
+    review

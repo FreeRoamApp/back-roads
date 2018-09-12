@@ -3,51 +3,41 @@ uuid = require 'node-uuid'
 Promise = require 'bluebird'
 moment = require 'moment'
 
+Base = require './base'
 cknex = require '../services/cknex'
 CacheService = require '../services/cache'
 config = require '../config'
 
-tables = [
-  {
-    name: 'user_blocks_by_userId'
-    keyspace: 'free_roam'
-    fields:
-      userId: 'uuid'
-      blockedId: 'uuid'
-      time: 'timestamp'
-    primaryKey:
-      partitionKey: ['userId']
-      clusteringColumns: ['blockedId']
-  }
-]
-
-defaultUserBlock = (userBlock) ->
-  unless userBlock?
-    return null
-
-  _.defaults {time: new Date()}, userBlock
-
-defaultUserBlockOutput = (userBlock) ->
-  unless userBlock?
-    return null
-
-  userBlock.userId = "#{userBlock.userId}"
-  userBlock.blockedId = "#{userBlock.blockedId}"
-
-  userBlock
-
 ONE_HOUR_SECONDS = 60
 
-class UserBlockModel
-  SCYLLA_TABLES: tables
+class UserBlockModel extends Base
+  SCYLLA_TABLES: [
+    {
+      name: 'user_blocks_by_userId'
+      keyspace: 'free_roam'
+      fields:
+        userId: 'uuid'
+        blockedId: 'uuid'
+        time: 'timestamp'
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['blockedId']
+    }
+  ]
 
-  getAllByUserId: (userId, {preferCache} = {}) ->
-    get = ->
+  upsert: (userBlock) =>
+    super userBlock
+    .tap ->
+      prefix = CacheService.PREFIXES.USER_BLOCKS
+      CacheService.deleteByKey "#{prefix}:#{userBlock.userId}"
+
+  getAllByUserId: (userId, {preferCache} = {}) =>
+    get = =>
       cknex().select '*'
       .from 'user_blocks_by_userId'
       .where 'userId', '=', userId
       .run()
-      .map defaultUserBlockOutput
+      .map @defaultOutput
 
     if preferCache
       cacheKey = "#{CacheService.PREFIXES.USER_BLOCKS}:#{userId}"
@@ -57,25 +47,13 @@ class UserBlockModel
     else
       get()
 
-  getByUserIdAndBlockedId: (userId, blockedId) ->
+  getByUserIdAndBlockedId: (userId, blockedId) =>
     cknex().select '*'
     .from 'user_blocks_by_userId'
     .where 'userId', '=', userId
     .andWhere 'blockedId', '=', blockedId
     .run {isSingle: true}
-    .then defaultUserBlockOutput
-
-  upsert: (userBlock) ->
-    userBlock = defaultUserBlock userBlock
-
-    cknex().update 'user_blocks_by_userId'
-    .set _.omit userBlock, ['userId', 'blockedId']
-    .where 'userId', '=', userBlock.userId
-    .andWhere 'blockedId', '=', userBlock.blockedId
-    .run()
-    .tap ->
-      prefix = CacheService.PREFIXES.USER_BLOCKS
-      CacheService.deleteByKey "#{prefix}:#{userBlock.userId}"
+    .then @defaultOutput
 
   deleteByUserBlock: (userBlock) ->
     cknex().delete()
@@ -92,5 +70,20 @@ class UserBlockModel
         .tap ->
           prefix = CacheService.PREFIXES.USER_BLOCKS
           CacheService.deleteByKey "#{prefix}:#{userId}"
+
+  defaultInput: (userBlock) ->
+    unless userBlock?
+      return null
+
+    _.defaults {time: new Date()}, userBlock
+
+  defaultOutput : (userBlock) ->
+    unless userBlock?
+      return null
+
+    userBlock.userId = "#{userBlock.userId}"
+    userBlock.blockedId = "#{userBlock.blockedId}"
+
+    userBlock
 
 module.exports = new UserBlockModel()
