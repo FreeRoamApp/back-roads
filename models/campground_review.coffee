@@ -5,27 +5,23 @@ uuid = require 'node-uuid'
 ReviewBase = require './review_base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
-return
-# main should be like yelp, kayak, etc...? search page. when typing, prepopulate: boondocking, rv park, walmart
-# TODO: campgrounds_translations_by_slug_and_language
-# override english values
 
 class CampgroundReview extends ReviewBase
   SCYLLA_TABLES: [
     {
-      name: 'campground_reviews_by_placeId'
+      name: 'campground_reviews_by_parentId'
       keyspace: 'free_roam'
       fields:
         # common between all reviews
         id: 'timeuuid'
-        placeId: 'uuid'
+        parentId: 'uuid'
+        userId: 'uuid'
         title: 'text'
-        details: 'text' # wikipedia style info. can be stylized with markdown
+        body: 'text'
         rating: 'int'
-        images: 'text' # json
-        videos: 'text' # json
+        attachments: 'text' # json
       primaryKey:
-        partitionKey: ['placeId']
+        partitionKey: ['parentId']
         clusteringColumns: ['id']
       withClusteringOrderBy: ['id', 'desc']
     }
@@ -35,12 +31,12 @@ class CampgroundReview extends ReviewBase
       fields:
         # common between all reviews
         id: 'timeuuid'
-        placeId: 'uuid'
+        parentId: 'uuid'
+        userId: 'uuid'
         title: 'text'
-        details: 'text' # wikipedia style info. can be stylized with markdown
+        body: 'text'
         rating: 'int'
-        images: 'text' # json
-        videos: 'text' # json
+        attachments: 'text' # json
       primaryKey:
         partitionKey: ['userId']
         clusteringColumns: ['id']
@@ -52,23 +48,23 @@ class CampgroundReview extends ReviewBase
       fields:
         # common between all reviews
         id: 'timeuuid'
-        placeId: 'uuid'
+        parentId: 'uuid'
+        userId: 'uuid'
         title: 'text'
-        details: 'text' # wikipedia style info. can be stylized with markdown
+        body: 'text'
         rating: 'int'
-        images: 'text' # json
-        videos: 'text' # json
+        attachments: 'text' # json
       primaryKey:
         partitionKey: ['id']
     }
   ]
   ELASTICSEARCH_INDICES: [
     {
-      name: ELASTICSEARCH_INDEX_NAME
+      name: 'campground_reviews'
       mappings:
-        placeId: {type: 'text'}
+        parentId: {type: 'text'}
         title: {type: 'text'}
-        details: {type: 'text'}
+        body: {type: 'text'}
         rating: {type: 'integer'}
     }
   ]
@@ -79,19 +75,13 @@ class CampgroundReview extends ReviewBase
 
     # transform existing data
     campground = _.defaults {
-      siteCount: JSON.stringify campground.siteCount
-      crowds: JSON.stringify campground.crowds
-      fullness: JSON.stringify campground.fullness
-      noise: JSON.stringify campground.noise
-      cellSignal: JSON.stringify campground.cellSignal
-      restrooms: JSON.stringify campground.restrooms
-      videos: JSON.stringify campground.videos
-      address: JSON.stringify campground.address
+      attachments: JSON.stringify campground.attachments
     }, campground
 
 
     # add data if non-existent
     _.defaults campground, {
+      id: cknex.getTimeUuid()
       rating: 0
     }
 
@@ -100,8 +90,7 @@ class CampgroundReview extends ReviewBase
       return null
 
     jsonFields = [
-      'siteCount', 'crowds', 'fullness', 'noise', 'cellSignal',
-      'restrooms', 'videos', 'address'
+      'attachments'
     ]
     _.forEach jsonFields, (field) ->
       try

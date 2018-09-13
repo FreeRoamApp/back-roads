@@ -116,6 +116,7 @@ class Campground extends PlaceBase
 
     # add data if non-existent
     _.defaults campground, {
+      id: cknex.getTimeUuid()
       rating: 0
     }
 

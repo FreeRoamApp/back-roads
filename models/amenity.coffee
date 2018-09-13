@@ -57,6 +57,7 @@ class Amenity extends PlaceBase
 
     # add data if non-existent
     _.defaults amenity, {
+      id: cknex.getTimeUuid()
       rating: 0
     }
 

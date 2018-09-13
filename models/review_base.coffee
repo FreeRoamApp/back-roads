@@ -19,12 +19,12 @@ module.exports = class ReviewBase extends Base
       _.map hits.hits, ({_id, _source}) ->
         {slug: _id, title: _source.title, details: _source.details}
 
-  getBySlug: (slug) =>
+  getAllByParentId: (parentId) =>
     cknex().select '*'
     .from @SCYLLA_TABLES[0].name
-    .where 'slug', '=', slug
-    .run {isSingle: true}
-    .then @defaultOutput
+    .where 'parentId', '=', parentId
+    .run()
+    .map @defaultOutput
 
   getAll: ({limit} = {}) =>
     limit ?= 30

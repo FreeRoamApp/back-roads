@@ -87,8 +87,6 @@ class ThreadCommentCtrl
 
     body = body.trim()
 
-    msPlayed = Date.now() - user.joinTime?.getTime()
-
     if user.flags.isChatBanned
       router.throw status: 400, info: 'unable to post...'
 

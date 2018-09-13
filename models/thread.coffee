@@ -49,7 +49,11 @@ class ThreadModel extends Base
         groupId: 'uuid'
         userId: 'uuid'
         category: 'text'
-        data: 'text'
+        title: 'text'
+        body: 'text'
+        attachments: 'text'
+        lastUpdateTime: 'timestamp'
+        isPinned: 'boolean'
         timeBucket: 'text'
       primaryKey:
         partitionKey: ['groupId', 'timeBucket']
@@ -65,7 +69,11 @@ class ThreadModel extends Base
         groupId: 'uuid'
         userId: 'uuid'
         category: 'text'
-        data: 'text'
+        title: 'text'
+        body: 'text'
+        attachments: 'text'
+        lastUpdateTime: 'timestamp'
+        isPinned: 'boolean'
         timeBucket: 'text'
       primaryKey:
         partitionKey: ['groupId', 'category', 'timeBucket']
@@ -81,7 +89,11 @@ class ThreadModel extends Base
         groupId: 'uuid'
         userId: 'uuid'
         category: 'text'
-        data: 'text' # title, body, type, attachmentIds/attachments?, lastUpdateTime
+        title: 'text'
+        body: 'text'
+        attachments: 'text'
+        lastUpdateTime: 'timestamp'
+        isPinned: 'boolean'
         timeBucket: 'text'
       primaryKey:
         partitionKey: ['userId'] # may want to restructure with timeBucket
@@ -97,7 +109,11 @@ class ThreadModel extends Base
         groupId: 'uuid'
         userId: 'uuid'
         category: 'text'
-        data: 'text' # title, body, type, attachmentIds/attachments?
+        title: 'text'
+        body: 'text'
+        attachments: 'text'
+        lastUpdateTime: 'timestamp'
+        isPinned: 'boolean'
         timeBucket: 'text'
       primaryKey:
         partitionKey: ['id']
@@ -111,7 +127,11 @@ class ThreadModel extends Base
         groupId: 'uuid'
         userId: 'uuid'
         category: 'text'
-        data: 'text' # title, body, type, attachmentIds/attachments?
+        title: 'text'
+        body: 'text'
+        attachments: 'text'
+        lastUpdateTime: 'timestamp'
+        isPinned: 'boolean'
         timeBucket: 'text'
       primaryKey:
         partitionKey: ['slug']
@@ -135,7 +155,7 @@ class ThreadModel extends Base
         slug
 
   upsert: (thread) =>
-    slug = _.kebabCase(thread.data.title)
+    slug = _.kebabCase(thread.title)
     (if thread.slug
       Promise.resolve thread.slug
     else
@@ -478,8 +498,8 @@ class ThreadModel extends Base
     unless thread?
       return null
 
-    thread.data?.lastUpdateTime = new Date()
-    thread.data = JSON.stringify thread.data
+    thread?.lastUpdateTime = new Date()
+    thread.attachments = JSON.stringify thread.attachments
 
     threadByIdTable = _.find @SCYLLA_TABLES, {name: 'threads_by_id'}
     thread = _.pick thread, _.keys threadByIdTable.fields
@@ -488,7 +508,6 @@ class ThreadModel extends Base
       id: cknex.getTimeUuid()
       userId: null
       category: 'general'
-      data: {}
       timeBucket: 'MONTH-' + moment().format 'YYYY-MM'
     }
 
@@ -496,8 +515,8 @@ class ThreadModel extends Base
     unless thread?.id
       return null
 
-    thread.data = try
-      JSON.parse thread.data
+    thread.attachments = try
+      JSON.parse thread.attachments
     catch error
       {}
 
@@ -516,10 +535,13 @@ class ThreadModel extends Base
       'category'
       'userId'
       'user'
-      'data'
+      'title'
+      'body'
+      'attachments'
       'groupId'
       'comments'
       'commentCount'
+      'lastUpdateTime'
       'myVote'
       'score'
       'upvotes'
