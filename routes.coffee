@@ -5,6 +5,7 @@ AuthCtrl = require './controllers/auth'
 BanCtrl = require './controllers/ban'
 CategoryCtrl = require './controllers/category'
 CampgroundCtrl = require './controllers/campground'
+CampgroundReviewCtrl = require './controllers/campground_review'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
 GroupCtrl = require './controllers/group'
@@ -124,6 +125,14 @@ module.exports = router
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert
 .on 'pushTokens.subscribeToTopic', authed PushTokenCtrl.subscribeToTopic
 
+# reviews (shared routes for the most part)
+.on 'campgroundReviews.getAllByParentId',
+  authed CampgroundReviewCtrl.getAllByParentId
+.on 'campgroundReviews.search', authed CampgroundReviewCtrl.search
+.on 'campgroundReviews.upsert', authed CampgroundReviewCtrl.upsert
+.on 'campgroundReviews.uploadImage', authed CampgroundReviewCtrl.uploadImage
+# end reviews
+
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll
 .on 'threads.getById', authed ThreadCtrl.getById
@@ -132,6 +141,7 @@ module.exports = router
 .on 'threads.pinById', authed ThreadCtrl.pinById
 .on 'threads.unpinById', authed ThreadCtrl.unpinById
 .on 'threads.deleteById', authed ThreadCtrl.deleteById
+.on 'threads.uploadImage', authed ThreadCtrl.uploadImage
 
 .on 'threadVotes.upsertByParent',
   authed ThreadVoteCtrl.upsertByParent

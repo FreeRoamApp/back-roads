@@ -1,15 +1,22 @@
 Promise = require 'bluebird'
 gm = require('gm').subClass({imageMagick: true})
 request = require 'request-promise'
+Storage = require('@google-cloud/storage').Storage
 _ = require 'lodash'
+uuid = require 'node-uuid'
 
 config = require '../config'
+storage = new Storage {
+  projectId: config.GOOGLE_PROJECT_ID
+  credentials: config.GOOGLE_PRIVATE_KEY_JSON
+}
 
 DEFAULT_IMAGE_QUALITY = 85
 SMALL_VIDEO_PREVIEW_WIDTH = 360
 SMALL_VIDEO_PREVIEW_HEIGHT = 202
 LARGE_VIDEO_PREVIEW_WIDTH = 512
 LARGE_VIDEO_PREVIEW_HEIGHT = 288
+SMALL_IMAGE_SIZE = 200
 
 class ImageService
   DEFAULT_IMAGE_QUALITY: DEFAULT_IMAGE_QUALITY
@@ -47,25 +54,60 @@ class ImageService
       .quality DEFAULT_IMAGE_QUALITY
       .stream type
 
-  # Note: images are never removed from s3
+  # Note: images are never removed from gcloud
   uploadImage: ({key, stream, contentType}) ->
     contentType ?= 'image/jpg'
 
-    # TODO: google cloud
-
-    bucket = new AWSService.S3()
-
     new Promise (resolve, reject) ->
-      bucket.upload
-        Key: key
-        Bucket: config.AWS.CDN_BUCKET
-        Body: stream
-        ContentType: contentType
-      .send (err) ->
-        if err
-          reject err
-        else
-          resolve key
+      file = storage.bucket('fdn.uno').file key
+      stream.pipe file.createWriteStream {
+        gzip: true
+        metaData: {contentType}
+      }
+      .on 'finish', ->
+        resolve key
+      .on 'error', reject
+
+  uploadImageByUserIdAndFile: (userId, file, {folder} = {}) =>
+    folder ?= 'misc'
+    @getSizeByBuffer (file.buffer)
+    .then (size) =>
+      key = "#{userId}_#{uuid.v4()}"
+      keyPrefix = "images/fr/#{folder}/#{key}"
+
+      aspectRatio = size.width / size.height
+      # 10 is to prevent super wide/tall images from being uploaded
+      if (aspectRatio < 1 and aspectRatio < 10) or aspectRatio < 0.1
+        smallWidth = SMALL_IMAGE_SIZE
+        smallHeight = smallWidth / aspectRatio
+      else
+        smallHeight = SMALL_IMAGE_SIZE
+        smallWidth = smallHeight * aspectRatio
+
+      Promise.all [
+        @uploadImage
+          key: "#{keyPrefix}.small.jpg"
+          stream: @toStream
+            buffer: file.buffer
+            width: Math.min size.width, smallWidth
+            height: Math.min size.height, smallHeight
+            useMin: true
+
+        @uploadImage
+          key: "#{keyPrefix}.large.jpg"
+          stream: @toStream
+            buffer: file.buffer
+            width: Math.min size.width, smallWidth * 5
+            height: Math.min size.height, smallHeight * 5
+            useMin: true
+      ]
+      .then (imageKeys) ->
+        _.map imageKeys, (imageKey) ->
+          "https://#{config.CDN_HOST}/#{imageKey}"
+      .then ([smallUrl, largeUrl]) ->
+        {
+          smallUrl, largeUrl, key, width: size.width, height: size.height
+        }
 
   getYoutubePreview: (keyPrefix, youtubeId) =>
     unless youtubeId

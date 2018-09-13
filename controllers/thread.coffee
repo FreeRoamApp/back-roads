@@ -95,18 +95,16 @@ class ThreadCtrl
 
     @checkIfBanned groupId, ip, user.id, router
     .then =>
-      msPlayed = Date.now() - user.joinTime?.getTime()
-
       if user.flags.isChatBanned
         router.throw status: 400, info: 'unable to post...'
 
-      if thread.data.body?.length > MAX_LENGTH and not user?.flags?.isModerator
+      if thread.body?.length > MAX_LENGTH and not user?.flags?.isModerator
         router.throw status: 400, info: 'message is too long...'
 
-      if not thread.data.body or not thread.data.title
+      if not thread.body or not thread.title
         router.throw status: 400, info: 'can\'t be empty'
 
-      if thread.data.title.match /like si\b/i
+      if thread.title.match /like si\b/i
         router.throw status: 400, info: 'title must not contain that phrase'
 
       unless thread.id
@@ -116,24 +114,24 @@ class ThreadCtrl
         thread.category = 'news'
 
       images = new RegExp('\\!\\[(.*?)\\]\\(<?(.*?)( |\\))', 'gi').exec(
-        thread.data.body
+        thread.body
       )
       firstImageSrc = images?[2]
-      thread.data.attachments = _.filter thread.data.attachments, ({persist}) ->
+      thread.attachments = _.filter thread.attachments, ({persist}) ->
         not persist
       if firstImageSrc
-        largeCdnImgRegex = /https:\/\/cdn\.wtf\/images\/fam\/cm\/(.*?)\.large/i
+        largeCdnImgRegex = /https:\/\/cdn\.wtf\/images\/fr\/th\/(.*?)\.large/i
         firstImageSrc = firstImageSrc.replace(
-          largeCdnImgRegex, 'https://cdn.wtf/images/fam/cm/$1.small'
+          largeCdnImgRegex, 'https://cdn.wtf/images/fr/th/$1.small'
         )
-        thread.data.attachments.push {
+        thread.attachments.push {
           type: 'image', src: firstImageSrc
         }
 
-      @getAttachment thread.data.body
+      @getAttachment thread.body
       .then (attachment) =>
         if attachment
-          thread.data.attachments.push attachment
+          thread.attachments.push attachment
 
         Group.getById groupId
         .then (group) =>
@@ -309,7 +307,7 @@ class ThreadCtrl
           category: thread.category
           id: thread.id
           timeBucket: thread.timeBucket
-          data: _.defaults {isPinned: true}, thread.data
+          isPinned: true
         }
         .tap ->
           Thread.setPinnedThreadId id
@@ -342,7 +340,7 @@ class ThreadCtrl
           category: thread.category
           id: thread.id
           timeBucket: thread.timeBucket
-          data: _.defaults {isPinned: false}, thread.data
+          isPinned: false
         }
         .tap ->
           {groupId, category} = thread
@@ -358,5 +356,10 @@ class ThreadCtrl
               "#{CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY}:#{thread.slug}"
             )
           ]
+
+    uploadImage: ({}, {user, file}) ->
+      ImageService.uploadImageByUserIdAndFile(
+        user.id, file, {folder: 'th'}
+      )
 
 module.exports = new ThreadCtrl()

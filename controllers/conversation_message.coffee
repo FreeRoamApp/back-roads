@@ -32,7 +32,6 @@ MAX_CONVERSATION_USER_IDS = 20
 URL_REGEX = /\b(https?):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[A-Z0-9+&@#/%=~_|]/gi
 IMAGE_REGEX = /\!\[(.*?)\]\((.*?)\)/gi
 CARD_BUILDER_TIMEOUT_MS = 1000
-SMALL_IMAGE_SIZE = 200
 MAX_LENGTH = 5000
 ONE_DAY_SECONDS = 3600 * 24
 
@@ -161,8 +160,6 @@ class ConversationMessageCtrl
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
-
-    msPlayed = Date.now() - user.joinTime?.getTime()
 
     if user.flags.isChatBanned
       router.throw status: 400, info: 'unable to post'
@@ -351,43 +348,9 @@ class ConversationMessageCtrl
             prepareFn item
         }
 
-
   uploadImage: ({}, {user, file}) ->
-    ImageService.getSizeByBuffer (file.buffer)
-    .then (size) ->
-      key = "#{user.id}_#{uuid.v4()}"
-      keyPrefix = "images/fam/cm/#{key}"
-
-      aspectRatio = size.width / size.height
-      # 10 is to prevent super wide/tall images from being uploaded
-      if (aspectRatio < 1 and aspectRatio < 10) or aspectRatio < 0.1
-        smallWidth = SMALL_IMAGE_SIZE
-        smallHeight = smallWidth / aspectRatio
-      else
-        smallHeight = SMALL_IMAGE_SIZE
-        smallWidth = smallHeight * aspectRatio
-
-      Promise.all [
-        ImageService.uploadImage
-          key: "#{keyPrefix}.small.jpg"
-          stream: ImageService.toStream
-            buffer: file.buffer
-            width: Math.min size.width, smallWidth
-            height: Math.min size.height, smallHeight
-            useMin: true
-
-        ImageService.uploadImage
-          key: "#{keyPrefix}.large.jpg"
-          stream: ImageService.toStream
-            buffer: file.buffer
-            width: Math.min size.width, smallWidth * 5
-            height: Math.min size.height, smallHeight * 5
-            useMin: true
-      ]
-      .then (imageKeys) ->
-        _.map imageKeys, (imageKey) ->
-          "https://#{config.CDN_HOST}/#{imageKey}"
-      .then ([smallUrl, largeUrl]) ->
-        {smallUrl, largeUrl, key, width: size.width, height: size.height}
+    ImageService.uploadImageByUserIdAndFile(
+      user.id, file, {folder: 'cm'}
+    )
 
 module.exports = new ConversationMessageCtrl()
