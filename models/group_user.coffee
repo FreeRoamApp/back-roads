@@ -26,6 +26,7 @@ PERMISSIONS =
   PERMA_BAN_USER: 'permaBanUser'
   TEMP_BAN_USER: 'tempBanUser'
   UNBAN_USER: 'unbanUser'
+  MENTION_EVERYONE: 'mentionEveryone'
   MANAGE_ROLE: 'manageRole'
   SEND_MESSAGE: 'sendMessage'
   SEND_IMAGE: 'sendImage'

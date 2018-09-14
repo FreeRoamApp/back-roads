@@ -89,20 +89,33 @@ class ConversationMessageCtrl
           status: 403
           info: "unable to post, banned #{userId}, #{ipAddr}"
 
-  _getMentions: (conversation, body) ->
+  _getMentions: (conversation, body, {user}) ->
     mentions = _.map _.uniq(body.match /\@[a-zA-Z0-9_-]+/g), (find) ->
       find.replace('@', '').toLowerCase()
     mentions = _.take mentions, 5 # so people don't abuse
     hasMentions = not _.isEmpty mentions
+    mentionsEveryone = mentions.indexOf('everyone') isnt -1
+    groupId = conversation.groupId
 
-    (if hasMentions and conversation.groupId
-      GroupRole.getAllByGroupId conversation.groupId, {preferCache: true}
-    else
-      Promise.resolve(null)
-    )
-    .then (roles) ->
-      # TODO: match roles
+    Promise.all [
+      (if hasMentions and conversation.groupId
+        GroupRole.getAllByGroupId conversation.groupId, {preferCache: true}
+      else
+        Promise.resolve(null)
+      )
+
+      if groupId and mentionsEveryone
+        permissions = [GroupUser.PERMISSIONS.MENTION_EVERYONE]
+        GroupUser.hasPermissionByGroupIdAndUser groupId, user, permissions, {
+          channelId: conversation.id
+        }
+      else
+        Promise.resolve null
+    ]
+    .then ([roles, hasMentionEveryonePermission]) ->
       _.reduce mentions, (obj, mention) ->
+        if mention is 'everyone' and not hasMentionEveryonePermission
+          return obj
         if _.find roles, {name: mention}
           obj.roleMentions.push mention
         else
@@ -232,7 +245,7 @@ class ConversationMessageCtrl
           isRead: false
         }), {userId: user.id}
 
-        @_getMentions conversation, body
+        @_getMentions conversation, body, {user}
         .then ({userMentions, roleMentions}) =>
           @_sendPushNotifications {
             conversation, user, body, userMentions, roleMentions, isImage
