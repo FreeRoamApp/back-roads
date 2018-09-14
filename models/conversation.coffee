@@ -21,6 +21,7 @@ class ConversationModel extends Base
         userIds: {type: 'set', subType: 'uuid'}
         groupId: 'uuid'
         type: 'text'
+        rank: 'int' # ordering
         data: 'text' # json: name, description, slowMode, slowModeCooldown
         isRead: 'boolean'
         lastUpdateTime: 'timestamp'
@@ -39,6 +40,7 @@ class ConversationModel extends Base
         userIds: {type: 'set', subType: 'uuid'}
         groupId: 'uuid'
         type: 'text'
+        rank: 'int' # ordering
         data: 'text' # json: name, description, slowMode, slowModeCooldown
         isRead: 'boolean'
         lastUpdateTime: 'timestamp'
@@ -57,6 +59,7 @@ class ConversationModel extends Base
         userIds: {type: 'set', subType: 'uuid'}
         groupId: 'uuid'
         type: 'text'
+        rank: 'int' # ordering
         data: 'text' # json: name, description, slowMode, slowModeCooldown
         isRead: 'boolean'
         lastUpdateTime: 'timestamp'
@@ -74,6 +77,7 @@ class ConversationModel extends Base
         userIds: {type: 'set', subType: 'uuid'}
         groupId: 'uuid'
         type: 'text'
+        rank: 'int' # ordering
         data: 'text' # json: name, description, slowMode, slowModeCooldown
         isRead: 'boolean'
         lastUpdateTime: 'timestamp'
@@ -193,6 +197,7 @@ class ConversationModel extends Base
       'lastUpdateTime'
       'lastMessage'
       'isRead'
+      'rank'
       'embedded'
     ]
 

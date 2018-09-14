@@ -19,6 +19,7 @@ lastMessageEmbed = [
 ]
 
 class ConversationCtrl
+  # TODO: cleanup, make more efficient
   create: ({userIds, groupId, name, description}, {user}) ->
     userIds ?= []
     userIds = _.uniq userIds.concat [user.id]
@@ -155,5 +156,19 @@ class ConversationCtrl
       ]
     .then Conversation.sanitize null
 
+  setOrderByGroupId: ({groupId, order}, {user}) ->
+    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
+      GroupUser.PERMISSIONS.MANAGE_CHANNEL
+    ]
+    .then (hasPermission) ->
+      unless hasPermission
+        router.throw {status: 400, info: 'You don\'t have permission'}
+
+      Promise.map order, (conversationId, rank) ->
+        Conversation.upsert {
+          groupId
+          id: conversationId
+          rank: rank + 1
+        }
 
 module.exports = new ConversationCtrl()

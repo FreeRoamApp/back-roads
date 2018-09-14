@@ -53,6 +53,7 @@ module.exports = router
 .on 'conversations.getAll', authed ConversationCtrl.getAll
 .on 'conversations.getAllByGroupId', authed ConversationCtrl.getAllByGroupId
 .on 'conversations.getById', authed ConversationCtrl.getById
+.on 'conversations.setOrderByGroupId', authed ConversationCtrl.setOrderByGroupId
 
 .on 'conversationMessages.create', authed ConversationMessageCtrl.create
 .on 'conversationMessages.deleteById', authed ConversationMessageCtrl.deleteById
