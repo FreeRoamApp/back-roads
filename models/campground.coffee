@@ -28,8 +28,8 @@ class Campground extends PlaceBase
           # thoroughfare: 'text' # address
           # premise: 'text' # apt, suite, etc...
           # locality: 'text' # city / town
-          # administrative_area: 'text' # state / province / region. iso when avail
-          # postal_code: 'text'
+          # administrativeArea: 'text' # state / province / region. iso when avail
+          # postalCode: 'text'
           # country: 'text' # 2 char iso
         # end common
 
@@ -113,10 +113,9 @@ class Campground extends PlaceBase
       address: JSON.stringify campground.address
     }, campground
 
-
     # add data if non-existent
     _.defaults campground, {
-      id: cknex.getTimeUuid()
+      # TODO: if this is set, batchUpsert changes id every time # id: cknex.getTimeUuid()
       rating: 0
     }
 

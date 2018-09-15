@@ -101,9 +101,9 @@ class ConversationModel extends Base
       .from 'conversations_by_id'
       .where 'id', '=', id
       .run {isSingle: true}
-      .then defaultOutput
+      .then @defaultOutput
       .catch (err) ->
-        console.log 'covnersation get err', id
+        console.log 'conversation get err', id
         throw err
 
     if preferCache

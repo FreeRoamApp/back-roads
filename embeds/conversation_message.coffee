@@ -26,7 +26,7 @@ class ConversationMessageEmbed
   mentionedUsers: (conversationMessage) ->
     text = conversationMessage.body
     mentions = _.map _.uniq(text?.match /\@[a-zA-Z0-9_-]+/g), (find) ->
-      find.replace '@', ''
+      find.replace('@', '').toLowerCase()
     mentions = _.take mentions, 5 # so people don't abuse
     Promise.map mentions, (username) ->
       BaseMessage.user {username, groupId: conversationMessage.groupId}

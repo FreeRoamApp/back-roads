@@ -7,6 +7,8 @@ config = require '../config'
 module.exports = class PlaceBaseCtrl
   getBySlug: ({slug}, {user}) =>
     @Model.getBySlug slug
+    .then (place) =>
+      _.defaults {@type}, place
     # .then EmbedService.embed {embed: defaultEmbed}
 
   search: ({query}, {user}) =>
