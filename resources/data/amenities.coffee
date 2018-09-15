@@ -42,11 +42,38 @@ amenities =
     amenities: ['groceries']
 
   # indian-bread-rocks-blm
+  'shell-bowie'
+    name: 'Shell Bowie'
+    location: [32.319150, -109.452341]
+    amenities: ['water', 'gas', 'diesel']
+    prices:
+      water: 0
+  'safeway-wilcox'
+    name: 'Safeway Wilcox'
+    location: [32.263165, -109.842326]
+    amenities: ['groceries']
+  'mountain-view-rv-park'
+    amenities: ['propane', 'dump', 'gas', 'diesel']
+
   # snyder-hill-blm
+  'safeway-tucson-1'
+    name: 'Safeway Tucson'
+    location: [32.135133, -111.030016]
+    amenities: ['groceries']
+  'merrigans-arizona-roadrunner'
+    name: 'Merrigan\'s Arizona Roadrunner'
+    location: [32.285443, -110.994579]
+    amenities: ['water', 'dump']
+  'uhaul-tucson-1'
+    name: 'U-Haul of Southwest'
+    location: [32.178424, -110.969300]
+    amenities: ['propane']
+
   # saddle-mountain-blm
+
   # darby-well-road
   # craggy-wash-blm
-  
+
 
 module.exports = _.map amenities, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity
