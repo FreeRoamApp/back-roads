@@ -28,8 +28,6 @@ amenities =
     location: [36.906287, -116.757011]
     amenities: ['groceries', 'propane', 'laundry']
 
-  # indian-bread-rocks-blm
-
   # scaddan wash
   'rv-pit-stop-quartzite':
     name: 'RV Pit Stop'
@@ -43,6 +41,12 @@ amenities =
     location: [33.663178, -114.231280]
     amenities: ['groceries']
 
+  # indian-bread-rocks-blm
+  # snyder-hill-blm
+  # saddle-mountain-blm
+  # darby-well-road
+  # craggy-wash-blm
+  
 
 module.exports = _.map amenities, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity
