@@ -1,5 +1,6 @@
 _ = require 'lodash'
 uuid = require 'node-uuid'
+Promise = require 'bluebird'
 
 Base = require './base'
 cknex = require '../services/cknex'
@@ -111,7 +112,6 @@ class GroupModel extends Base
 
     group = _.defaults group, {
       id: cknex.getTimeUuid()
-      id: null
       name: null
       description: null
       userId: null

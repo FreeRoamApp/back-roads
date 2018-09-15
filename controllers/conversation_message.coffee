@@ -329,6 +329,7 @@ class ConversationMessageCtrl
     ConversationMessage.getLastTimeByUserIdAndConversationId user.id, conversationId
 
   getAllByConversationId: (options, {user}, socketInfo) =>
+    console.log 'getall'
     {conversationId, minId, maxId, isStreamed} = options
     {emit, socket, route} = socketInfo
 

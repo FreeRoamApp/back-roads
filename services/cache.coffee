@@ -27,7 +27,7 @@ class CacheService
     CHAT_USER_BY_USERNAME: 'chat:user:byUsername'
     CHAT_GROUP_USER: 'chat:group_user'
     CHAT_MESSAGE_DAILY_XP: 'chat_message:daily_xp'
-    CONVERSATION_ID: 'conversation:id5'
+    CONVERSATION_ID: 'conversation:id7'
     GROUP_ID: 'group:id'
     GROUP_SLUG: 'group:slug'
     GROUP_GET_ALL: 'group:getAll1'

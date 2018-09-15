@@ -5,7 +5,6 @@ config = require '../config'
 cknex = require '../services/cknex'
 
 EmbedClasses =
-  user: require '../embeds/user'
   category: require '../embeds/category'
   conversation: require '../embeds/conversation'
   conversationMessage: require '../embeds/conversation_message'
@@ -14,8 +13,10 @@ EmbedClasses =
   groupUser: require '../embeds/group_user'
   item: require '../embeds/item'
   product: require '../embeds/product'
+  review: require '../embeds/review'
   thread: require '../embeds/thread'
   threadComment: require '../embeds/thread_comment'
+  user: require '../embeds/user'
 
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
@@ -46,6 +47,9 @@ TYPES =
   PRODUCT:
     NAME_KEBAB: 'product:nameKebab'
     ITEM: 'product:item'
+  REVIEW:
+    TIME: 'review:time'
+    USER: 'review:user'
   THREAD_COMMENT:
     USER: 'threadComment:user'
     GROUP_USER: 'threadComment:groupUser'

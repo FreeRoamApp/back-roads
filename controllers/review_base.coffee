@@ -1,5 +1,6 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
+router = require 'exoid-router'
 
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
@@ -9,18 +10,18 @@ module.exports = class ReviewBaseCtrl
   imageFolder: 'rv'
   getAllByParentId: ({parentId}, {user}) =>
     @Model.getAllByParentId parentId
-    # .then EmbedService.embed {embed: defaultEmbed}
+    .map EmbedService.embed {embed: @defaultEmbed}
 
   search: ({query}, {user}) =>
     @Model.search {query}
     .then (places) =>
       _.map places, (place) =>
         _.defaults {@type}, place
-    # .then (results) ->
-    #   Promise.map results, EmbedService.embed {embed: defaultEmbed}
+    .then (results) ->
+      Promise.map results, EmbedService.embed {embed: @defaultEmbed}
 
   upsert: (options, {user, headers, connection}) =>
-    {id, type, title, body, attachments, parentId} = options
+    {id, type, title, body, rating, attachments, parentId} = options
 
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
@@ -34,10 +35,18 @@ module.exports = class ReviewBaseCtrl
     unless body
       router.throw status: 400, info: 'can\'t be empty'
 
-    @Model.upsert
-      userId: user.id
-      body: body
-      parentId: parentId
+    isUpdate = Boolean id
+    (if isUpdate then @Model.getById id else Promise.resolve null)
+    .then (existingReview) =>
+      # FIXME: update place review. @PlaceModel
+      @Model.upsert
+        id: id
+        userId: user.id
+        title: title
+        body: body
+        parentId: parentId
+        rating: rating
+        attachments: attachments
 
   uploadImage: ({}, {user, file}) =>
     ImageService.uploadImageByUserIdAndFile(
