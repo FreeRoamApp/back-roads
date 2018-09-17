@@ -1,7 +1,7 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-Amenity = require '../models/campground'
+Amenity = require '../models/amenity'
 PlaceBaseCtrl = require './place_base'
 
 class AmenityCtrl extends PlaceBaseCtrl

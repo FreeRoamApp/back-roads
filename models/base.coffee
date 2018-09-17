@@ -14,6 +14,7 @@ module.exports = class Base
 
   upsert: (row, {ttl, prepareFn, isUpdate, map} = {}) =>
     scyllaRow = @defaultInput row
+    elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
     Promise.all _.filter _.map(@SCYLLA_TABLES, (table) ->
       if table.ignoreUpsert
@@ -36,7 +37,7 @@ module.exports = class Base
         _.forEach map, (value, column) ->
           q.add column, value
       q.run()
-    ).concat [@index row]
+    ).concat [@index elasticSearchRow]
     .then =>
       if @streamChannelKey
         prepareFn?(scyllaRow) or Promise.resolve scyllaRow
@@ -52,16 +53,26 @@ module.exports = class Base
       Promise.resolve()
     else
       row = @defaultESInput row
-      elasticsearch.index {
+      elasticsearch.update {
         index: @ELASTICSEARCH_INDICES[0].name
         type: @ELASTICSEARCH_INDICES[0].name
-        id: row.slug
-        body: _.pick row, _.keys @ELASTICSEARCH_INDICES[0].mappings
+        id: row.id
+        body:
+          doc:
+            _.pick row, _.keys @ELASTICSEARCH_INDICES[0].mappings
+          doc_as_upsert: true
       }
+      .catch (err) =>
+        console.log 'elastic err', @ELASTICSEARCH_INDICES[0].name
+        throw err
 
   defaultInput: (row) -> row
   defaultOutput: (row) -> row
-  defaultESInput: (row) -> row
+  defaultESInput: (row) ->
+    if row.id
+      row.id = "#{row.id}"
+    row
+  defaultESOutput: (row) -> row
 
   # streaming fns
   streamCreate: (obj) =>

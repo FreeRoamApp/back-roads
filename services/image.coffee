@@ -106,7 +106,8 @@ class ImageService
           "https://#{config.CDN_HOST}/#{imageKey}"
       .then ([smallUrl, largeUrl]) ->
         {
-          smallUrl, largeUrl, key, width: size.width, height: size.height
+          aspectRatio, smallUrl, largeUrl, key
+          width: size.width, height: size.height
         }
 
   getYoutubePreview: (keyPrefix, youtubeId) =>

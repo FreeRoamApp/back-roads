@@ -8,12 +8,14 @@ Thread = require '../models/thread'
 Category = require '../models/category'
 Group = require '../models/group'
 Item = require '../models/item'
+Amenity = require '../models/amenity'
 Campground = require '../models/campground'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
 allCategories = require '../resources/data/categories'
 allGroups = require '../resources/data/groups'
 allItems = require '../resources/data/items'
+allAmenities = require '../resources/data/amenities'
 allCampgrounds = require '../resources/data/campgrounds'
 allProducts = require '../resources/data/products'
 config = require '../config'
@@ -35,6 +37,7 @@ class CronService
           Group.upsert _.cloneDeep group
         Item.batchUpsert _.cloneDeep allItems
         Campground.batchUpsert _.cloneDeep allCampgrounds
+        Amenity.batchUpsert _.cloneDeep allAmenities
         Product.batchUpsert _.cloneDeep allProducts
         Category.batchUpsert _.cloneDeep allCategories
 
@@ -42,11 +45,12 @@ class CronService
       Thread.updateScores 'time'
 
 
-    @addCron 'oneHour', '0 28 * * * *', ->
+    @addCron 'oneHour', '0 18 * * * *', ->
       CleanupService.trimLeaderboards()
       Promise.map allGroups, (group) ->
         Group.upsert _.cloneDeep group
       Item.batchUpsert _.cloneDeep allItems
+      Amenity.batchUpsert _.cloneDeep allAmenities
       Campground.batchUpsert _.cloneDeep allCampgrounds
       Product.batchUpsert _.cloneDeep allProducts
       Category.batchUpsert _.cloneDeep allCategories
