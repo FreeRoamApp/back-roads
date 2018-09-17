@@ -6,10 +6,13 @@ config = require '../../config'
 # TODO: 'view satellite' link
 # TODO: distanceTo: calculate from other campgrounds in database? or manually input
 # just AZ for now (fall/winter)
+# cknex = require '../../services/cknex'
+# console.log cknex.getTimeUuid()
 
 campgrounds =
   'snyder-hill-blm':
     name: 'Snyder Hill BLM'
+    id: 'b01d8540-b95a-11e8-bd0b-850399f93208'
     location: [32.158132, -111.115281]
     address:
       locality: 'Tucson'
@@ -17,6 +20,7 @@ campgrounds =
     siteCount:
       99: 30
     crowds: {winter: 4, spring: 3, summer: 2, fall: 3}
+    fullness: {winter: 4, springs: 3, summer: 2, fall: 3}
     noise: {day: 3, night: 2}
     shade: 1
     roadDifficulty: 2
@@ -29,6 +33,7 @@ campgrounds =
 
   'saddle-mountain-blm':
     name: 'Saddle Mountain BLM'
+    id: 'bdc8f8a0-b95a-11e8-9f50-694a5cc55d04'
     location: [33.464512, -113.036644]
     address:
       locality: 'Tonopah'
@@ -36,6 +41,7 @@ campgrounds =
     siteCount:
       99: 15
     crowds: {winter: 2, spring: 1, summer: 1, fall: 1}
+    fullness: {winter: 2, spring: 1, summer: 1, fall: 1}
     noise: {day: 1, night: 1}
     shade: 1
     roadDifficulty: 2
@@ -49,6 +55,7 @@ campgrounds =
 
   'scaddan-wash-blm':
     name: 'Scaddan Wash BLM'
+    id: 'caba91e0-b95a-11e8-bd4b-a2e26b5759cf'
     location: [33.661132, -114.186548]
     address:
       locality: 'Quartzsite'
@@ -57,6 +64,7 @@ campgrounds =
     siteCount:
       99: 50
     crowds: {winter: 4, spring: 3, summer: 1, fall: 3}
+    fullness: {winter: 3, spring: 2, summer: 1, fall: 2}
     noise: {day: 3, night: 3}
     shade: 1
     roadDifficulty: 1
@@ -89,6 +97,7 @@ campgrounds =
 
   'darby-well-road':
     name: 'Darby Well Road'
+    id: 'e0c7b620-b95a-11e8-aa35-9ccab29abe44'
     location: [32.339270, -112.849561]
     address:
       locality: 'Ajo'
@@ -97,11 +106,12 @@ campgrounds =
       35: 5
       25: 15
     crowds: {winter: 2, spring: 2, summer: 1, fall: 2}
+    fullness: {winter: 3, spring: 3, summer: 2, fall: 1}
     noise: {day: 2, night: 1}
     shade: 1
     roadDifficulty: 2
     cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, tmobile: {signal: 2, type: '4g'}}
-    safety: 5
+    safety: 3
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -110,6 +120,7 @@ campgrounds =
 
   'craggy-wash-blm':
     name: 'Craggy Wash BLM'
+    id: 'e7815c50-b95a-11e8-a52d-67644798c673'
     location: [34.586301, -114.367222]
     address:
       locality: 'Lake Havasu City'
@@ -122,7 +133,7 @@ campgrounds =
     shade: 1
     roadDifficulty: 2
     cellSignal: {att: {signal: 2, type: '4g', speed: 'fast'}, verizon: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '3g'}, tmobile: {signal: 0, type: '4g', speed: 'fast'}}
-    safety: 4
+    safety: 2
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -132,6 +143,7 @@ campgrounds =
 
   'indian-bread-rocks-blm':
     name: 'Indian Bread Rocks BLM'
+    id: 'eec4cbf0-b95a-11e8-beb1-a9dd11964986'
     location: [32.238663, -109.499735]
     address:
       locality: 'Bowie'
@@ -146,7 +158,7 @@ campgrounds =
     shade: 1
     roadDifficulty: 3
     cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'},  tmobile: {signal: 2, type: '4g'}}
-    safety: 4
+    safety: 2
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: {pitToilet: true}
@@ -156,6 +168,7 @@ campgrounds =
 
   'bombos-pond':
     name: 'Bombo\'s Pond'
+    id: 'f443a830-b95a-11e8-a4bf-2d01b29b84ce'
     location: [36.881623, -116.753584]
     address:
       locality: 'Beatty'
@@ -180,6 +193,7 @@ campgrounds =
   # rockhouse campground
   # jumbo rocks joshua tree
   # joshua tree south
+  # valley of fire nevada, A8vEsqSssRE, MFt5XBe59cA timestamp 3m0s
 
 
 module.exports = _.map campgrounds, (value, slug) -> _.defaults {slug}, value

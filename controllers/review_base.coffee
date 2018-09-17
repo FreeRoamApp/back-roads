@@ -14,9 +14,9 @@ module.exports = class ReviewBaseCtrl
 
   search: ({query}, {user}) =>
     @Model.search {query}
-    .then (places) =>
-      _.map places, (place) =>
-        _.defaults {@type}, place
+    .then (reviews) =>
+      _.map reviews, (review) =>
+        _.defaults {@type}, review
     .then (results) ->
       Promise.map results, EmbedService.embed {embed: @defaultEmbed}
 
@@ -36,17 +36,30 @@ module.exports = class ReviewBaseCtrl
       router.throw status: 400, info: 'can\'t be empty'
 
     isUpdate = Boolean id
-    (if isUpdate then @Model.getById id else Promise.resolve null)
-    .then (existingReview) =>
-      # FIXME: update place review. @PlaceModel
-      @Model.upsert
-        id: id
-        userId: user.id
-        title: title
-        body: body
-        parentId: parentId
-        rating: rating
-        attachments: attachments
+    Promise.all [
+      (if isUpdate then @Model.getById id else Promise.resolve null)
+      @ParentModel.getById parentId
+    ]
+    .then ([existingReview, parent]) =>
+      totalStars = parent.rating * parent.ratingCount
+      totalStars += rating
+      newRatingCount = parent.ratingCount + 1
+      newRating = totalStars / newRatingCount
+
+      Promise.all [
+        @ParentModel.upsert {
+          id: parent.id, slug: parent.slug
+          rating: newRating, ratingCount: newRatingCount
+        }
+        @Model.upsert
+          id: id
+          userId: user.id
+          title: title
+          body: body
+          parentId: parentId
+          rating: rating
+          attachments: attachments
+      ]
 
   uploadImage: ({}, {user, file}) =>
     ImageService.uploadImageByUserIdAndFile(

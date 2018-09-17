@@ -3,6 +3,7 @@ _ = require 'lodash'
 
 EmbedService = require '../services/embed'
 CampgroundReview = require '../models/campground_review'
+Campground = require '../models/campground'
 ReviewBaseCtrl = require './review_base'
 
 class CampgroundReviewCtrl extends ReviewBaseCtrl
@@ -10,5 +11,6 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
   imageFolder: 'rvcg'
   defaultEmbed: [EmbedService.TYPES.REVIEW.USER, EmbedService.TYPES.REVIEW.TIME]
   Model: CampgroundReview
+  ParentModel: Campground
 
 module.exports = new CampgroundReviewCtrl()

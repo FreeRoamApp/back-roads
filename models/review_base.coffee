@@ -34,6 +34,3 @@ module.exports = class ReviewBase extends Base
     .limit limit
     .run()
     .map @defaultOutput
-
-  defaultESInput: (review) ->
-    review

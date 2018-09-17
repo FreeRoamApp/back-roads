@@ -6,6 +6,9 @@ PlaceBase = require './place_base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
+# low to high
+ICON_ORDER = ['gas', 'propane', 'groceries', 'water', 'dump']
+
 class Amenity extends PlaceBase
   SCYLLA_TABLES: [
     {
@@ -29,6 +32,9 @@ class Amenity extends PlaceBase
           # country: 'text' # 2 char iso
         # end common
 
+        amenities: 'text' # json
+        prices: 'text' # json
+
       primaryKey:
         partitionKey: ['slug']
     }
@@ -41,6 +47,7 @@ class Amenity extends PlaceBase
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
+        amenities: {type: 'text'} # array
         # end common
     }
   ]
@@ -52,13 +59,14 @@ class Amenity extends PlaceBase
     # transform existing data
     amenity = _.defaults {
       address: JSON.stringify amenity.address
+      amenities: JSON.stringify amenity.amenities
+      prices: JSON.stringify amenity.prices
     }, amenity
 
 
     # add data if non-existent
     _.defaults amenity, {
       # TODO: if this is set, batchUpsert changes id every time # id: cknex.getTimeUuid()
-      rating: 0
     }
 
   defaultOutput: (amenity) ->
@@ -66,7 +74,7 @@ class Amenity extends PlaceBase
       return null
 
     jsonFields = [
-      'address'
+      'address', 'amenities', 'prices'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -76,5 +84,11 @@ class Amenity extends PlaceBase
 
     _.defaults {type: 'amenity'}, amenity
 
+  defaultESOutput: (campground) ->
+    campground = _.defaults {
+      icon: _.orderBy(campground.amenities, (amenity) ->
+        ICON_ORDER.indexOf(amenity)
+      , ['desc'])[0]
+    }, _.pick campground, ['slug', 'name', 'location', 'amenities']
 
 module.exports = new Amenity()

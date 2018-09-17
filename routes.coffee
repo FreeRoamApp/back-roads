@@ -118,6 +118,8 @@ module.exports = router
 
 .on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
 .on 'campgrounds.search', authed CampgroundCtrl.search
+.on 'campgrounds.getAmenityBoundsById',
+  authed CampgroundCtrl.getAmenityBoundsById
 # end places
 
 .on 'products.getBySlug', authed ProductCtrl.getBySlug

@@ -11,8 +11,8 @@ module.exports = class PlaceBaseCtrl
       _.defaults {@type}, place
     # .then EmbedService.embed {embed: defaultEmbed}
 
-  search: ({query}, {user}) =>
-    @Model.search {query}
+  search: ({query, sort}, {user}) =>
+    @Model.search {query, sort}
     .then (places) =>
       _.map places, (place) =>
         _.defaults {@type}, place
