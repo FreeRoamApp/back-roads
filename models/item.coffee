@@ -42,6 +42,7 @@ class Item extends Base
     {
       name: 'items'
       mappings:
+        slug: {type: 'text'}
         name: {type: 'text'}
         categories: {type: 'text'}
         why: {type: 'text'}
@@ -77,7 +78,7 @@ class Item extends Base
     }
     .then ({hits}) ->
       _.map hits.hits, ({_id, _source}) ->
-        _.defaults _source, {slug: _id}
+        _.defaults _source, {id: _id}
 
   getBySlug: (slug) =>
     cknex().select '*'
