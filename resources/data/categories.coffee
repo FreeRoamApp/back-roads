@@ -5,9 +5,9 @@ config = require '../../config'
 
 categories =
   'starting-out':
-    name: 'Starting Out'
+    name: 'RVers'
     description: 'Products to get you ready to start RVing'
-    priority: 0
+    priority: 2
     data:
       defaultProductSlug: 'camco-plastic-wheel-chocks'
   'maintenance':
@@ -19,7 +19,7 @@ categories =
   'boondocking':
     name: 'Boondocking'
     description: 'Solar, generators, and everything you need to boondock'
-    priority: 2
+    priority: 0
     data:
       defaultProductSlug: 'renogy-100w-solar-panel-mono'
 

@@ -61,7 +61,7 @@ amenities =
     name: 'Safeway Wilcox'
     id: 'ab51ce50-ba08-11e8-93c0-85218541d519'
     location: [32.263165, -109.842326]
-    amenities: ['groceries']
+    amenities: ['groceries', 'trash']
   'mountain-view-rv-park':
     name: 'Mountain View RV Park'
     id: 'b4c42be0-ba08-11e8-a513-190d0cfe807e'
@@ -73,7 +73,7 @@ amenities =
     name: 'Safeway Tucson'
     id: 'b9b63170-ba08-11e8-a594-5e57e192584c'
     location: [32.135133, -111.030016]
-    amenities: ['groceries']
+    amenities: ['groceries', 'trash']
   'merrigans-arizona-roadrunner':
     name: 'Merrigan\'s Arizona Roadrunner'
     id: 'bde00500-ba08-11e8-9733-3f73ddcf007d'
@@ -111,7 +111,7 @@ amenities =
     name: 'Walmart Buckeye'
     id: '1e5e9f30-ba14-11e8-9c41-dfd9b90c36bf'
     location: [33.436908, -112.560312]
-    amenities: ['groceries']
+    amenities: ['groceries', 'trash']
 
   'leaf-verde-rv-park':
     name: 'Leaf Verde RV Park'
@@ -156,13 +156,89 @@ amenities =
     name: 'Walmart Lake Havasu City'
     id: 'd2fce8f0-ba20-11e8-80dc-138403e59b76'
     location: [34.571657, -114.368076]
-    amenities: ['groceries']
+    amenities: ['groceries', 'trash']
 
   'amerigas-lake-havasu-city':
     name: 'Amerigas Lake Havasu City'
     id: '336bf3c0-ba21-11e8-8850-c6abdef98230'
     location: [34.506282, -114.348301]
     amenities: ['propane']
+
+  # american-girl-mine-blm
+  'rest-area-winterhaven':
+    name: 'Rest Area Winterhaven'
+    id: '1829df30-babe-11e8-814c-0d78c67a5dac'
+    location: [32.737364, -114.890338]
+    amenities: ['water', 'trash']
+
+  'chevron-sidewinder':
+    name: 'Chevron Sidewinder'
+    id: 'a316fcc0-bac0-11e8-9211-2d6d362feb2a'
+    location: [32.745387, -114.755294]
+    amenities: ['dump', 'trash']
+    prices:
+      dump: 15
+
+  'walmart-yuma':
+    name: 'Walmart Yuma'
+    id: 'b120e3d0-bac0-11e8-b438-d431db42b9c5'
+    location: [32.712408, -114.652506]
+    amenities: ['groceries', 'trash']
+
+  'amerigas-yuma':
+    name: 'AmeriGas Yuma'
+    id: 'e6c0c3c0-bac0-11e8-863a-466d77a49d19'
+    location: [32.698859, -114.595986]
+    amenities: ['propane']
+
+  # blair-valley
+  'julian-market-and-deli':
+    name: 'Julian Market and Deli'
+    id: '7e030f80-baef-11e8-a0c9-f49babd8bfc8'
+    location: [33.078835, -116.602362]
+    amenities: ['groceries']
+
+  'stagecoach-trails-rv-resort':
+    name: 'Stagecoach Trails RV Resort'
+    id: '9ec86250-baf0-11e8-8c3a-ede2199eaa48'
+    location: [33.060269, -116.424864]
+    amenities: ['dump', 'water']
+    prices:
+      dump: 20
+
+  'ramco-julian':
+    name: 'Ramco Julian'
+    id: '53df2de0-baf1-11e8-97a1-242defa7932b'
+    location: [33.076734, -116.600245]
+    amenities: ['propane', 'gas']
+    # accessibility:
+    #   gas: 2
+    #   diesel: 2
+
+  # joshua-tree-blm-south
+  'chevron-chiriaco-summit':
+    name: 'Chevron Chiriaco Summit'
+    id: '6d6aea30-baf4-11e8-a749-052732658139'
+    location: [33.660847, -115.720135]
+    amenities: ['water', 'propane', 'gas']
+    prices:
+      water: 0
+
+  'cottonwood-visitor-center':
+    name: 'Cottonwood Visitor Center'
+    id: 'bfb56f20-baf6-11e8-b24b-883a4f229ab0'
+    location: [33.748603, -115.823964]
+    amenities: ['dump', 'water']
+    prices:
+      water: 5
+      dump: 5
+
+  'winco-foods-indio':
+    name: 'Winco Foods Indio'
+    id: 'f3771930-baf6-11e8-b1f3-de0d96c4e95b'
+    location: [33.739575, -116.213104]
+    amenities: ['groceries', 'trash']
+
 
 
 module.exports = _.map amenities, (value, slug) -> _.defaults {slug}, value

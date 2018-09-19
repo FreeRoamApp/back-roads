@@ -23,6 +23,7 @@ campgrounds =
     fullness: {winter: 4, springs: 3, summer: 2, fall: 3}
     noise: {day: 3, night: 2}
     shade: 1
+    safety: 4
     roadDifficulty: 2
     cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '3g'}, tmobile: {signal: 3, type: '4g'}}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
@@ -40,10 +41,11 @@ campgrounds =
       administrativeArea: 'AZ'
     siteCount:
       99: 15
-    crowds: {winter: 2, spring: 1, summer: 1, fall: 1}
+    crowds: {winter: 2, spring: 1, summer: 1, fall: 2}
     fullness: {winter: 2, spring: 1, summer: 1, fall: 1}
     noise: {day: 1, night: 1}
     shade: 1
+    safety: 4
     roadDifficulty: 2
     cellSignal: {att: {signal: 2, type: '4g'}, verizon: {signal: 2, type: '4g'}, sprint: {signal: 2, type: '3g'}, tmobile: {signal: 0}}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
@@ -67,6 +69,7 @@ campgrounds =
     fullness: {winter: 3, spring: 2, summer: 1, fall: 2}
     noise: {day: 3, night: 3}
     shade: 1
+    safety: 4
     roadDifficulty: 1
     cellSignal: {att: {signal: 2, type: '4g'}, verizon: {signal: 4, type: '4g', speed: 'slow'}, sprint: {signal: 3, type: '3g'}, tmobile: {signal: 2, type: '4g'}}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
@@ -133,7 +136,7 @@ campgrounds =
     shade: 1
     roadDifficulty: 2
     cellSignal: {att: {signal: 2, type: '4g', speed: 'fast'}, verizon: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '3g'}, tmobile: {signal: 0, type: '4g', speed: 'fast'}}
-    safety: 2
+    safety: 4
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -158,7 +161,7 @@ campgrounds =
     shade: 1
     roadDifficulty: 3
     cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'},  tmobile: {signal: 2, type: '4g'}}
-    safety: 2
+    safety: 4
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: {pitToilet: true}
@@ -182,7 +185,7 @@ campgrounds =
     shade: 1
     roadDifficulty: 1
     cellSignal: {att: {signal: 2, type: '4g'}, verizon: {signal: 2, type: '4g'}}
-    safety: 2
+    safety: 3
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: null
@@ -190,10 +193,109 @@ campgrounds =
       {sourceType: 'youtube', sourceId: 'NqjCGkeWMjg'}
     ]
 
+  'american-girl-mine-blm':
+    name: 'American Girl Mine BLM'
+    id: 'cabc22c0-babe-11e8-8e13-181478e84c85'
+    location: [32.836784, -114.812061]
+    address:
+      locality: 'Obregon'
+      administrativeArea: 'CA'
+    # drivingInstructions: ''
+    siteCount:
+      99: 50
+    crowds: {winter: 3, spring: 2, summer: 1, fall: 2}
+    fullness: {winter: 2, spring: 1, summer: 1, fall: 1}
+    noise: {day: 2, night: 1}
+    shade: 1
+    roadDifficulty: 2
+    cellSignal: {att: {signal: 1, type: '4g'}, verizon: {signal: 4, type: '4g'}}
+    safety: 4
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    restrooms: null
+    videos: [
+      {sourceType: 'youtube', sourceId: '5kI5V3rn0vo'}
+    ]
+
+  'blair-valley':
+    name: 'Blair Valley'
+    id: 'b3ec0760-bae4-11e8-b8ae-1f51c09be6da'
+    location: [33.037322, -116.410416]
+    address:
+      locality: 'Julian'
+      administrativeArea: 'CA'
+    # # drivingInstructions: ''
+    siteCount:
+      99: 50
+    crowds: {winter: 2, spring: 2, summer: 1, fall: 2}
+    fullness: {winter: 2, spring: 2, summer: 1, fall: 2}
+    noise: {day: 1, night: 1}
+    shade: 1
+    roadDifficulty: 3
+    cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, tmobile: {signal: 3, type: '4g'}}
+    safety: 4
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    restrooms: null
+    videos: [
+      {sourceType: 'youtube', sourceId: 'IGftiG2oTFA', timestamp: '6m30s'}
+    ]
+
+  'joshua-tree-blm-south':
+    name: 'Joshua Tree BLM South'
+    id: '4e8c7540-baf2-11e8-8e0a-97f6c311604a'
+    location: [33.674494, -115.801903]
+    address:
+      locality: 'Chiriaco Summit'
+      administrativeArea: 'CA'
+    # # # drivingInstructions: ''
+    siteCount:
+      99: 25
+    crowds: {winter: 3, spring: 3, summer: 1, fall: 3}
+    fullness: {winter: 4, spring: 4, summer: 1, fall: 3}
+    noise: {day: 2, night: 2}
+    shade: 1
+    roadDifficulty: 3
+    cellSignal: {att: {signal: 4, type: '4g'}, verizon: {signal: 4, type: '4g'}, tmobile: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '4g'}}
+    safety: 4
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    restrooms: null
+    videos: [
+      {sourceType: 'youtube', sourceId: 'Qb-mqJyzGeE'}
+    ]
+
+  # 'government-wash':
+  #   name: 'Government Wash'
+  #   id: 'af30b550-bafc-11e8-ab2b-d533ac942e4d'
+  #   location: [36.133394, -114.837833]
+  #   address:
+  #     locality: 'Las Vegas'
+  #     administrativeArea: 'NV'
+  #   # # # drivingInstructions: ''
+  #   siteCount:
+  #     99: 20
+  #   # crowds: {winter: 3, spring: 3, summer: 1, fall: 3}
+  #   # fullness: {winter: 4, spring: 4, summer: 1, fall: 3}
+  #   # noise: {day: 2, night: 2}
+  #   # shade: 1
+  #   # roadDifficulty: 3
+  #   # cellSignal: {att: {signal: 4, type: '4g'}, verizon: {signal: 4, type: '4g'}, tmobile: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '4g'}}
+  #   # safety: 4
+  #   # minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+  #   # maxDays: 14
+  #   # restrooms: null
+  #   videos: [
+  #     {sourceType: 'youtube', sourceId: 'tZJ6cGPsy_o '}
+  #   ]
+
+
+
   # rockhouse campground
   # jumbo rocks joshua tree
   # joshua tree south
   # valley of fire nevada, A8vEsqSssRE, MFt5XBe59cA timestamp 3m0s
+
 
 
 module.exports = _.map campgrounds, (value, slug) -> _.defaults {slug}, value
