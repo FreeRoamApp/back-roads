@@ -158,6 +158,10 @@ app.get '/ping', (req, res) -> res.send 'pong'
 
 app.get '/healthcheck', HealthCtrl.check
 
+app.get '/syncCell', ->
+  sync = require './sync_cell/sync_cell_towers'
+  sync()
+
 app.post '/log', (req, res) ->
   unless req.body?.event is 'client_error'
     return res.status(400).send 'must be type client_error'
