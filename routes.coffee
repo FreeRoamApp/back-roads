@@ -6,6 +6,7 @@ BanCtrl = require './controllers/ban'
 CategoryCtrl = require './controllers/category'
 CampgroundCtrl = require './controllers/campground'
 CampgroundReviewCtrl = require './controllers/campground_review'
+CellTowerCtrl = require './controllers/cell_tower'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
 GroupCtrl = require './controllers/group'
@@ -120,6 +121,10 @@ module.exports = router
 .on 'campgrounds.search', authed CampgroundCtrl.search
 .on 'campgrounds.getAmenityBoundsById',
   authed CampgroundCtrl.getAmenityBoundsById
+
+# .on 'cellTowers.getBySlug', authed CellTowerCtrl.getBySlug
+.on 'cellTowers.search', authed CellTowerCtrl.search
+
 # end places
 
 .on 'products.getBySlug', authed ProductCtrl.getBySlug
