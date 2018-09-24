@@ -1,4 +1,5 @@
 _ = require 'lodash'
+Promise = require 'bluebird'
 
 GroupUserEmbed = require './group_user'
 GroupUser = require '../models/group_user'

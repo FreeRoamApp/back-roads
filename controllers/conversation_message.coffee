@@ -238,12 +238,13 @@ class ConversationMessageCtrl
       .then (conversationMessage) =>
         userIds = conversation.userIds
         pickedConversation = _.pick conversation, [
-          'userId', 'userIds', 'groupId', 'id'
+          'userIds', 'groupId', 'id'
         ]
         Conversation.upsert _.defaults(pickedConversation, {
           lastUpdateTime: new Date()
           isRead: false
-        }), {userId: user.id}
+          userId: user.id
+        })
 
         @_getMentions conversation, body, {user}
         .then ({userMentions, roleMentions}) =>

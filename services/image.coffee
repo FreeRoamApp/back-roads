@@ -73,7 +73,7 @@ class ImageService
     @getSizeByBuffer (file.buffer)
     .then (size) =>
       key = "#{userId}_#{uuid.v4()}"
-      keyPrefix = "images/fr/#{folder}/#{key}"
+      keyPrefix = "images/#{folder}/#{key}"
 
       aspectRatio = size.width / size.height
       # 10 is to prevent super wide/tall images from being uploaded

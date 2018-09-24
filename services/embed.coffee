@@ -5,6 +5,7 @@ config = require '../config'
 cknex = require '../services/cknex'
 
 EmbedClasses =
+  ban: require '../embeds/ban'
   category: require '../embeds/category'
   conversation: require '../embeds/conversation'
   conversationMessage: require '../embeds/conversation_message'
@@ -20,6 +21,9 @@ EmbedClasses =
 
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
+  BAN:
+    USER: 'ban:user'
+    BANNED_BY_USER: 'ban:bannedByUser'
   CATEGORY:
     FIRST_ITEM_PRODUCT_SLUG: 'category:firstItemFirstProductSlug'
   CONVERSATION_MESSAGE:

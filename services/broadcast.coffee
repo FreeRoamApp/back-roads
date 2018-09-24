@@ -74,8 +74,9 @@ class BroadcastService
         Promise.map userIds, (userId) ->
           User.getById userId
           .then (user) ->
-            langCode = Language.getLanguageByCountry user.country
-            lang = message.lang[langCode] or message.lang['en']
+            # langCode = Language.getLanguageByCountry user.country
+            # lang = message.lang[langCode] or message.lang['en']
+            lang = message.lang['en']
             message = _.defaults {
               title: lang.title
               text: lang.text

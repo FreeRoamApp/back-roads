@@ -59,7 +59,6 @@
     "emailjs": "^1.0.11",
     "exoid-router": "git://github.com/claydotio/exoid-router.git",
     "express": "^4.13.3",
-    "fast-csv": "^2.4.1",
     "fb": "^1.1.1",
     "fortnite-api": "git+https://github.com/claydotio/fortnite-api.git",
     "geoip-lite": "^1.2.0",
