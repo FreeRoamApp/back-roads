@@ -120,9 +120,9 @@ class ThreadCtrl
       thread.attachments = _.filter thread.attachments, ({persist}) ->
         not persist
       if firstImageSrc
-        largeCdnImgRegex = /https:\/\/cdn\.wtf\/images\/fr\/th\/(.*?)\.large/i
+        largeCdnImgRegex = /https:\/\/cdn\.wtf\/images\/th\/(.*?)\.large/i
         firstImageSrc = firstImageSrc.replace(
-          largeCdnImgRegex, 'https://cdn.wtf/images/fr/th/$1.small'
+          largeCdnImgRegex, "https://#{config.CDN_HOST}/images/th/$1.small"
         )
         thread.attachments.push {
           type: 'image', src: firstImageSrc

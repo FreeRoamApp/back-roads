@@ -272,7 +272,7 @@ class PushNotificationService
     )
       return Promise.reject new Error 'missing message'
 
-    language = user.language or Language.getLanguageByCountry user.country
+    language = user.language or 'en'
 
     message.data ?= {}
     if message.titleObj

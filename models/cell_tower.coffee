@@ -72,7 +72,8 @@ class CellTower extends PlaceBase
 
   defaultESOutput: (cellTower) ->
     cellTower = _.defaults {
-      name: "#{carriers[cellTower.carrier]} #{cellTower.tech} Tower"
-    }, _.pick cellTower, ['slug', 'name', 'location']
+      name: "#{carriers[cellTower.carrier]} #{cellTower.tech}"
+      icon: cellTower.carrier
+    }, _.pick cellTower, ['slug', 'name', 'icon', 'location']
 
 module.exports = new CellTower()

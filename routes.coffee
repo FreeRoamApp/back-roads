@@ -46,6 +46,13 @@ module.exports = router
 ###################
 # Authed Routes   #
 ###################
+
+.on 'bans.getAllByGroupId', authed BanCtrl.getAllByGroupId
+.on 'bans.getByGroupIdAndUserId', authed BanCtrl.getByGroupIdAndUserId
+.on 'bans.banByGroupIdAndIp', authed BanCtrl.banByGroupIdAndIp
+.on 'bans.banByGroupIdAndUserId', authed BanCtrl.banByGroupIdAndUserId
+.on 'bans.unbanByGroupIdAndUserId', authed BanCtrl.unbanByGroupIdAndUserId
+
 .on 'categories.getAll', authed CategoryCtrl.getAll
 
 .on 'conversations.create', authed ConversationCtrl.create

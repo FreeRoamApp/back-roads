@@ -40,7 +40,9 @@ module.exports = class Base
     ).concat [@index elasticSearchRow]
     .then =>
       if @streamChannelKey
-        prepareFn?(scyllaRow) or Promise.resolve scyllaRow
+        (if prepareFn
+        then prepareFn(scyllaRow)
+        else Promise.resolve scyllaRow)
         .then (scyllaRow) =>
           unless isUpdate
             @streamCreate scyllaRow
