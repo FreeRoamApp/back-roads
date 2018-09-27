@@ -23,8 +23,8 @@ class CacheService
     BROADCAST: 'broadcast'
   LOCKS: {}
   PREFIXES:
-    CHAT_USER: 'chat:user0'
-    CHAT_USER_BY_USERNAME: 'chat:user:byUsername'
+    CHAT_USER: 'chat:user1'
+    CHAT_USER_BY_USERNAME: 'chat:user:byUsername1'
     CHAT_GROUP_USER: 'chat:group_user'
     CHAT_MESSAGE_DAILY_XP: 'chat_message:daily_xp'
     CONVERSATION_ID: 'conversation:id7'

@@ -6,6 +6,7 @@ BanCtrl = require './controllers/ban'
 CategoryCtrl = require './controllers/category'
 CampgroundCtrl = require './controllers/campground'
 CampgroundReviewCtrl = require './controllers/campground_review'
+CampgroundAttachmentCtrl = require './controllers/campground_attachment'
 CellTowerCtrl = require './controllers/cell_tower'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
@@ -47,13 +48,33 @@ module.exports = router
 # Authed Routes   #
 ###################
 
+.on 'amenities.getBySlug', authed AmenityCtrl.getBySlug
+.on 'amenities.search', authed AmenityCtrl.search
+
 .on 'bans.getAllByGroupId', authed BanCtrl.getAllByGroupId
 .on 'bans.getByGroupIdAndUserId', authed BanCtrl.getByGroupIdAndUserId
 .on 'bans.banByGroupIdAndIp', authed BanCtrl.banByGroupIdAndIp
 .on 'bans.banByGroupIdAndUserId', authed BanCtrl.banByGroupIdAndUserId
 .on 'bans.unbanByGroupIdAndUserId', authed BanCtrl.unbanByGroupIdAndUserId
 
+.on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
+.on 'campgrounds.search', authed CampgroundCtrl.search
+.on 'campgrounds.getAmenityBoundsById',
+  authed CampgroundCtrl.getAmenityBoundsById
+
+.on 'campgroundReviews.getAllByParentId',
+  authed CampgroundReviewCtrl.getAllByParentId
+.on 'campgroundReviews.search', authed CampgroundReviewCtrl.search
+.on 'campgroundReviews.upsert', authed CampgroundReviewCtrl.upsert
+.on 'campgroundReviews.uploadImage', authed CampgroundReviewCtrl.uploadImage
+
+.on 'campgroundAttachments.getAllByParentId',
+  authed CampgroundAttachmentCtrl.getAllByParentId
+
 .on 'categories.getAll', authed CategoryCtrl.getAll
+
+# .on 'cellTowers.getBySlug', authed CellTowerCtrl.getBySlug
+.on 'cellTowers.search', authed CellTowerCtrl.search
 
 .on 'conversations.create', authed ConversationCtrl.create
 .on 'conversations.updateById', authed ConversationCtrl.updateById
@@ -120,33 +141,11 @@ module.exports = router
 
 .on 'nps.create', authed NpsCtrl.create
 
-# places (shared routes for the most part)
-.on 'amenities.getBySlug', authed AmenityCtrl.getBySlug
-.on 'amenities.search', authed AmenityCtrl.search
-
-.on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
-.on 'campgrounds.search', authed CampgroundCtrl.search
-.on 'campgrounds.getAmenityBoundsById',
-  authed CampgroundCtrl.getAmenityBoundsById
-
-# .on 'cellTowers.getBySlug', authed CellTowerCtrl.getBySlug
-.on 'cellTowers.search', authed CellTowerCtrl.search
-
-# end places
-
 .on 'products.getBySlug', authed ProductCtrl.getBySlug
 .on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
 
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert
 .on 'pushTokens.subscribeToTopic', authed PushTokenCtrl.subscribeToTopic
-
-# reviews (shared routes for the most part)
-.on 'campgroundReviews.getAllByParentId',
-  authed CampgroundReviewCtrl.getAllByParentId
-.on 'campgroundReviews.search', authed CampgroundReviewCtrl.search
-.on 'campgroundReviews.upsert', authed CampgroundReviewCtrl.upsert
-.on 'campgroundReviews.uploadImage', authed CampgroundReviewCtrl.uploadImage
-# end reviews
 
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll

@@ -46,6 +46,7 @@ AuthService = require './services/auth'
 CronService = require './services/cron'
 KueRunnerService = require './services/kue_runner'
 HealthCtrl = require './controllers/health'
+SiteMapCtrl = require './controllers/site_map'
 StreamService = require './services/stream'
 
 if config.DEV_USE_HTTPS
@@ -157,6 +158,10 @@ app.get '/', (req, res) -> res.status(200).send 'ok'
 app.get '/ping', (req, res) -> res.send 'pong'
 
 app.get '/healthcheck', HealthCtrl.check
+
+app.get '/healthcheck/throw', HealthCtrl.checkThrow
+
+app.get '/sitemap', SiteMapCtrl.getAll
 
 app.get '/syncCell', ->
   sync = require './sync_cell/sync_cell_towers'

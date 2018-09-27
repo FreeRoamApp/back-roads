@@ -265,6 +265,7 @@ campgrounds =
       {sourceType: 'youtube', sourceId: 'Qb-mqJyzGeE'}
     ]
 
+  # permit req
   # 'government-wash':
   #   name: 'Government Wash'
   #   id: 'af30b550-bafc-11e8-ab2b-d533ac942e4d'
@@ -288,6 +289,17 @@ campgrounds =
   #   videos: [
   #     {sourceType: 'youtube', sourceId: 'tZJ6cGPsy_o '}
   #   ]
+
+
+  # geekstreamers:
+  # white mountain road dispersed
+  # franklin basin road dispersed
+  # twin lakes
+  # san luis state wildlife area
+  # upper teton view
+  # nomad view
+  # mchood park (winslow az but cold in winter: 49/21 in jan)
+  
 
 
 

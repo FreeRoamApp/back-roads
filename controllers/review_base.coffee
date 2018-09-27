@@ -20,6 +20,14 @@ module.exports = class ReviewBaseCtrl
     .then (results) ->
       Promise.map results, EmbedService.embed {embed: @defaultEmbed}
 
+  upsertAttachments: (attachments, {parentId, userId}) =>
+    @AttachmentModel.batchUpsert _.map attachments, (attachment) ->
+      attachment = _.pick attachment, [
+        'caption', 'tags', 'type', 'aspectRatio', 'location'
+        'src', 'largeSrc', 'smallSrc'
+      ]
+      _.defaults attachment, {parentId, userId}
+
   upsert: (options, {user, headers, connection}) =>
     {id, type, title, body, rating, attachments, parentId} = options
 
@@ -45,6 +53,10 @@ module.exports = class ReviewBaseCtrl
       totalStars += rating
       newRatingCount = parent.ratingCount + 1
       newRating = totalStars / newRatingCount
+
+      # don't need to block for this
+      unless id # TODO handle photo updates on review edits?
+        @upsertAttachments attachments, {parentId, userId: user.id}
 
       Promise.all [
         @ParentModel.upsert {

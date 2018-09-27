@@ -2,6 +2,7 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 EmbedService = require '../services/embed'
+CampgroundAttachment = require '../models/campground_attachment'
 CampgroundReview = require '../models/campground_review'
 Campground = require '../models/campground'
 ReviewBaseCtrl = require './review_base'
@@ -12,5 +13,6 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
   defaultEmbed: [EmbedService.TYPES.REVIEW.USER, EmbedService.TYPES.REVIEW.TIME]
   Model: CampgroundReview
   ParentModel: Campground
+  AttachmentModel: CampgroundAttachment
 
 module.exports = new CampgroundReviewCtrl()

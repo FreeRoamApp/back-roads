@@ -6,14 +6,31 @@ User = require '../models/user'
 config = require '../config'
 
 HEALTHCHECK_TIMEOUT = 20000
+HEALTHCHECK_THROW_TIMEOUT = 40000
 AUSTIN_USERNAME = 'austin'
 
 
 class HealthCtrl
-  check: (req, res, next) ->
+  check: (req, res, next) =>
+    @getStatus()
+    .then (status) ->
+      res.json status
+    .catch next
+
+  # used for readinessProbe
+  checkThrow: (req, res, next) =>
+    @getStatus {timeout: HEALTHCHECK_THROW_TIMEOUT}
+    .then (status) ->
+      if status.healthy
+        res.send 'ok'
+      else
+        res.status(400).send 'fail'
+
+  getStatus: ({timeout} = {}) ->
+    timeout ?= HEALTHCHECK_TIMEOUT
     Promise.all [
       User.getByUsername AUSTIN_USERNAME
-      .timeout HEALTHCHECK_TIMEOUT
+      .timeout timeout
       .catch -> null
 
     ]
@@ -24,8 +41,5 @@ class HealthCtrl
 
       result.healthy = _.every _.values result
       return result
-    .then (status) ->
-      res.json status
-    .catch next
 
 module.exports = new HealthCtrl()
