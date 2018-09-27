@@ -70,6 +70,15 @@ class Product extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
+  getAll: ({limit} = {}) =>
+    limit ?= 30
+
+    cknex().select '*'
+    .from @SCYLLA_TABLES[0].name
+    .limit limit
+    .run()
+    .map @defaultOutput
+
   defaultInput: (product) ->
     unless product?
       return null

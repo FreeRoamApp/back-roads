@@ -239,6 +239,9 @@ amenities =
     location: [33.739575, -116.213104]
     amenities: ['groceries', 'trash']
 
+  # government-wash
+  # ''
+
 
 
 module.exports = _.map amenities, (value, slug) -> _.defaults {slug}, value

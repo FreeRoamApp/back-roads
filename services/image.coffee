@@ -70,7 +70,7 @@ class ImageService
 
   uploadImageByUserIdAndFile: (userId, file, {folder} = {}) =>
     folder ?= 'misc'
-    @getSizeByBuffer (file.buffer)
+    @getSizeByBuffer file.buffer
     .then (size) =>
       key = "#{userId}_#{uuid.v4()}"
       keyPrefix = "images/#{folder}/#{key}"
