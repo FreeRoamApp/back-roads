@@ -1,6 +1,6 @@
 _ = require 'lodash'
 router = require 'exoid-router'
-bcrypt = require 'bcrypt'
+bcrypt = require 'bcrypt-nodejs'
 Joi = require 'joi'
 Promise = require 'bluebird'
 geoip = require 'geoip-lite'

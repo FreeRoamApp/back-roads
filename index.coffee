@@ -81,7 +81,9 @@ setup = ->
   .catch (err) ->
     console.log 'setup', err
   .tap ->
+    console.log 'scylla & elasticsearch setup'
     CronService.start()
+    console.log 'cron started'
     # KueRunnerService.listen() # TODO: child instance too
     null # don't block
 

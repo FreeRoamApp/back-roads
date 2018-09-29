@@ -2,6 +2,8 @@ CronJob = require('cron').CronJob
 _ = require 'lodash'
 Promise = require 'bluebird'
 
+console.log 'req cron'
+
 CacheService = require './cache'
 CleanupService = require './cleanup'
 Thread = require '../models/thread'
@@ -45,7 +47,7 @@ class CronService
       Thread.updateScores 'time'
 
 
-    @addCron 'oneHour', '0 52 * * * *', ->
+    @addCron 'oneHour', '0 40 * * * *', ->
       CleanupService.trimLeaderboards()
       Promise.map allGroups, (group) ->
         Group.upsert _.cloneDeep group

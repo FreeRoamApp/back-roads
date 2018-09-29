@@ -239,6 +239,20 @@ amenities =
     location: [33.739575, -116.213104]
     amenities: ['groceries', 'trash']
 
+  # rockhouse
+  'borrego-palm-canyon-campground':
+    name: 'Borrego Palm Canyon Campground'
+    id: '4b91a620-c395-11e8-ac4f-64d6130cfd13'
+    location: [33.268828, -116.406102]
+    amenities: ['dump', 'water']
+
+  'center-market':
+    name: 'Center Market'
+    id: '03f8f1b0-c395-11e8-ac96-09a7af40156c'
+    location: [33.257449, -116.379964]
+    amenities: ['groceries']
+
+
   # government-wash
   # ''
 

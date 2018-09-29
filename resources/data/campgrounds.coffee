@@ -6,8 +6,8 @@ config = require '../../config'
 # TODO: 'view satellite' link
 # TODO: distanceTo: calculate from other campgrounds in database? or manually input
 # just AZ for now (fall/winter)
-# cknex = require '../../services/cknex'
-# console.log cknex.getTimeUuid()
+cknex = require '../../services/cknex'
+console.log cknex.getTimeUuid()
 
 campgrounds =
   'snyder-hill-blm':
@@ -290,6 +290,29 @@ campgrounds =
   #     {sourceType: 'youtube', sourceId: 'tZJ6cGPsy_o '}
   #   ]
 
+  'rockhouse':
+    name: 'Rockhouse'
+    id: 'e78b4b20-c391-11e8-9a3e-74441ff1beb7'
+    location: [33.294480, -116.290165]
+    address:
+      locality: 'Borrego Springs'
+      administrativeArea: 'CA'
+    # # # # drivingInstructions: ''
+    siteCount:
+      99: 50
+    crowds: {winter: 3, spring: 3, summer: 1, fall: 2}
+    fullness: {winter: 3, spring: 3, summer: 1, fall: 2}
+    noise: {day: 2, night: 1}
+    shade: 1
+    roadDifficulty: 2
+    cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, tmobile: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '4g'}}
+    safety: 4
+    minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
+    maxDays: 14
+    restrooms: null
+    videos: [
+      {sourceType: 'youtube', sourceId: 'SVBcMpFtWWs'}
+    ]
 
   # geekstreamers:
   # white mountain road dispersed
@@ -299,7 +322,7 @@ campgrounds =
   # upper teton view
   # nomad view
   # mchood park (winslow az but cold in winter: 49/21 in jan)
-  
+
 
 
 
