@@ -105,10 +105,12 @@ class NotificationModel extends Base
 
       super notification, {ttl}
 
-  getAllByUserId: (userId) =>
+  getAllByUserId: (userId, {limit} = {}) =>
+    limit ?= 1000
     cknex().select '*'
     .from 'notifications_by_userId'
     .where 'userId', '=', userId
+    .limit limit
     .run()
     .map @defaultOutput
 

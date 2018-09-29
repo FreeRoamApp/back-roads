@@ -23,5 +23,3 @@ module.exports = getJsonString: (language) ->
     , {}
   str = JSON.stringify files
   "if(typeof window !== 'undefined'){window.languageStrings=#{str};}"
-
-module.exports.getJsonString 'es'
