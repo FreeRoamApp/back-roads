@@ -132,6 +132,7 @@ class BanModel extends Base
     else
       get()
 
+  # TODO: super() (deleteByRow)
   deleteByBan: (ban) ->
     Promise.all _.filter [
       cknex().delete()

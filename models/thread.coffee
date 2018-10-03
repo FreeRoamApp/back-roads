@@ -409,6 +409,7 @@ class ThreadModel extends Base
     q.where 'id', '=', id
     .run()
 
+  # TODO: super() (deleteByRow)
   deleteByThread: (thread) ->
     groupAllPrefix = CacheService.STATIC_PREFIXES
                     .THREAD_GROUP_LEADERBOARD_ALL

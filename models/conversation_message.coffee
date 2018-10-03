@@ -159,6 +159,7 @@ class ConversationMessageModel extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
+  # TODO: super() (deleteByRow)
   deleteByConversationMessage: (conversationMessage) =>
     Promise.all [
       cknex().delete()

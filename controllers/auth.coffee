@@ -72,7 +72,7 @@ class AuthCtrl
             ignoreLog: true
           }
 
-        Promise.promisify(bcrypt.hash)(insecurePassword, BCRYPT_ROUNDS)
+        Promise.promisify(bcrypt.hash)(insecurePassword, bcrypt.genSaltSync(BCRYPT_ROUNDS), null)
         .then (password) ->
           User.updateByUser user, {username, password, email}
       .then ->

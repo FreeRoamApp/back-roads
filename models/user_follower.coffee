@@ -157,6 +157,7 @@ class UserFollowerModel extends Base
       .run()
     ]
 
+  # TODO: super() (deleteByRow)
   deleteByUserFollower: (userFollower) =>
     Promise.all [
       cknex().delete()
