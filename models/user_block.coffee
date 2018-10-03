@@ -55,6 +55,7 @@ class UserBlockModel extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
+  # TODO: super() (deleteByRow)
   deleteByUserBlock: (userBlock) ->
     cknex().delete()
     .from 'user_blocks_by_userId'

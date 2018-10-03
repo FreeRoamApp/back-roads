@@ -146,6 +146,7 @@ class ThreadCommentModel extends Base
     .andWhere 'timeBucket', '=', timeBucket
     .run()
 
+  # TODO: super() (deleteByRow)
   deleteByThreadComment: (threadComment) ->
     Promise.all [
       cknex().delete()

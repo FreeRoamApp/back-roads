@@ -137,6 +137,7 @@ class NotificationModel extends Base
     .run()
     .map @defaultOutput
 
+  # TODO: super() (deleteByRow)
   deleteByNotification: (notification) ->
     Promise.all _.filter _.flatten [
       if notification.userId

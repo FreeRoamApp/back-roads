@@ -15,4 +15,7 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
   ParentModel: Campground
   AttachmentModel: CampgroundAttachment
 
+  upsertExtras: ->
+    null
+
 module.exports = new CampgroundReviewCtrl()

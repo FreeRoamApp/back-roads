@@ -57,6 +57,38 @@ class CampgroundReview extends ReviewBase
       primaryKey:
         partitionKey: ['id']
     }
+    {
+      name: 'campground_reviews_by_id'
+      keyspace: 'free_roam'
+      fields:
+        # common between all reviews
+        id: 'timeuuid'
+        parentId: 'uuid'
+        userId: 'uuid'
+        title: 'text'
+        body: 'text'
+        rating: 'int'
+        attachments: 'text' # json
+      primaryKey:
+        partitionKey: ['id']
+    }
+    {
+      name: 'campground_review_extras_by_id'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        id: 'timeuuid' # review id
+        userId: 'uuid'
+        roadDifficulty: 'int'
+        crowds: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
+        fullness: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
+        noise: 'text' # json {day: 3, night: 0}
+        shade: 'int'
+        safety: 'int'
+        cellSignal: 'text'
+      primaryKey:
+        partitionKey: ['id']
+    }
   ]
   ELASTICSEARCH_INDICES: [
     {

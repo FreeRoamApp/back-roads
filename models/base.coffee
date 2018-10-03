@@ -68,6 +68,36 @@ module.exports = class Base
         console.log 'elastic err', @ELASTICSEARCH_INDICES[0].name
         throw err
 
+  deleteByRow: (row) =>
+    Promise.all _.filter _.map(@SCYLLA_TABLES, (table) ->
+      if table.ignoreUpsert
+        return
+      keyColumns = _.filter table.primaryKey.partitionKey.concat(
+        table.primaryKey.clusteringColumns
+      )
+      q = cknex().delete()
+      .from table.name
+      _.forEach keyColumns, (column) ->
+        q.andWhere column, '=', row[column]
+      q.run()
+    ).concat [@deleteESById row.id]
+    .then =>
+      if @streamChannelKey
+        @streamDeleteById row.id, row
+      null
+
+  deleteESById: (id) =>
+    if _.isEmpty @ELASTICSEARCH_INDICES
+      Promise.resolve()
+    else
+      elasticsearch.delete {
+        index: @ELASTICSEARCH_INDICES[0].name
+        type: @ELASTICSEARCH_INDICES[0].name
+        id: "#{id}"
+      }
+      .catch (err) ->
+        console.log 'elastic err', err
+
   defaultInput: (row) -> row
   defaultOutput: (row) -> row
   defaultESInput: (row) ->

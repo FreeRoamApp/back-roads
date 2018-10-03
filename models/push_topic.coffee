@@ -44,6 +44,7 @@ class PushTopic extends Base
     .run()
     .map @defaultOutput
 
+  # TODO: super() (deleteByRow)
   deleteByPushTopic: (pushTopic) ->
     cknex().delete()
     .from 'push_topics_by_userId'

@@ -19,6 +19,13 @@ module.exports = class ReviewBase extends Base
       _.map hits.hits, ({_id, _source}) ->
         {slug: _id, title: _source.title, details: _source.details}
 
+  getById: (id) =>
+    cknex().select '*'
+    .from @SCYLLA_TABLES[2].name
+    .where 'id', '=', id
+    .run {isSingle: true}
+    .then @defaultOutput
+
   getAllByParentId: (parentId) =>
     cknex().select '*'
     .from @SCYLLA_TABLES[0].name

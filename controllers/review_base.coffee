@@ -29,7 +29,7 @@ module.exports = class ReviewBaseCtrl
       _.defaults attachment, {parentId, userId}
 
   upsert: (options, {user, headers, connection}) =>
-    {id, type, title, body, rating, attachments, parentId} = options
+    {id, type, title, body, rating, attachments, extras, parentId} = options
 
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
@@ -58,7 +58,7 @@ module.exports = class ReviewBaseCtrl
       unless id # TODO handle photo updates on review edits?
         @upsertAttachments attachments, {parentId, userId: user.id}
 
-      Promise.all [
+      Promise.all _.filter [
         @ParentModel.upsert {
           id: parent.id, slug: parent.slug
           rating: newRating, ratingCount: newRatingCount
@@ -71,9 +71,21 @@ module.exports = class ReviewBaseCtrl
           parentId: parentId
           rating: rating
           attachments: attachments
+
+        if extras
+          @upsertExtras
       ]
 
   uploadImage: ({}, {user, file}) =>
     ImageService.uploadImageByUserIdAndFile(
       user.id, file, {folder: @imageFolder}
     )
+
+  deleteById: ({id}, {user}) =>
+    @Model.getById id
+    .then (review) =>
+      hasPermission = review.userId is user.id or user.username is 'austin'
+      unless hasPermission
+        router.throw
+          status: 400, info: 'You don\'t have permission to do that'
+      @Model.deleteByRow review
