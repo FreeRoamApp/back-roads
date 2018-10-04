@@ -33,25 +33,14 @@ scyllaFields =
   siteCount: 'text' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
   distanceTo: 'text' # json {groceries: 25, walmart: 10} all in miles
 
-  # 0 my prius could get there, 5 need a truck, 10 need 4x4 high clearance van
-  roadDifficulty: 'int'
+  roadDifficulty: 'text' # json {value: 3, count: 1}
+  crowds: 'text' # json {winter: {value: 2, count: 1} ... }
+  fullness: 'text' # json {winter: {value: 2, count: 1} ... }
+  noise: 'text' # json {day: {value: 3, count: 1}, night: {value: 0, count: 1}}
+  shade: 'text' # json {value: 3, count: 1}
+  safety: 'text' # json {value: 3, count: 1}
+  cellSignal: 'text' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
 
-  # 0 private spot, closest human 100yd+ away, 5 can see others, > 50 ft, 10 sardines
-  crowds: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
-
-  # 0 no one there / always spots available, 10 almost impossible to get a spot
-  fullness: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
-
-  # 0 silence, 5 occassional train / some road noise, 10 constant trains, highway noise
-  noise: 'text' # json {day: 3, night: 0}
-
-  # 0 no shade, 5 shade if you want it, 10 all shade
-  shade: 'int'
-
-  # 0 you might get murdered, 10 no worries at all
-  safety: 'int'
-
-  cellSignal: 'text' # json {verizon: {signal: 7, type: '4g'}, att: {signal: 3, type: '3g'}} 0-10 signal
   maxDays: 'int'
   hasFreshWater: 'boolean'
   hasSewage: 'boolean'
@@ -116,6 +105,9 @@ class Campground extends PlaceBase
       siteCount: JSON.stringify campground.siteCount
       crowds: JSON.stringify campground.crowds
       fullness: JSON.stringify campground.fullness
+      shade: JSON.stringify campground.shade
+      safety: JSON.stringify campground.safety
+      roadDifficulty: JSON.stringify campground.roadDifficulty
       noise: JSON.stringify campground.noise
       cellSignal: JSON.stringify campground.cellSignal
       restrooms: JSON.stringify campground.restrooms
@@ -125,7 +117,7 @@ class Campground extends PlaceBase
 
     # add data if non-existent
     _.defaults campground, {
-      # TODO: if this is set, batchUpsert changes id every time # id: cknex.getTimeUuid()
+      id: cknex.getTimeUuid()
     }
 
   defaultOutput: (campground) ->
@@ -133,8 +125,8 @@ class Campground extends PlaceBase
       return null
 
     jsonFields = [
-      'siteCount', 'crowds', 'fullness', 'noise', 'cellSignal',
-      'restrooms', 'videos', 'address'
+      'siteCount', 'crowds', 'fullness', 'shade', 'safety', 'roadDifficulty'
+      'noise', 'cellSignal', 'restrooms', 'videos', 'address'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -143,6 +135,25 @@ class Campground extends PlaceBase
         {}
 
     _.defaults {type: 'campground'}, campground
+
+  defaultESInput: (campground) ->
+    _.defaults {
+      id: "#{campground.id}"
+      crowds: if campground.crowds
+        _.mapValues campground.crowds, ({value}, season) -> value
+      fullness: if campground.fullness
+        _.mapValues campground.fullness, ({value}, season) -> value
+      shade: if campground.shade
+        campground.shade?.value
+      safety: if campground.safety
+        campground.safety?.value
+      roadDifficulty: if campground.roadDifficulty
+        campground.roadDifficulty?.value
+      noise: if campground.noise
+        _.mapValues campground.fullness, ({value}, time) -> value
+      location: if campground.location
+        {lat: campground.location[0], lon: campground.location[1]}
+    }, campground
 
   defaultESOutput: (campground) ->
     _.pick campground, ['slug', 'name', 'location']
