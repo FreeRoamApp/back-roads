@@ -5,7 +5,7 @@ config = require '../../config'
 
 # TODO: 'view satellite' link
 # TODO: distanceTo: calculate from other campgrounds in database? or manually input
-# just AZ for now (fall/winter)
+# just AZ for now (warmer)
 cknex = require '../../services/cknex'
 console.log cknex.getTimeUuid()
 
@@ -19,13 +19,13 @@ campgrounds =
       administrativeArea: 'AZ'
     siteCount:
       99: 30
-    crowds: {winter: 4, spring: 3, summer: 2, fall: 3}
-    fullness: {winter: 4, springs: 3, summer: 2, fall: 3}
-    noise: {day: 3, night: 2}
-    shade: 1
-    safety: 4
-    roadDifficulty: 2
-    cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '3g'}, tmobile: {signal: 3, type: '4g'}}
+    crowds: {winter: {value: 4, count: 1}, spring: {value: 3, count: 1}, summer: {value: 2, count: 1}, fall: {value: 3, count: 1}}
+    fullness: {winter: {value: 4, count: 1}, springs: 3, summer: {value: 2, count: 1}, fall: {value: 3, count: 1}}
+    noise: {day: {value: 3, count: 1}, night: {value: 2, count: 1}}
+    shade: {value: 1, count: 1}
+    safety: {value: 4, count: 1}
+    roadDifficulty: {value: 2, count: 1}
+    cellSignal: {att_lte: {signal: 3, count: 1}, verizon_lte: {signal: 3, count: 1}, sprint: {value: 3, count: 1, type: '3g'}, tmobile_lte: {signal: 3, count: 1}}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -41,13 +41,13 @@ campgrounds =
       administrativeArea: 'AZ'
     siteCount:
       99: 15
-    crowds: {winter: 2, spring: 1, summer: 1, fall: 2}
-    fullness: {winter: 2, spring: 1, summer: 1, fall: 1}
-    noise: {day: 1, night: 1}
-    shade: 1
-    safety: 4
-    roadDifficulty: 2
-    cellSignal: {att: {signal: 2, type: '4g'}, verizon: {signal: 2, type: '4g'}, sprint: {signal: 2, type: '3g'}, tmobile: {signal: 0}}
+    crowds: {winter: {value: 2, count: 1}, spring: {value: 1, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    fullness: {winter: {value: 2, count: 1}, spring: {value: 1, count: 1}, summer: {value: 1, count: 1}, fall: {value: 1, count: 1}}
+    noise: {day: {value: 1, count: 1}, night: {value: 1, count: 1}}
+    shade: {value: 1, count: 1}
+    safety: {value: 4, count: 1}
+    roadDifficulty: {value: 2, count: 1}
+    cellSignal: {att_lte: {signal: 2, count: 1}, verizon_lte: {signal: 2, count: 1}, sprint: {value: 2, count: 1, type: '3g'}, tmobile: {value: 0, count: 1}}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -65,13 +65,13 @@ campgrounds =
     drivingInstructions: ''
     siteCount:
       99: 50
-    crowds: {winter: 4, spring: 3, summer: 1, fall: 3}
-    fullness: {winter: 3, spring: 2, summer: 1, fall: 2}
-    noise: {day: 3, night: 3}
-    shade: 1
-    safety: 4
-    roadDifficulty: 1
-    cellSignal: {att: {signal: 2, type: '4g'}, verizon: {signal: 4, type: '4g', speed: 'slow'}, sprint: {signal: 3, type: '3g'}, tmobile: {signal: 2, type: '4g'}}
+    crowds: {winter: {value: 4, count: 1}, spring: {value: 3, count: 1}, summer: {value: 1, count: 1}, fall: {value: 3, count: 1}}
+    fullness: {winter: {value: 3, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    noise: {day: {value: 3, count: 1}, night: {value: 3, count: 1}}
+    shade: {value: 1, count: 1}
+    safety: {value: 4, count: 1}
+    roadDifficulty: {value: 1, count: 1}
+    cellSignal: {att_lte: {signal: 2, count: 1}, verizon_lte: {signal: 4, count: 1, speed: 'slow'}, sprint: {value: 3, count: 1, type: '3g'}, tmobile_lte: {signal: 2, count: 1}}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -87,11 +87,11 @@ campgrounds =
   #   siteCount:
   #     35: 5
   #     25: 5
-  #   crowds: {winter: 3, spring: 3, summer: 2, fall: 3}
-  #   noise: {day: 1, night: 1}
-  #   shade: 3
-  #   roadDifficulty: 7
-  #   cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 6, type: '4g'}, tmobile: {signal: 6, type: '4g'}}
+  #   crowds: {winter: {value: 3, count: 1}, spring: {value: 3, count: 1}, summer: {value: 2, count: 1}, fall: {value: 3, count: 1}}
+  #   noise: {day: {value: 1, count: 1}, night: {value: 1, count: 1}}
+  #   shade: {value: 3, count: 1}
+  #   roadDifficulty: {value: 7, count: 1}
+  #   cellSignal: {att_lte: {signal: 3, count: 1}, verizon_lte: {signal: 6, count: 1}, tmobile_lte: {signal: 6, count: 1}}
   #   minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
   #   maxDays: 14
     # videos: [
@@ -108,13 +108,13 @@ campgrounds =
     siteCount:
       35: 5
       25: 15
-    crowds: {winter: 2, spring: 2, summer: 1, fall: 2}
-    fullness: {winter: 3, spring: 3, summer: 2, fall: 1}
-    noise: {day: 2, night: 1}
-    shade: 1
-    roadDifficulty: 2
-    cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, tmobile: {signal: 2, type: '4g'}}
-    safety: 3
+    crowds: {winter: {value: 2, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    fullness: {winter: {value: 3, count: 1}, spring: {value: 3, count: 1}, summer: {value: 2, count: 1}, fall: {value: 1, count: 1}}
+    noise: {day: {value: 2, count: 1}, night: {value: 1, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 2, count: 1}
+    cellSignal: {att_lte: {signal: 3, count: 1}, verizon_lte: {signal: 3, count: 1}, tmobile_lte: {signal: 2, count: 1}}
+    safety: {value: 3, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -130,13 +130,13 @@ campgrounds =
       administrativeArea: 'AZ'
     siteCount:
       99: 40
-    crowds: {winter: 3, spring: 2, summer: 1, fall: 2}
-    fullness: {winter: 3, spring: 2, summer: 1, fall: 2}
-    noise: {day: 2, night: 1}
-    shade: 1
-    roadDifficulty: 2
-    cellSignal: {att: {signal: 2, type: '4g', speed: 'fast'}, verizon: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '3g'}, tmobile: {signal: 0, type: '4g', speed: 'fast'}}
-    safety: 4
+    crowds: {winter: {value: 3, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    fullness: {winter: {value: 3, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    noise: {day: {value: 2, count: 1}, night: {value: 1, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 2, count: 1}
+    cellSignal: {att_lte: {signal: 2, count: 1, speed: 'fast'}, verizon_lte: {signal: 3, count: 1}, sprint: {value: 3, count: 1, type: '3g'}, tmobile_lte: {signal: 0, count: 1, speed: 'fast'}}
+    safety: {value: 4, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     videos: [
@@ -155,13 +155,13 @@ campgrounds =
     siteCount:
       35: 4
       25: 15
-    crowds: {winter: 3, spring: 2, summer: 1, fall: 2}
-    fullness: {winter: 2, spring: 1, summer: 1, fall: 1}
-    noise: {day: 1, night: 1}
-    shade: 1
-    roadDifficulty: 3
-    cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'},  tmobile: {signal: 2, type: '4g'}}
-    safety: 4
+    crowds: {winter: {value: 3, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    fullness: {winter: {value: 2, count: 1}, spring: {value: 1, count: 1}, summer: {value: 1, count: 1}, fall: {value: 1, count: 1}}
+    noise: {day: {value: 1, count: 1}, night: {value: 1, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 3, count: 1}
+    cellSignal: {att_lte: {signal: 3, count: 1}, verizon_lte: {signal: 3, count: 1},  tmobile_lte: {signal: 2, count: 1}}
+    safety: {value: 4, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: {pitToilet: true}
@@ -179,13 +179,13 @@ campgrounds =
     drivingInstructions: 'Right off Highway 95. You can go over the hill by the pond for a little more privacy.'
     siteCount:
       99: 20
-    crowds: {winter: 3, spring: 3, summer: 2, fall: 3}
-    fullness: {winter: 2, spring: 2, summer: 1, fall: 2}
-    noise: {day: 3, night: 2}
-    shade: 1
-    roadDifficulty: 1
-    cellSignal: {att: {signal: 2, type: '4g'}, verizon: {signal: 2, type: '4g'}}
-    safety: 3
+    crowds: {winter: {value: 3, count: 1}, spring: {value: 3, count: 1}, summer: {value: 2, count: 1}, fall: {value: 3, count: 1}}
+    fullness: {winter: {value: 2, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    noise: {day: {value: 3, count: 1}, night: {value: 2, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 1, count: 1}
+    cellSignal: {att_lte: {signal: 2, count: 1}, verizon_lte: {signal: 2, count: 1}}
+    safety: {value: 3, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: null
@@ -203,13 +203,13 @@ campgrounds =
     # drivingInstructions: ''
     siteCount:
       99: 50
-    crowds: {winter: 3, spring: 2, summer: 1, fall: 2}
-    fullness: {winter: 2, spring: 1, summer: 1, fall: 1}
-    noise: {day: 2, night: 1}
-    shade: 1
-    roadDifficulty: 2
-    cellSignal: {att: {signal: 1, type: '4g'}, verizon: {signal: 4, type: '4g'}}
-    safety: 4
+    crowds: {winter: {value: 3, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    fullness: {winter: {value: 2, count: 1}, spring: {value: 1, count: 1}, summer: {value: 1, count: 1}, fall: {value: 1, count: 1}}
+    noise: {day: {value: 2, count: 1}, night: {value: 1, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 2, count: 1}
+    cellSignal: {att_lte: {signal: 1, count: 1}, verizon_lte: {signal: 4, count: 1}}
+    safety: {value: 4, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: null
@@ -227,13 +227,13 @@ campgrounds =
     # # drivingInstructions: ''
     siteCount:
       99: 50
-    crowds: {winter: 2, spring: 2, summer: 1, fall: 2}
-    fullness: {winter: 2, spring: 2, summer: 1, fall: 2}
-    noise: {day: 1, night: 1}
-    shade: 1
-    roadDifficulty: 3
-    cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, tmobile: {signal: 3, type: '4g'}}
-    safety: 4
+    crowds: {winter: {value: 2, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    fullness: {winter: {value: 2, count: 1}, spring: {value: 2, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    noise: {day: {value: 1, count: 1}, night: {value: 1, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 3, count: 1}
+    cellSignal: {att_lte: {signal: 3, count: 1}, verizon_lte: {signal: 3, count: 1}, tmobile_lte: {signal: 3, count: 1}}
+    safety: {value: 4, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: null
@@ -251,13 +251,13 @@ campgrounds =
     # # # drivingInstructions: ''
     siteCount:
       99: 25
-    crowds: {winter: 3, spring: 3, summer: 1, fall: 3}
-    fullness: {winter: 4, spring: 4, summer: 1, fall: 3}
-    noise: {day: 2, night: 2}
-    shade: 1
-    roadDifficulty: 3
-    cellSignal: {att: {signal: 4, type: '4g'}, verizon: {signal: 4, type: '4g'}, tmobile: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '4g'}}
-    safety: 4
+    crowds: {winter: {value: 3, count: 1}, spring: {value: 3, count: 1}, summer: {value: 1, count: 1}, fall: {value: 3, count: 1}}
+    fullness: {winter: {value: 4, count: 1}, spring: {value: 4, count: 1}, summer: {value: 1, count: 1}, fall: {value: 3, count: 1}}
+    noise: {day: {value: 2, count: 1}, night: {value: 2, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 3, count: 1}
+    cellSignal: {att_lte: {signal: 4, count: 1}, verizon_lte: {signal: 4, count: 1}, tmobile_lte: {signal: 3, count: 1}, sprint_lte: {signal: 3, count: 1}}
+    safety: {value: 4, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: null
@@ -276,13 +276,13 @@ campgrounds =
   #   # # # drivingInstructions: ''
   #   siteCount:
   #     99: 20
-  #   # crowds: {winter: 3, spring: 3, summer: 1, fall: 3}
-  #   # fullness: {winter: 4, spring: 4, summer: 1, fall: 3}
-  #   # noise: {day: 2, night: 2}
-  #   # shade: 1
-  #   # roadDifficulty: 3
-  #   # cellSignal: {att: {signal: 4, type: '4g'}, verizon: {signal: 4, type: '4g'}, tmobile: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '4g'}}
-  #   # safety: 4
+  #   # crowds: {winter: {value: 3, count: 1}, spring: {value: 3, count: 1}, summer: {value: 1, count: 1}, fall: {value: 3, count: 1}}
+  #   # fullness: {winter: {value: 4, count: 1}, spring: {value: 4, count: 1}, summer: {value: 1, count: 1}, fall: {value: 3, count: 1}}
+  #   # noise: {day: {value: 2, count: 1}, night: {value: 2, count: 1}}
+  #   # shade: {value: 1, count: 1}
+  #   # roadDifficulty: {value: 3, count: 1}
+  #   # cellSignal: {att_lte: {signal: 4, count: 1}, verizon_lte: {signal: 4, count: 1}, tmobile_lte: {signal: 3, count: 1}, sprint_lte: {signal: 3, count: 1}}
+  #   # safety: {value: 4, count: 1}
   #   # minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
   #   # maxDays: 14
   #   # restrooms: null
@@ -300,13 +300,13 @@ campgrounds =
     # # # # drivingInstructions: ''
     siteCount:
       99: 50
-    crowds: {winter: 3, spring: 3, summer: 1, fall: 2}
-    fullness: {winter: 3, spring: 3, summer: 1, fall: 2}
-    noise: {day: 2, night: 1}
-    shade: 1
-    roadDifficulty: 2
-    cellSignal: {att: {signal: 3, type: '4g'}, verizon: {signal: 3, type: '4g'}, tmobile: {signal: 3, type: '4g'}, sprint: {signal: 3, type: '4g'}}
-    safety: 4
+    crowds: {winter: {value: 3, count: 1}, spring: {value: 3, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    fullness: {winter: {value: 3, count: 1}, spring: {value: 3, count: 1}, summer: {value: 1, count: 1}, fall: {value: 2, count: 1}}
+    noise: {day: {value: 2, count: 1}, night: {value: 1, count: 1}}
+    shade: {value: 1, count: 1}
+    roadDifficulty: {value: 2, count: 1}
+    cellSignal: {att_lte: {signal: 3, count: 1}, verizon_lte: {signal: 3, count: 1}, tmobile_lte: {signal: 3, count: 1}, sprint_lte: {signal: 3, count: 1}}
+    safety: {value: 4, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
     restrooms: null
@@ -321,7 +321,7 @@ campgrounds =
   # san luis state wildlife area
   # upper teton view
   # nomad view
-  # mchood park (winslow az but cold in winter: 49/21 in jan)
+  # mchood park (winslow az but cold in winter: {value: 4, count: 1}9/21 in jan)
 
 
 

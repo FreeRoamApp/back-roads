@@ -17,7 +17,7 @@ module.exports = class ReviewBaseCtrl
     .then (reviews) =>
       _.map reviews, (review) =>
         _.defaults {@type}, review
-    .then (results) ->
+    .then (results) =>
       Promise.map results, EmbedService.embed {embed: @defaultEmbed}
 
   upsertAttachments: (attachments, {parentId, userId}) =>
@@ -54,11 +54,10 @@ module.exports = class ReviewBaseCtrl
       newRatingCount = parent.ratingCount + 1
       newRating = totalStars / newRatingCount
 
-      # don't need to block for this
-      unless id # TODO handle photo updates on review edits?
-        @upsertAttachments attachments, {parentId, userId: user.id}
-
       Promise.all _.filter [
+        unless id # TODO handle photo updates on review edits?
+          @upsertAttachments attachments, {parentId, userId: user.id}
+
         @ParentModel.upsert {
           id: parent.id, slug: parent.slug
           rating: newRating, ratingCount: newRatingCount
@@ -71,10 +70,10 @@ module.exports = class ReviewBaseCtrl
           parentId: parentId
           rating: rating
           attachments: attachments
-
-        if extras
-          @upsertExtras
       ]
+      .tap ([parentUpsert, review]) =>
+        if extras
+          @upsertExtras {id: review.id, parent, extras}, {user}
 
   uploadImage: ({}, {user, file}) =>
     ImageService.uploadImageByUserIdAndFile(

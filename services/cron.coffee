@@ -38,7 +38,7 @@ class CronService
         Promise.map allGroups, (group) ->
           Group.upsert _.cloneDeep group
         Item.batchUpsert _.cloneDeep allItems
-        Campground.batchUpsert _.cloneDeep allCampgrounds
+        # Campground.batchUpsert _.cloneDeep allCampgrounds
         Amenity.batchUpsert _.cloneDeep allAmenities
         Product.batchUpsert _.cloneDeep allProducts
         Category.batchUpsert _.cloneDeep allCategories
@@ -53,7 +53,7 @@ class CronService
         Group.upsert _.cloneDeep group
       Item.batchUpsert _.cloneDeep allItems
       Amenity.batchUpsert _.cloneDeep allAmenities
-      Campground.batchUpsert _.cloneDeep allCampgrounds
+      # Campground.batchUpsert _.cloneDeep allCampgrounds
       Product.batchUpsert _.cloneDeep allProducts
       Category.batchUpsert _.cloneDeep allCategories
 

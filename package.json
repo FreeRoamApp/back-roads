@@ -78,6 +78,7 @@
     "money": "^0.2.0",
     "multer": "^1.2.0",
     "node-gcm": "^1.0.2",
+    "node-geocoder": "^3.22.0",
     "node-uuid": "^1.4.7",
     "pcg-random": "^1.0.0",
     "pg": "^6.1.5",

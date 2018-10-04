@@ -101,6 +101,29 @@ class CampgroundReview extends ReviewBase
     }
   ]
 
+  upsertExtras: (extras) =>
+    extras = @defaultExtrasInput extras
+
+    cknex().update 'campground_review_extras_by_id'
+    .set _.omit extras, ['id']
+    .where 'id', '=', extras.id
+    .run()
+
+  defaultExtrasInput: (extras) ->
+    unless extras?
+      return null
+
+    # transform existing data
+    extras = _.defaults {
+      crowds: JSON.stringify extras.crowds
+      fullness: JSON.stringify extras.fullness
+      noise: JSON.stringify extras.noise
+      cellSignal: JSON.stringify extras.cellSignal
+    }, extras
+
+    # add data if non-existent
+    _.defaults extras, {}
+
   defaultInput: (campground) ->
     unless campground?
       return null
