@@ -325,10 +325,6 @@ campgrounds =
 
 
 
-
-  # rockhouse campground
-  # jumbo rocks joshua tree
-  # joshua tree south
   # valley of fire nevada, A8vEsqSssRE, MFt5XBe59cA timestamp 3m0s
 
 

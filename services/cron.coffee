@@ -38,7 +38,7 @@ class CronService
         Promise.map allGroups, (group) ->
           Group.upsert _.cloneDeep group
         Item.batchUpsert _.cloneDeep allItems
-        # Campground.batchUpsert _.cloneDeep allCampgrounds
+        Campground.batchUpsert _.cloneDeep allCampgrounds
         Amenity.batchUpsert _.cloneDeep allAmenities
         Product.batchUpsert _.cloneDeep allProducts
         Category.batchUpsert _.cloneDeep allCategories
@@ -47,7 +47,7 @@ class CronService
       Thread.updateScores 'time'
 
 
-    @addCron 'oneHour', '0 40 * * * *', ->
+    @addCron 'oneHour', '0 24 * * * *', ->
       CleanupService.trimLeaderboards()
       Promise.map allGroups, (group) ->
         Group.upsert _.cloneDeep group

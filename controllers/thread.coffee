@@ -23,10 +23,6 @@ defaultEmbed = [
 MAX_LENGTH = 100000
 ONE_MINUTE_SECONDS = 60
 IMAGE_REGEX = /\!\[(.*?)\]\((.*?)\)/gi
-YOUTUBE_ID_REGEX = ///
-  (?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)
-  ([^"&?\/ ]{11})
-///i
 IMGUR_ID_REGEX = /https?:\/\/(?:i\.)?imgur\.com(?:\/a)?\/(.*?)(?:[\.#\/].*|$)/i
 STREAMABLE_ID_REGEX = /https?:\/\/streamable\.com\/([a-zA-Z0-9]+)/i
 
@@ -46,7 +42,7 @@ class ThreadCtrl
           info: "unable to post, banned #{userId}, #{ipAddr}"
 
   getAttachment: (body) ->
-    if youtubeId = body?.match(YOUTUBE_ID_REGEX)?[1]
+    if youtubeId = body?.match(config.YOUTUBE_ID_REGEX)?[1]
       return Promise.resolve {
         type: 'video'
         src: "https://www.youtube.com/embed/#{youtubeId}?autoplay=1"

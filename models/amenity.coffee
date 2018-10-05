@@ -74,7 +74,7 @@ class Amenity extends PlaceBase
 
     # add data if non-existent
     _.defaults amenity, {
-      # TODO: if this is set, batchUpsert changes id every time # id: cknex.getTimeUuid()
+      id: cknex.getTimeUuid()
     }
 
   defaultOutput: (amenity) ->
