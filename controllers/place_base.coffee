@@ -7,7 +7,6 @@ GeocoderService = require '../services/geocoder'
 config = require '../config'
 
 MAX_UNIQUE_ID_ATTEMPTS = 10
-COORDINATE_REGEX_STR = '(^[-+]?(?:[1-8]?\\d(?:\\.\\d+)?|90(?:\\.0+)?))\\s*,\\s*([-+]?(?:180(?:\\.0+)?|(?:(?:1[0-7]\\d)|(?:[1-9]?\\d))(?:\\.\\d+)?))$'
 
 module.exports = class PlaceBaseCtrl
   getBySlug: ({slug}, {user}) =>
@@ -38,13 +37,18 @@ module.exports = class PlaceBaseCtrl
         slug
 
   upsert: (options, {user, headers, connection}) =>
-    {id, name, location, slug} = options
+    {id, name, location, slug, videos} = options
 
-    matches = new RegExp(COORDINATE_REGEX_STR, 'g').exec location
+    matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec location
     unless matches?[0] and matches?[1]
       console.log 'invalid', location
       router.throw {info: 'invalid location', status: 400}
     location = [parseFloat(matches[1]), parseFloat(matches[2])]
+
+    videos = _.filter _.map videos, (video) ->
+      youtubeId = video?.match(config.YOUTUBE_ID_REGEX)?[1]
+      if youtubeId
+        {sourceType: 'youtube', sourceId: youtubeId}
 
     Promise.all [
       (if slug
@@ -59,4 +63,5 @@ module.exports = class PlaceBaseCtrl
       address =
         locality: address?[0]?.city
         administrativeArea: address?[0]?.state
-      @Model.upsert {slug, name, location, address}
+
+      @Model.upsert {slug, name, location, address, videos}

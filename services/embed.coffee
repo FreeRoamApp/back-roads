@@ -18,6 +18,7 @@ EmbedClasses =
   thread: require '../embeds/thread'
   threadComment: require '../embeds/thread_comment'
   user: require '../embeds/user'
+  userBlock: require '../embeds/user_block'
 
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
