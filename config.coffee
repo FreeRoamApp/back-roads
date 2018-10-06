@@ -40,8 +40,7 @@ config =
   HONEYPOT_ACCESS_KEY: env.HONEYPOT_ACCESS_KEY
   COORDINATE_REGEX_STR: '(^[-+]?(?:[1-8]?\\d(?:\\.\\d+)?|90(?:\\.0+)?))\\s*,\\s*([-+]?(?:180(?:\\.0+)?|(?:(?:1[0-7]\\d)|(?:[1-9]?\\d))(?:\\.\\d+)?))$'
   YOUTUBE_ID_REGEX: ///
-    (?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)
-    ([^"&?\/ ]{11})
+    ^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*)(?:(\?t|\&t|&start)=(\d+))?.*
   ///i
   # also in free-roam
   DEFAULT_PERMISSIONS:

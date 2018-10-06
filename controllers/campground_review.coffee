@@ -53,6 +53,7 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
       id: parent.id, slug: parent.slug
     }, parentDiff
 
-    CampgroundReview.upsertExtras _.defaults {id, userId: user.id}, extras
+    if id # id isnt there if just updating the parent w/o review
+      CampgroundReview.upsertExtras _.defaults {id, userId: user.id}, extras
 
 module.exports = new CampgroundReviewCtrl()

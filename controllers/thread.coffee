@@ -42,7 +42,7 @@ class ThreadCtrl
           info: "unable to post, banned #{userId}, #{ipAddr}"
 
   getAttachment: (body) ->
-    if youtubeId = body?.match(config.YOUTUBE_ID_REGEX)?[1]
+    if youtubeId = body?.match(config.YOUTUBE_ID_REGEX)?[2]
       return Promise.resolve {
         type: 'video'
         src: "https://www.youtube.com/embed/#{youtubeId}?autoplay=1"
