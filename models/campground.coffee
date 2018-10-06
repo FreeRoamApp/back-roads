@@ -150,7 +150,7 @@ class Campground extends PlaceBase
       roadDifficulty: if campground.roadDifficulty
         campground.roadDifficulty?.value
       noise: if campground.noise
-        _.mapValues campground.fullness, ({value}, time) -> value
+        _.mapValues campground.noise, ({value}, time) -> value
       location: if campground.location
         {lat: campground.location[0], lon: campground.location[1]}
     }, campground

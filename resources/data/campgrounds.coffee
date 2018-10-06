@@ -318,14 +318,10 @@ campgrounds =
   # white mountain road dispersed
   # franklin basin road dispersed
   # twin lakes
-  # san luis state wildlife area
+  # san luis state wildlife area: free with permit (need to add that as feature)
   # upper teton view
   # nomad view
-  # mchood park (winslow az but cold in winter: {value: 4, count: 1}9/21 in jan)
 
-
-
-  # valley of fire nevada, A8vEsqSssRE, MFt5XBe59cA timestamp 3m0s
 
 
 

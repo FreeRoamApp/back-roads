@@ -46,9 +46,11 @@ module.exports = class PlaceBaseCtrl
     location = [parseFloat(matches[1]), parseFloat(matches[2])]
 
     videos = _.filter _.map videos, (video) ->
-      youtubeId = video?.match(config.YOUTUBE_ID_REGEX)?[1]
+      matches = video?.match(config.YOUTUBE_ID_REGEX)
+      youtubeId = matches?[2]
+      time = matches?[4]
       if youtubeId
-        {sourceType: 'youtube', sourceId: youtubeId}
+        {sourceType: 'youtube', sourceId: youtubeId, timestamp: time}
 
     Promise.all [
       (if slug

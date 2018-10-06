@@ -40,7 +40,7 @@ module.exports = class ReviewBaseCtrl
     if user.flags.isChatBanned
       router.throw status: 400, info: 'unable to post...'
 
-    unless body
+    if not body and user.username isnt 'austin'
       router.throw status: 400, info: 'can\'t be empty'
 
     isUpdate = Boolean id
@@ -54,24 +54,27 @@ module.exports = class ReviewBaseCtrl
       newRatingCount = parent.ratingCount + 1
       newRating = totalStars / newRatingCount
 
-      Promise.all _.filter [
-        unless id # TODO handle photo updates on review edits?
-          @upsertAttachments attachments, {parentId, userId: user.id}
+      (if user?.username is 'austin' and not rating
+        Promise.resolve [null, {id: null}]
+      else
+        Promise.all _.filter [
+          unless id # TODO handle photo updates on review edits?
+            @upsertAttachments attachments, {parentId, userId: user.id}
 
-        @ParentModel.upsert {
-          id: parent.id, slug: parent.slug
-          rating: newRating, ratingCount: newRatingCount
-        }
-        @Model.upsert
-          id: id
-          userId: user.id
-          title: title
-          body: body
-          parentId: parentId
-          rating: rating
-          attachments: attachments
-      ]
-      .tap ([parentUpsert, review]) =>
+          @ParentModel.upsert {
+            id: parent.id, slug: parent.slug
+            rating: newRating, ratingCount: newRatingCount
+          }
+          @Model.upsert
+            id: id
+            userId: user.id
+            title: title
+            body: body
+            parentId: parentId
+            rating: rating
+            attachments: attachments
+        ]
+      ).tap ([parentUpsert, review]) =>
         if extras
           @upsertExtras {id: review.id, parent, extras}, {user}
 
