@@ -12,6 +12,10 @@ module.exports = class Base
     Promise.map rows, (row) =>
       @upsert row
 
+  batchIndex: (rows) =>
+    Promise.map rows, (row) =>
+      @index row
+
   upsert: (row, {ttl, prepareFn, isUpdate, map} = {}) =>
     scyllaRow = @defaultInput row
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
@@ -46,9 +50,9 @@ module.exports = class Base
         .then (scyllaRow) =>
           unless isUpdate
             @streamCreate scyllaRow
-          scyllaRow
+          @defaultOutput scyllaRow
       else
-        scyllaRow
+        @defaultOutput scyllaRow
 
   index: (row) =>
     if _.isEmpty @ELASTICSEARCH_INDICES
@@ -65,7 +69,7 @@ module.exports = class Base
           doc_as_upsert: true
       }
       .catch (err) =>
-        console.log 'elastic err', @ELASTICSEARCH_INDICES[0].name
+        console.log 'elastic err', @ELASTICSEARCH_INDICES[0].name, err
         throw err
 
   deleteByRow: (row) =>

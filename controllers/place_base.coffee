@@ -4,6 +4,8 @@ router = require 'exoid-router'
 
 EmbedService = require '../services/embed'
 GeocoderService = require '../services/geocoder'
+ImageService = require '../services/image'
+WeatherStation = require '../models/weather_station'
 config = require '../config'
 
 MAX_UNIQUE_ID_ATTEMPTS = 10
@@ -43,7 +45,10 @@ module.exports = class PlaceBaseCtrl
     unless matches?[0] and matches?[1]
       console.log 'invalid', location
       router.throw {info: 'invalid location', status: 400}
-    location = [parseFloat(matches[1]), parseFloat(matches[2])]
+    location = {
+      lat: parseFloat(matches[1])
+      lon: parseFloat(matches[2])
+    }
 
     videos = _.filter _.map videos, (video) ->
       matches = video?.match(config.YOUTUBE_ID_REGEX)
@@ -60,10 +65,23 @@ module.exports = class PlaceBaseCtrl
         @getUniqueSlug slug)
 
       GeocoderService.reverse location
+      .catch -> null
+
+      if @Model.SCYLLA_TABLES[0].fields.weather
+        WeatherStation.getClosestToLocation location
+      else
+        Promise.resolve null
     ]
-    .then ([slug, address]) =>
+    .then ([slug, address, weatherStation]) =>
       address =
         locality: address?[0]?.city
         administrativeArea: address?[0]?.state
 
-      @Model.upsert {slug, name, location, address, videos}
+      diff = {slug, name, location, address, videos}
+      if weatherStation
+        diff.weather = weatherStation.weather
+
+      @Model.upsert diff
+      .tap (place) ->
+        if place.weather
+          ImageService.uploadWeatherImageByPlace place
