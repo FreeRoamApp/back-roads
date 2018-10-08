@@ -15,7 +15,7 @@ scyllaFields =
   slug: 'text' # eg: old-settlers-rv-park
   id: 'timeuuid'
   name: 'text'
-  location: {type: 'set', subType: 'double'} # coordinates
+  location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
   rating: 'double'
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown
@@ -40,6 +40,8 @@ scyllaFields =
   shade: 'text' # json {value: 3, count: 1}
   safety: 'text' # json {value: 3, count: 1}
   cellSignal: 'text' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
+
+  weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
 
   maxDays: 'int'
   hasFreshWater: 'boolean'
@@ -84,6 +86,7 @@ class Campground extends PlaceBase
         shade: {type: 'integer'}
         safety: {type: 'integer'}
         cellSignal: {type: 'object'}
+        weather: {type: 'object'}
         maxDays: {type: 'integer'}
         hasFreshWater: {type: 'boolean'}
         hasSewage: {type: 'boolean'}
@@ -113,6 +116,7 @@ class Campground extends PlaceBase
       restrooms: JSON.stringify campground.restrooms
       videos: JSON.stringify campground.videos
       address: JSON.stringify campground.address
+      weather: JSON.stringify campground.weather
     }, campground
 
     # add data if non-existent
@@ -126,7 +130,7 @@ class Campground extends PlaceBase
 
     jsonFields = [
       'siteCount', 'crowds', 'fullness', 'shade', 'safety', 'roadDifficulty'
-      'noise', 'cellSignal', 'restrooms', 'videos', 'address'
+      'noise', 'cellSignal', 'restrooms', 'videos', 'address', 'weather'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -151,8 +155,6 @@ class Campground extends PlaceBase
         campground.roadDifficulty?.value
       noise: if campground.noise
         _.mapValues campground.noise, ({value}, time) -> value
-      location: if campground.location
-        {lat: campground.location[0], lon: campground.location[1]}
     }, campground
 
   defaultESOutput: (campground) ->

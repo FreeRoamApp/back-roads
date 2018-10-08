@@ -13,24 +13,7 @@ carriers =
   sprint: 'Sprint'
 
 class CellTower extends PlaceBase
-  SCYLLA_TABLES: [
-    {
-      name: 'cell_towers_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        # common between all places
-        slug: 'text'
-        id: 'timeuuid'
-        location: {type: 'set', subType: 'double'} # coordinates
-        # end common
-
-        carrier: 'text'
-        tech: 'text'
-
-      primaryKey:
-        partitionKey: ['slug']
-    }
-  ]
+  SCYLLA_TABLES: []
   ELASTICSEARCH_INDICES: [
     {
       name: 'cell_towers'

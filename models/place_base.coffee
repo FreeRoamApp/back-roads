@@ -47,6 +47,4 @@ module.exports = class PlaceBase extends Base
   defaultESInput: (place) ->
     if place.id
       place.id = "#{place.id}"
-    if place.location
-      place.location = {lat: place.location[0], lon: place.location[1]}
     place

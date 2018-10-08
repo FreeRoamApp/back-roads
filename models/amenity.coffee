@@ -14,7 +14,7 @@ scyllaFields =
   slug: 'text' # eg: old-settlers-rv-park
   id: 'timeuuid'
   name: 'text'
-  location: {type: 'set', subType: 'double'} # coordinates
+  location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
   rating: 'double'
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown

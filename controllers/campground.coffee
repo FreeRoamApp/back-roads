@@ -22,16 +22,18 @@ class CampgroundCtrl extends PlaceBaseCtrl
                 geo_bounding_box:
                   location:
                     top_left:
-                      lat: campground.location[1] + 5
-                      lon: campground.location[0] - 5 # TODO: probably less than 5
+                      lat: campground.location.lat + 5
+                      lon: campground.location.lon - 5 # TODO: probably less than 5
                     bottom_right:
-                      lat: campground.location[1] - 5
-                      lon: campground.location[0] + 5
+                      lat: campground.location.lat - 5
+                      lon: campground.location.lon + 5
               }
             ]
         sort: [
           _geo_distance:
-            location: campground.location
+            location:
+              lat: campground.location.lat
+              lon: campground.location.lon
             order: 'asc'
             unit: 'km'
             distance_type: 'plane'
@@ -46,9 +48,7 @@ class CampgroundCtrl extends PlaceBaseCtrl
           amenities.indexOf('groceries') isnt -1
 
         place = {
-          location:
-            lon: campground.location[0]
-            lat: campground.location[1]
+          location: campground.location
         }
         importantAmenities = _.filter [place, dump, water, groceries]
         minX = _.minBy importantAmenities, ({location}) -> location.lon
