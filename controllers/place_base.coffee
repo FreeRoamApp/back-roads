@@ -38,6 +38,12 @@ module.exports = class PlaceBaseCtrl
       else
         slug
 
+  deleteByRow: ({row}, {user}) =>
+    unless user.username is 'austin'
+      router.throw {status: 401, info: 'Unauthorized'}
+
+    @Model.deleteByRow row
+
   upsert: (options, {user, headers, connection}) =>
     {id, name, location, slug, videos} = options
 

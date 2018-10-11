@@ -51,6 +51,7 @@ module.exports = router
 .on 'amenities.getBySlug', authed AmenityCtrl.getBySlug
 .on 'amenities.search', authed AmenityCtrl.search
 .on 'amenities.upsert', authed AmenityCtrl.upsert
+.on 'amenities.deleteByRow', authed AmenityCtrl.deleteByRow
 
 .on 'bans.getAllByGroupId', authed BanCtrl.getAllByGroupId
 .on 'bans.getByGroupIdAndUserId', authed BanCtrl.getByGroupIdAndUserId

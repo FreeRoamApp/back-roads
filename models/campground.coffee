@@ -75,10 +75,12 @@ class Campground extends PlaceBase
     {
       name: 'campgrounds'
       mappings:
+        # commeon
         slug: {type: 'text'}
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
+        # end common
         roadDifficulty: {type: 'integer'}
         crowds: {type: 'object'}
         fullness: {type: 'object'}

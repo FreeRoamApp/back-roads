@@ -52,11 +52,12 @@ class Amenity extends PlaceBase
       name: 'amenities'
       mappings:
         # common between all places
+        slug: {type: 'text'}
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
-        amenities: {type: 'text'} # array
         # end common
+        amenities: {type: 'text'} # array
     }
   ]
 
@@ -97,6 +98,6 @@ class Amenity extends PlaceBase
       icon: _.orderBy(amenity.amenities, (amenity) ->
         ICON_ORDER.indexOf(amenity)
       , ['desc'])[0]
-    }, _.pick amenity, ['slug', 'name', 'location', 'amenities']
+    }, _.pick amenity, ['id', 'slug', 'name', 'location', 'amenities']
 
 module.exports = new Amenity()

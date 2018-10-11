@@ -34,14 +34,14 @@ class CronService
       CleanupService.clean()
       Thread.updateScores 'stale'
       # FIXME: running these every minute seems to cause memory leak?
-      # if config.ENV is config.ENVS.DEV
-      #   Promise.map allGroups, (group) ->
-      #     Group.upsert _.cloneDeep group
-      #   Item.batchUpsert _.cloneDeep allItems
-      #   Campground.batchUpsert _.cloneDeep allCampgrounds
-      #   Amenity.batchUpsert _.cloneDeep allAmenities
-      #   Product.batchUpsert _.cloneDeep allProducts
-      #   Category.batchUpsert _.cloneDeep allCategories
+      if config.ENV is config.ENVS.DEV
+        Promise.map allGroups, (group) ->
+          Group.upsert _.cloneDeep group
+        Item.batchUpsert _.cloneDeep allItems
+        Campground.batchUpsert _.cloneDeep allCampgrounds
+        Amenity.batchUpsert _.cloneDeep allAmenities
+        Product.batchUpsert _.cloneDeep allProducts
+        Category.batchUpsert _.cloneDeep allCategories
 
     @addCron 'tenMin', '0 */10 * * * *', ->
       Thread.updateScores 'time'
