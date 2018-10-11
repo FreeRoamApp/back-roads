@@ -246,8 +246,11 @@ class ConversationMessageCtrl
           userId: user.id
         })
 
-        @_getMentions conversation, body, {user}
-        .then ({userMentions, roleMentions}) =>
+        (if groupId
+          @_getMentions conversation, body, {user}
+        else
+          Promise.resolve {}
+        ).then ({userMentions, roleMentions}) =>
           @_sendPushNotifications {
             conversation, user, body, userMentions, roleMentions, isImage
             conversationMessage

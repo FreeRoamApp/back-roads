@@ -314,13 +314,8 @@ campgrounds =
       {sourceType: 'youtube', sourceId: 'SVBcMpFtWWs'}
     ]
 
-  # geekstreamers:
-  # white mountain road dispersed
-  # franklin basin road dispersed
-  # twin lakes
-  # san luis state wildlife area: free with permit (need to add that as feature)
-  # upper teton view
-  # nomad view
+
+  # telephone road - fulltimeexlorer (close to craggy wash)
 
 
 
