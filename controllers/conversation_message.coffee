@@ -218,23 +218,23 @@ class ConversationMessageCtrl
       else
         Promise.resolve null)
       .then (group) =>
-          conversationMessageId = cknex.getTimeUuid()
+        conversationMessageId = cknex.getTimeUuid()
 
-          @_createCards body, isImage, conversationMessageId
-          .then ({card} = {}) ->
-            groupId = conversation.groupId or 'private'
-            ConversationMessage.upsert {
-              id: conversationMessageId
-              userId: user.id
-              body: body
-              clientId: clientId
-              conversationId: conversationId
-              groupId: conversation?.groupId
-              card: card
-            }, {
-              prepareFn: (item) ->
-                prepareFn item
-            }
+        @_createCards body, isImage, conversationMessageId
+        .then ({card} = {}) ->
+          groupId = conversation.groupId or 'private'
+          ConversationMessage.upsert {
+            id: conversationMessageId
+            userId: user.id
+            body: body
+            clientId: clientId
+            conversationId: conversationId
+            groupId: conversation?.groupId
+            card: card
+          }, {
+            prepareFn: (item) ->
+              prepareFn item
+          }
       .then (conversationMessage) =>
         userIds = conversation.userIds
         pickedConversation = _.pick conversation, [
@@ -246,10 +246,10 @@ class ConversationMessageCtrl
           userId: user.id
         })
 
-        (if groupId
-          @_getMentions conversation, body, {user}
+        (if conversation.type is 'pm'
+          Promise.resolve {userMentions: [], roleMentions: []}
         else
-          Promise.resolve {}
+          @_getMentions conversation, body, {user}
         ).then ({userMentions, roleMentions}) =>
           @_sendPushNotifications {
             conversation, user, body, userMentions, roleMentions, isImage

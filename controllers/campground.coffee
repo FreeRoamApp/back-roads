@@ -3,54 +3,65 @@ _ = require 'lodash'
 
 Campground = require '../models/campground'
 Amenity = require '../models/amenity'
+RoutingService = require '../services/routing'
 PlaceBaseCtrl = require './place_base'
+
+COMMON_AMENITIES = ['dump', 'water', 'groceries']
 
 class CampgroundCtrl extends PlaceBaseCtrl
   type: 'campground'
   Model: Campground
+
+  _setNearbyAmenities: (campground) ->
+    Amenity.searchNearby campground.location
+    .then (amenities) ->
+      closestAmenities = _.map COMMON_AMENITIES, (amenityType) ->
+        _.find amenities, ({amenities}) ->
+          amenities.indexOf(amenityType) isnt -1
+      Promise.props _.reduce closestAmenities, (obj, closestAmenity) ->
+        if closestAmenity
+          obj[closestAmenity.id] = RoutingService.getDistance(
+            campground.location, closestAmenity.location
+          )
+        obj
+      , {}
+      .then (distances) ->
+        _.reduce COMMON_AMENITIES, (obj, amenityType, i) ->
+          amenity = closestAmenities[i]
+          distance = distances[amenity.id]
+          if amenity and distance
+            obj[amenityType] = _.defaults distance, {id: amenity.id}
+          obj
+        , {}
+    .then (distanceTo) ->
+      Campground.upsert {
+        id: campground.id
+        slug: campground.slug
+        distanceTo
+      }
+
+  upsert: ({id}) =>
+    super
+    .tap (campground) =>
+      unless id
+        @_setNearbyAmenities campground
+      null # don't block
 
   # TODO: heavily cache this
   getAmenityBoundsById: ({id}) ->
     # get closest dump, water, groceries
     Campground.getById id
     .then (campground) ->
-      Amenity.search {
-        query:
-          bool:
-            filter: [
-              {
-                geo_bounding_box:
-                  location:
-                    top_left:
-                      lat: campground.location.lat + 5
-                      lon: campground.location.lon - 5 # TODO: probably less than 5
-                    bottom_right:
-                      lat: campground.location.lat - 5
-                      lon: campground.location.lon + 5
-              }
-            ]
-        sort: [
-          _geo_distance:
-            location:
-              lat: campground.location.lat
-              lon: campground.location.lon
-            order: 'asc'
-            unit: 'km'
-            distance_type: 'plane'
-        ]
-      }
+      Amenity.searchNearby campground.location
       .then (amenities) ->
-        dump = _.find amenities, ({amenities}) ->
-          amenities.indexOf('dump') isnt -1
-        water = _.find amenities, ({amenities}) ->
-          amenities.indexOf('water') isnt -1
-        groceries = _.find amenities, ({amenities}) ->
-          amenities.indexOf('groceries') isnt -1
+        closestAmenities = _.map COMMON_AMENITIES, (amenityType) ->
+          _.find amenities, ({amenities}) ->
+            amenities.indexOf(amenityType) isnt -1
 
         place = {
           location: campground.location
         }
-        importantAmenities = _.filter [place, dump, water, groceries]
+        importantAmenities = _.filter [place].concat closestAmenities
         minX = _.minBy importantAmenities, ({location}) -> location.lon
         minY = _.minBy importantAmenities, ({location}) -> location.lat
         maxX = _.maxBy importantAmenities, ({location}) -> location.lon
@@ -62,7 +73,5 @@ class CampgroundCtrl extends PlaceBaseCtrl
           x2: maxX.location.lon
           y2: minY.location.lat
         }
-
-
 
 module.exports = new CampgroundCtrl()

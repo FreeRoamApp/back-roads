@@ -2,7 +2,6 @@ _ = require 'lodash'
 Joi = require 'joi'
 Promise = require 'bluebird'
 router = require 'exoid-router'
-request = require 'request-promise'
 
 PushToken = require '../models/push_token'
 PushTopic = require '../models/push_topic'

@@ -17,7 +17,8 @@ module.exports = class Base
       @index row
 
   upsert: (row, {ttl, prepareFn, isUpdate, map} = {}) =>
-    scyllaRow = @defaultInput row
+    scyllaRow = _.pick row, _.keys @SCYLLA_TABLES[0].fields
+    scyllaRow = @defaultInput scyllaRow
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
     Promise.all _.filter _.map(@SCYLLA_TABLES, (table) ->
