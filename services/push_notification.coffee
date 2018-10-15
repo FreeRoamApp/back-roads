@@ -264,12 +264,12 @@ class PushNotificationService
           }
         user
         .then (user) =>
-          (if groupId
+          (if conversation.type is 'pm'
+            Promise.resolve true
+          else
             GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
               GroupUser.PERMISSIONS.READ_MESSAGE
             ], {channelId: conversation.id}
-          else
-            Promise.resolve true
           ).then (hasPermission) =>
             if hasPermission
               @send user, message, {fromUserId, groupId, conversation}

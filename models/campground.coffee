@@ -31,7 +31,7 @@ scyllaFields =
   drivingInstructions: 'text'
 
   siteCount: 'text' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
-  distanceTo: 'text' # json {groceries: 25, walmart: 10} all in miles
+  distanceTo: 'text' # json {groceries: {id: '', distance: 25, time: 22}} all in miles/min
 
   roadDifficulty: 'text' # json {value: 3, count: 1}
   crowds: 'text' # json {winter: {value: 2, count: 1} ... }
@@ -80,7 +80,9 @@ class Campground extends PlaceBase
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
+        thumbnailUrl: {type: 'text'}
         # end common
+        distanceTo: {type: 'object'}
         roadDifficulty: {type: 'integer'}
         crowds: {type: 'object'}
         fullness: {type: 'object'}
@@ -119,6 +121,7 @@ class Campground extends PlaceBase
       videos: JSON.stringify campground.videos
       address: JSON.stringify campground.address
       weather: JSON.stringify campground.weather
+      distanceTo: JSON.stringify campground.distanceTo
     }, campground
 
     # add data if non-existent
@@ -133,6 +136,7 @@ class Campground extends PlaceBase
     jsonFields = [
       'siteCount', 'crowds', 'fullness', 'shade', 'safety', 'roadDifficulty'
       'noise', 'cellSignal', 'restrooms', 'videos', 'address', 'weather'
+      'distanceTo'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -160,6 +164,8 @@ class Campground extends PlaceBase
     }, campground
 
   defaultESOutput: (campground) ->
-    _.pick campground, ['slug', 'name', 'location']
+    _.pick campground, [
+      'slug', 'name', 'location', 'rating', 'thumbnailUrl'
+    ]
 
 module.exports = new Campground()

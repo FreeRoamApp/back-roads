@@ -23,7 +23,7 @@ class CampgroundAttachment extends AttachmentBase
         smallSrc: 'text'
         largeSrc: 'text'
 
-        location: {type: 'set', subType: 'double'} # coordinates
+        location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
       primaryKey:
         partitionKey: ['parentId']
         clusteringColumns: ['id', 'src']
@@ -45,7 +45,7 @@ class CampgroundAttachment extends AttachmentBase
         smallSrc: 'text'
         largeSrc: 'text'
 
-        location: {type: 'set', subType: 'double'} # coordinates
+        location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
       primaryKey:
         partitionKey: ['id']
         clusteringColumns: ['src']

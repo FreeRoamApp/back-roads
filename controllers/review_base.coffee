@@ -54,17 +54,19 @@ module.exports = class ReviewBaseCtrl
       newRatingCount = parent.ratingCount + 1
       newRating = totalStars / newRatingCount
 
+      parentUpsert = {
+        id: parent.id, slug: parent.slug
+        rating: newRating, ratingCount: newRatingCount
+      }
+      # TODO: choose a good thumbnail for each campground instead of most recent
+      if attachments?[0]?.smallSrc
+        parentUpsert.thumbnailUrl = attachments?[0]?.smallSrc
+
       (if user?.username is 'austin' and not rating
         Promise.resolve [null, {id: null}]
       else
-        Promise.all _.filter [
-          unless id # TODO handle photo updates on review edits?
-            @upsertAttachments attachments, {parentId, userId: user.id}
-
-          @ParentModel.upsert {
-            id: parent.id, slug: parent.slug
-            rating: newRating, ratingCount: newRatingCount
-          }
+        Promise.all [
+          @ParentModel.upsert parentUpsert
           @Model.upsert
             id: id
             userId: user.id
@@ -75,8 +77,13 @@ module.exports = class ReviewBaseCtrl
             attachments: attachments
         ]
       ).tap ([parentUpsert, review]) =>
-        if extras
-          @upsertExtras {id: review.id, parent, extras}, {user}
+        Promise.all _.filter [
+          unless id # TODO handle photo updates on review edits?
+            @upsertAttachments attachments, {parentId, userId: user.id}
+
+          if extras
+            @upsertExtras {id: review.id, parent, extras}, {user}
+        ]
 
   uploadImage: ({}, {user, file}) =>
     ImageService.uploadImageByUserIdAndFile(

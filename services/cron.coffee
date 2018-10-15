@@ -2,8 +2,6 @@ CronJob = require('cron').CronJob
 _ = require 'lodash'
 Promise = require 'bluebird'
 
-console.log 'req cron'
-
 CacheService = require './cache'
 CleanupService = require './cleanup'
 Thread = require '../models/thread'
@@ -34,7 +32,7 @@ class CronService
       CleanupService.clean()
       Thread.updateScores 'stale'
       # FIXME: running these every minute seems to cause memory leak?
-      if config.ENV is config.ENVS.DEV
+      if config.ENV is config.ENVS.DEV and config.SCYLLA.CONTACT_POINTS[0] is 'localhost'
         Promise.map allGroups, (group) ->
           Group.upsert _.cloneDeep group
         Item.batchUpsert _.cloneDeep allItems

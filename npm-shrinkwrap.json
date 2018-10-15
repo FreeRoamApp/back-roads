@@ -1042,8 +1042,8 @@
       "integrity": "sha1-hLpeBUkNCW2T3PqTQ+vDHvajvSg="
     },
     "chartist-bar-labels": {
-      "version": "git+https://github.com/YorkshireInteractive/chartist-bar-labels.git#2eae6176d3c5c31ae510cae7fa0e1db3e41ebadf",
-      "from": "git+https://github.com/YorkshireInteractive/chartist-bar-labels.git",
+      "version": "git://github.com/FreeRoamApp/chartist-bar-labels.git#46328f342901888bfab83d18d7011584fdc6c769",
+      "from": "git://github.com/FreeRoamApp/chartist-bar-labels.git",
       "requires": {
         "handlebars": "^4.0.5",
         "metalsmith": "^2.1.0",
@@ -2438,14 +2438,6 @@
       "integrity": "sha512-Fs9VRguL0gqGHkXS5GQiMCr1VhZBxz0JnJs4JmMp/2jL18Fmbzvv7vOFRU+U8TBkHEE/CX1qDXzJplVULgsLeg==",
       "dev": true
     },
-    "fortnite-api": {
-      "version": "git+https://github.com/claydotio/fortnite-api.git#7a89328f1e641c02eaceca130ab3ebdfb8806519",
-      "from": "git+https://github.com/claydotio/fortnite-api.git",
-      "requires": {
-        "request": "^2.83.0",
-        "request-promise": "^4.2.2"
-      }
-    },
     "forwarded": {
       "version": "0.1.2",
       "resolved": "https://registry.npmjs.org/forwarded/-/forwarded-0.1.2.tgz",
@@ -2569,6 +2561,11 @@
       "version": "2.5.4",
       "resolved": "https://registry.npmjs.org/generic-pool/-/generic-pool-2.5.4.tgz",
       "integrity": "sha1-OMYYhRPhQDCUjsblz2VSPZd5KZs="
+    },
+    "geodist": {
+      "version": "0.2.1",
+      "resolved": "https://registry.npmjs.org/geodist/-/geodist-0.2.1.tgz",
+      "integrity": "sha1-lhml2TVSkzVxb6r60yIowp3AuSA="
     },
     "geoip-lite": {
       "version": "1.3.2",
