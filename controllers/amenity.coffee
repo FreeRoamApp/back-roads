@@ -31,7 +31,7 @@ class AmenityCtrl extends PlaceBaseCtrl
           {campground, distance}
       .filter ({campground, distance}) ->
         _.some _.map amenity.amenities, (amenityType) ->
-          campground.distanceTo?[amenityType]?.time <= distance.time
+          campground.distanceTo?[amenityType]?.time >= distance.time
     .then (campgrounds) ->
       Promise.map campgrounds, ({campground, distance}) ->
         oldDistanceTo = campground.distanceTo or {}

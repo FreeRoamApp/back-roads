@@ -433,6 +433,18 @@ class PushNotificationService
             @subscribeToTopicByToken token.token, upsertTopic
         ]
 
+  unsubscribeToPushTopic: (topic) =>
+    {userId, groupId, sourceType, sourceId} = topic
+
+    PushTopic.getAllByUserId userId
+    .then (topics) =>
+      unsubTopics = _.filter topics, topic
+      Promise.map unsubTopics, (pushTopic) =>
+        Promise.all [
+          PushTopic.deleteByPushTopic pushTopic
+          @unsubscribeToTopicByPushTopic topic
+        ]
+
   subscribeToGroupTopics: ({userId, groupId}) =>
     Promise.all [
       @subscribeToPushTopic {

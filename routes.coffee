@@ -15,10 +15,12 @@ GroupAuditLogCtrl = require './controllers/group_audit_log'
 GroupUserCtrl = require './controllers/group_user'
 GroupRoleCtrl = require './controllers/group_role'
 ItemCtrl = require './controllers/item'
+LowClearanceCtrl = require './controllers/low_clearance'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
+PushTopicCtrl = require './controllers/push_topic'
 ThreadCtrl = require './controllers/thread'
 ThreadCommentCtrl = require './controllers/thread_comment'
 ThreadVoteCtrl = require './controllers/thread_vote'
@@ -141,6 +143,8 @@ module.exports = router
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
 .on 'items.search', authed ItemCtrl.search
 
+.on 'lowClearances.search', authed LowClearanceCtrl.search
+
 .on 'notifications.getAll', authed NotificationCtrl.getAll
 
 .on 'nps.create', authed NpsCtrl.create
@@ -149,7 +153,10 @@ module.exports = router
 .on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
 
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert
-.on 'pushTokens.subscribeToTopic', authed PushTokenCtrl.subscribeToTopic
+
+.on 'pushTopics.subscribe', authed PushTopicCtrl.subscribe
+.on 'pushTopics.unsubscribe', authed PushTopicCtrl.unsubscribe
+.on 'pushTopics.getAll', authed PushTopicCtrl.getAll
 
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll
