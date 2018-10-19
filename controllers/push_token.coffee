@@ -19,13 +19,13 @@ class PushTokensCtrl
       # }
       # get any token obj associated with this token
       PushToken.getAllByToken token
-      .then (pushTokens) =>
+      .then (pushTokens) ->
         # delete the token
         _.map pushTokens, PushToken.deleteByPushToken
         # delete any pushTopics
-        _.map pushTokens, (pushToken) =>
+        _.map pushTokens, (pushToken) ->
           PushTopic.getAllByUserIdAndToken pushToken.userId, pushToken.token
-          .map (pushTopic) =>
+          .map (pushTopic) ->
             Promise.all [
               PushTopic.deleteByPushTopic pushTopic
               PushNotificationService.unsubscribeToTopicByPushTopic pushTopic

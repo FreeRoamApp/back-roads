@@ -77,6 +77,7 @@ class PushTopic extends Base
       return null
 
     pushTopic.groupId = "#{pushTopic.groupId}"
+    pushTopic.userId = "#{pushTopic.userId}"
     pushTopic
 
 module.exports = new PushTopic()

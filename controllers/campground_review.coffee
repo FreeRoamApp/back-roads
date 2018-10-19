@@ -7,6 +7,8 @@ CampgroundReview = require '../models/campground_review'
 Campground = require '../models/campground'
 ReviewBaseCtrl = require './review_base'
 
+SEASONS = ['winter', 'spring', 'summer', 'fall']
+
 class CampgroundReviewCtrl extends ReviewBaseCtrl
   type: 'campgroundReview'
   imageFolder: 'rvcg'
@@ -16,10 +18,12 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
   AttachmentModel: CampgroundAttachment
 
   upsertExtras: ({id, parent, extras}, {user}) =>
-    extras = _.pick extras, [
+    validFields = [
       'roadDifficulty', 'crowds', 'fullness', 'noise',
       'shade', 'safety', 'cellSignal'
     ]
+    extras = _.pickBy extras, (extra, key) ->
+      key in validFields and (typeof extra is 'number' or not _.isEmpty extra)
 
     # TODO allow specifying day/night noise
     if extras.noise
@@ -49,6 +53,17 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
       diff
     , {}
 
+    # if this campground doesn't have a value for a certain season, set it to
+    # whatever value we have, as an estimate
+    _.forEach Campground.seasonalFields, (field) ->
+      _.forEach SEASONS, (season) ->
+        if parentDiff[field] and not parent[season]?.count and
+            not parentDiff[field][season]
+          value = _.first(_.values(parentDiff[field]))?.value
+          if value
+            parentDiff[field][season] = {value, count: 0}
+
+    console.log parentDiff
     @ParentModel.upsert _.defaults {
       id: parent.id, slug: parent.slug
     }, parentDiff

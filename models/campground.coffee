@@ -103,6 +103,8 @@ class Campground extends PlaceBase
     }
   ]
 
+  seasonalFields: ['crowds', 'fullness']
+
   defaultInput: (campground) ->
     unless campground?
       return null

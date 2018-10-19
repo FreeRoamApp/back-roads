@@ -63,7 +63,12 @@ module.exports = class ReviewBaseCtrl
         parentUpsert.thumbnailUrl = attachments?[0]?.smallSrc
 
       (if user?.username is 'austin' and not rating
-        Promise.resolve [null, {id: null}]
+        Promise.all _.filter [
+          if parentUpsert.thumbnailUrl
+            @ParentModel.upsert _.omit parentUpsert, ['rating', 'ratingCount']
+
+          Promise.resolve {id: null}
+        ]
       else
         Promise.all [
           @ParentModel.upsert parentUpsert
@@ -82,7 +87,7 @@ module.exports = class ReviewBaseCtrl
             @upsertAttachments attachments, {parentId, userId: user.id}
 
           if extras
-            @upsertExtras {id: review.id, parent, extras}, {user}
+            @upsertExtras {id: review?.id, parent, extras}, {user}
         ]
 
   uploadImage: ({}, {user, file}) =>

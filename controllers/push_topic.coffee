@@ -7,10 +7,21 @@ PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
 class PushTopicCtrl
+  # TODO: use user.groupUserSettings.globalNotifications instead of manually getting topics
+  getAll: ({}, {user}) ->
+    PushTopic.getAllByUserId user.id
+
   subscribe: ({groupId, sourceType, sourceId}, {user}) ->
-    PushNotificationService.subscribeToTopic {
+    PushNotificationService.subscribeToPushTopic {
       groupId, sourceType, sourceId
       userId: user.id
     }
+
+  unsubscribe: ({groupId, sourceType, sourceId}, {user}) ->
+    PushNotificationService.unsubscribeToPushTopic {
+      groupId, sourceType, sourceId
+      userId: user.id
+    }
+
 
 module.exports = new PushTopicCtrl()
