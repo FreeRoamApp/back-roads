@@ -101,12 +101,25 @@ class CampgroundReview extends ReviewBase
     }
   ]
 
+  getExtrasById: (id) =>
+    cknex().select '*'
+    .from 'campground_review_extras_by_id'
+    .where 'id', '=', id
+    .run {isSingle: true}
+    .then @defaultExtrasOutput
+
   upsertExtras: (extras) =>
     extras = @defaultExtrasInput extras
 
     cknex().update 'campground_review_extras_by_id'
     .set _.omit extras, ['id']
     .where 'id', '=', extras.id
+    .run()
+
+  deleteExtrasById: (id) ->
+    cknex().delete()
+    .from 'campground_review_extras_by_id'
+    .where 'id', '=', id
     .run()
 
   defaultExtrasInput: (extras) ->
@@ -123,6 +136,21 @@ class CampgroundReview extends ReviewBase
 
     # add data if non-existent
     _.defaults extras, {}
+
+  defaultExtrasOutput: (extras) ->
+    unless extras?
+      return null
+
+    jsonFields = [
+      'crowds', 'fullness', 'noise', 'cellSignal'
+    ]
+    _.forEach jsonFields, (field) ->
+      extras[field] = try
+        JSON.parse extras[field]
+      catch
+        {}
+
+    extras
 
   defaultInput: (campground) ->
     unless campground?
