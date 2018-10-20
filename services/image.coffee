@@ -19,6 +19,7 @@ SMALL_VIDEO_PREVIEW_HEIGHT = 202
 LARGE_VIDEO_PREVIEW_WIDTH = 512
 LARGE_VIDEO_PREVIEW_HEIGHT = 288
 SMALL_IMAGE_SIZE = 200
+LARGE_IMAGE_SIZE = 1000
 
 class ImageService
   DEFAULT_IMAGE_QUALITY: DEFAULT_IMAGE_QUALITY
@@ -70,8 +71,11 @@ class ImageService
         resolve key
       .on 'error', reject
 
-  uploadImageByUserIdAndFile: (userId, file, {folder} = {}) =>
+  uploadImageByUserIdAndFile: (userId, file, options = {}) =>
+    {folder, smallSize, largeSize, useMin} = options
     folder ?= 'misc'
+    useMin ?= true
+
     @getSizeByBuffer file.buffer
     .then (size) =>
       key = "#{userId}_#{uuid.v4()}"
@@ -80,28 +84,33 @@ class ImageService
       aspectRatio = size.width / size.height
       # 10 is to prevent super wide/tall images from being uploaded
       if (aspectRatio < 1 and aspectRatio < 10) or aspectRatio < 0.1
-        smallWidth = SMALL_IMAGE_SIZE
-        smallHeight = smallWidth / aspectRatio
+        smallWidth = smallSize?.width or Math.min(size.width, SMALL_IMAGE_SIZE)
+        smallHeight = smallSize?.height or smallWidth / aspectRatio
       else
-        smallHeight = SMALL_IMAGE_SIZE
-        smallWidth = smallHeight * aspectRatio
+        smallHeight = smallSize?.height or Math.min(
+          size.height, SMALL_IMAGE_SIZE
+        )
+        smallWidth = smallSize?.width or smallHeight * aspectRatio
+
+      largeWidth = largeSize?.width or Math.min(size.width, smallWidth * 5)
+      largeHeight = largeSize?.height or Math.min(size.height, smallHeight * 5)
 
       Promise.all [
         @uploadImage
           key: "#{keyPrefix}.small.jpg"
           stream: @toStream
             buffer: file.buffer
-            width: Math.min size.width, smallWidth
-            height: Math.min size.height, smallHeight
-            useMin: true
+            width: smallWidth
+            height: smallHeight
+            useMin: useMin
 
         @uploadImage
           key: "#{keyPrefix}.large.jpg"
           stream: @toStream
             buffer: file.buffer
-            width: Math.min size.width, smallWidth * 5
-            height: Math.min size.height, smallHeight * 5
-            useMin: true
+            width: largeWidth
+            height: largeHeight
+            useMin: useMin
       ]
       .then (imageKeys) ->
         _.map imageKeys, (imageKey) ->
@@ -218,7 +227,6 @@ class ImageService
           metadata: {contentType}
         }
         .on 'finish', ->
-          console.log 'finish'
           resolve key
         .on 'error', (err) ->
           console.log 'err', err

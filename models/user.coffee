@@ -193,6 +193,7 @@ class UserModel extends Base
       return null
 
     user.flags = JSON.stringify user.flags
+    user.avatarImage = JSON.stringify user.avatarImage
 
     _.defaults user, {
       id: cknex.getTimeUuid()
@@ -210,6 +211,14 @@ class UserModel extends Base
         {}
     else
       user.flags = {}
+
+    if user.avatarImage
+      user.avatarImage = try
+        JSON.parse user.avatarImage
+      catch
+        {}
+    else
+      user.avatarImage = {}
 
     user = _.defaults user, {
       id: "#{user.id}"

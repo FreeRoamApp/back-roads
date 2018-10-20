@@ -28,6 +28,8 @@ class CampgroundCtrl extends PlaceBaseCtrl
       .then (distances) ->
         _.reduce COMMON_AMENITIES, (obj, amenityType, i) ->
           amenity = closestAmenities[i]
+          unless amenity
+            return
           distance = distances[amenity.id]
           if amenity and distance
             obj[amenityType] = _.defaults distance, {id: amenity.id}
@@ -41,6 +43,7 @@ class CampgroundCtrl extends PlaceBaseCtrl
       }
 
   upsert: ({id}) =>
+    console.log 'upsert', arguments[0]
     super
     .tap (campground) =>
       unless id

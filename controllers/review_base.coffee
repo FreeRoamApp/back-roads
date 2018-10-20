@@ -4,6 +4,7 @@ router = require 'exoid-router'
 
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
+cknex = require '../services/cknex'
 config = require '../config'
 
 module.exports = class ReviewBaseCtrl
@@ -23,13 +24,17 @@ module.exports = class ReviewBaseCtrl
   upsertAttachments: (attachments, {parentId, userId}) =>
     @AttachmentModel.batchUpsert _.map attachments, (attachment) ->
       attachment = _.pick attachment, [
-        'caption', 'tags', 'type', 'aspectRatio', 'location'
+        'id', 'caption', 'tags', 'type', 'aspectRatio', 'location'
         'src', 'largeSrc', 'smallSrc'
       ]
       _.defaults attachment, {parentId, userId}
 
   upsert: (options, {user, headers, connection}) =>
     {id, type, title, body, rating, attachments, extras, parentId} = options
+
+    # assign every attachment an id
+    attachments = _.map attachments, (attachment) ->
+      _.defaults attachment, {id: cknex.getTimeUuid()}
 
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
@@ -95,11 +100,42 @@ module.exports = class ReviewBaseCtrl
       user.id, file, {folder: @imageFolder}
     )
 
+  deleteAttachments: (attachments) =>
+    Promise.map attachments, @AttachmentModel.deleteByRow
+
   deleteById: ({id}, {user}) =>
-    @Model.getById id
-    .then (review) =>
-      hasPermission = review.userId is user.id or user.username is 'austin'
+    Promise.all _.filter [
+      @Model.getById id
+      @Model.getExtrasById? id
+    ]
+    .then ([review, extras]) =>
+      hasPermission = "#{review.userId}" is "#{user.id}" or
+                        user.username is 'austin'
       unless hasPermission
         router.throw
           status: 400, info: 'You don\'t have permission to do that'
-      @Model.deleteByRow review
+
+      @ParentModel.getById review.parentId
+      .then (parent) =>
+        totalStars = parent.rating * parent.ratingCount
+        totalStars -= review.rating
+        newRatingCount = parent.ratingCount - 1
+        newRating = totalStars / newRatingCount
+
+        parentUpsert = {
+          id: parent.id, slug: parent.slug
+          rating: newRating, ratingCount: newRatingCount
+        }
+
+        Promise.all _.filter [
+          @ParentModel.upsert parentUpsert
+          @Model.deleteByRow review
+          @deleteAttachments _.map review.attachments, (attachment) ->
+            _.defaults attachment, {
+              parentId: review.parentId, userId: review.userId
+            }
+          if extras
+            Promise.delay 100 # HACK: below upserts parentModel, which can't be done simultaneously with above
+            .then =>
+              @deleteExtras {parent, extras, id: review.id}
+        ]

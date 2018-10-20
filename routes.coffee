@@ -76,6 +76,8 @@ module.exports = router
 
 .on 'campgroundAttachments.getAllByParentId',
   authed CampgroundAttachmentCtrl.getAllByParentId
+.on 'campgroundAttachments.deleteByRow',
+  authed CampgroundAttachmentCtrl.deleteByRow
 
 .on 'categories.getAll', authed CategoryCtrl.getAll
 
@@ -186,6 +188,7 @@ module.exports = router
 .on 'users.getById', authed UserCtrl.getById
 .on 'users.getByUsername', authed UserCtrl.getByUsername
 .on 'users.getCountry', authed UserCtrl.getCountry
+.on 'users.setAvatarImage', authed UserCtrl.setAvatarImage
 .on 'users.setPartner', authed UserCtrl.setPartner
 .on 'users.getPartner', authed UserCtrl.getPartner
 

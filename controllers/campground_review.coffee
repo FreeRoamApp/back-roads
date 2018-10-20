@@ -8,6 +8,10 @@ Campground = require '../models/campground'
 ReviewBaseCtrl = require './review_base'
 
 SEASONS = ['winter', 'spring', 'summer', 'fall']
+VALID_EXTRAS = [
+  'roadDifficulty', 'crowds', 'fullness', 'noise',
+  'shade', 'safety', 'cellSignal'
+]
 
 class CampgroundReviewCtrl extends ReviewBaseCtrl
   type: 'campgroundReview'
@@ -17,41 +21,53 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
   ParentModel: Campground
   AttachmentModel: CampgroundAttachment
 
-  upsertExtras: ({id, parent, extras}, {user}) =>
-    validFields = [
-      'roadDifficulty', 'crowds', 'fullness', 'noise',
-      'shade', 'safety', 'cellSignal'
-    ]
-    extras = _.pickBy extras, (extra, key) ->
-      key in validFields and (typeof extra is 'number' or not _.isEmpty extra)
-
-    # TODO allow specifying day/night noise
-    if extras.noise
-      extras.noise = {day: extras.noise, night: extras.noise}
-
-    # update averages
-    parentDiff = _.reduce extras, (diff, addValue, key) ->
+  getParentDiff: ({parent, extras, operator}) ->
+    operator ?= 'add'
+    multiplier = if operator is 'add' then 1 else -1
+    _.reduce extras, (diff, addValue, key) ->
       valueKey = if key is 'cellSignal' then 'signal' else 'value'
       if typeof addValue is 'object' # seasonal, cell, day/night
         diff[key] = parent[key] or {}
         _.forEach addValue, (subAddValue, subKey) ->
           value = parent[key]?[subKey]?[valueKey] or 0
           count = parent[key]?[subKey]?.count or 0
-          newValue = (value * count + subAddValue) / (count + 1)
-          newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
+          newCount = count + (1 * multiplier)
+          if newCount is 0
+            newValue = 0
+          else
+            newValue = (value * count + (subAddValue * multiplier)) / newCount
+            newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
           diff[key] = _.defaults {
             "#{subKey}":
               "#{valueKey}": newValue
-              count: count + 1
+              count: newCount
           }, diff[key]
       else if addValue
         value = parent[key]?[valueKey] or 0
         count = parent[key]?.count or 0
-        newValue = (value * count + addValue) / (count + 1)
-        newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
-        diff[key] = _.defaults {"#{valueKey}": newValue, count: count + 1}
+        newCount = count + (1 * multiplier)
+        if newCount is 0
+          newValue = 0
+        else
+          newValue = (value * count + (addValue * multiplier)) / newCount
+          newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
+        diff[key] = _.defaults {
+          "#{valueKey}": newValue
+          count: newCount
+        }
       diff
     , {}
+
+  upsertExtras: ({id, parent, extras}, {user}) =>
+    extras = _.pickBy extras, (extra, key) ->
+      key in VALID_EXTRAS and (typeof extra is 'number' or not _.isEmpty extra)
+
+    # TODO allow specifying day/night noise
+    if extras.noise
+      extras.noise = {day: extras.noise, night: extras.noise}
+
+    # update averages
+    parentDiff = @getParentDiff {parent, extras, operator: 'add'}
 
     # if this campground doesn't have a value for a certain season, set it to
     # whatever value we have, as an estimate
@@ -63,12 +79,25 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
           if value
             parentDiff[field][season] = {value, count: 0}
 
-    console.log parentDiff
     @ParentModel.upsert _.defaults {
       id: parent.id, slug: parent.slug
     }, parentDiff
 
     if id # id isnt there if just updating the parent w/o review
       CampgroundReview.upsertExtras _.defaults {id, userId: user.id}, extras
+
+  deleteExtras: ({id, parent, extras}) =>
+    extras = _.pickBy extras, (extra, key) ->
+      key in VALID_EXTRAS and (typeof extra is 'number' or not _.isEmpty extra)
+
+    # update averages
+    parentDiff = @getParentDiff {parent, extras, operator: 'sub'}
+    Promise.all [
+      @ParentModel.upsert _.defaults {
+        id: parent.id, slug: parent.slug
+      }, parentDiff
+
+      CampgroundReview.deleteExtrasById id
+    ]
 
 module.exports = new CampgroundReviewCtrl()

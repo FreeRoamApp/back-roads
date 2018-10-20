@@ -54,61 +54,24 @@ class UserCtrl
   upsert: ({newUser}, {user}) ->
     User.upsert _.defaults newUser, {id: user.id}
 
+  setAvatarImage: ({}, {user, file}) ->
+    ImageService.uploadImageByUserIdAndFile(
+      user.id, file, {
+        folder: 'uav'
+        smallSize:
+          width: AVATAR_SMALL_IMAGE_WIDTH, height: AVATAR_SMALL_IMAGE_HEIGHT
+        largeSize:
+          width: AVATAR_LARGE_IMAGE_WIDTH, height: AVATAR_LARGE_IMAGE_HEIGHT
+        useMin: false
+      }
+    )
+    .then (avatarImage) ->
+      User.updateByUser user, {avatarImage: avatarImage}
+    .then (response) ->
+      key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.id}"
+      CacheService.deleteByKey key
+      response
+    .then ->
+      User.getById user.id
   #
-  # setAvatarImage: ({}, {user, file}) ->
-  #   router.assert {file}, {
-  #     file: Joi.object().unknown().keys schemas.imageFile
-  #   }
-  #
-  #   # bust cache
-  #   keyPrefix = "images/freeroam/u/#{user.id}/avatar_#{Date.now()}"
-  #
-  #   Promise.all [
-  #     ImageService.uploadImage
-  #       key: "#{keyPrefix}.original.jpg"
-  #       stream: ImageService.toStream
-  #         buffer: file.buffer
-  #         quality: 100
-  #
-  #     ImageService.uploadImage
-  #       key: "#{keyPrefix}.small.jpg"
-  #       stream: ImageService.toStream
-  #         buffer: file.buffer
-  #         width: AVATAR_SMALL_IMAGE_WIDTH
-  #         height: AVATAR_SMALL_IMAGE_HEIGHT
-  #
-  #     ImageService.uploadImage
-  #       key: "#{keyPrefix}.large.jpg"
-  #       stream: ImageService.toStream
-  #         buffer: file.buffer
-  #         width: AVATAR_LARGE_IMAGE_WIDTH
-  #         height: AVATAR_LARGE_IMAGE_HEIGHT
-  #   ]
-  #   .then (imageKeys) ->
-  #     _.map imageKeys, (imageKey) ->
-  #       "https://#{config.CDN_HOST}/#{imageKey}"
-  #   .then ([originalUrl, smallUrl, largeUrl]) ->
-  #     avatarImage =
-  #       originalUrl: originalUrl
-  #       versions: [
-  #         {
-  #           width: AVATAR_SMALL_IMAGE_WIDTH
-  #           height: AVATAR_SMALL_IMAGE_HEIGHT
-  #           url: smallUrl
-  #         }
-  #         {
-  #           width: AVATAR_LARGE_IMAGE_WIDTH
-  #           height: AVATAR_LARGE_IMAGE_HEIGHT
-  #           url: largeUrl
-  #         }
-  #       ]
-  #     User.updateByUser user, {avatarImage: avatarImage}
-  #   .then (response) ->
-  #     key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.id}"
-  #     CacheService.deleteByKey key
-  #     response
-  #   .then ->
-  #     User.getById user.id
-  #   .then User.sanitize(user.id)
-
 module.exports = new UserCtrl()
