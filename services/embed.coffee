@@ -56,6 +56,7 @@ TYPES =
     NAME_KEBAB: 'product:nameKebab'
     ITEM: 'product:item'
   REVIEW:
+    EXTRAS: 'review:extras'
     TIME: 'review:time'
     USER: 'review:user'
   THREAD_COMMENT:

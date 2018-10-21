@@ -29,7 +29,7 @@ class CampgroundCtrl extends PlaceBaseCtrl
         _.reduce COMMON_AMENITIES, (obj, amenityType, i) ->
           amenity = closestAmenities[i]
           unless amenity
-            return
+            return obj
           distance = distances[amenity.id]
           if amenity and distance
             obj[amenityType] = _.defaults distance, {id: amenity.id}

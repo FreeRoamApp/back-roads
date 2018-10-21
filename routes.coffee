@@ -67,6 +67,7 @@ module.exports = router
   authed CampgroundCtrl.getAmenityBoundsById
 .on 'campgrounds.upsert', authed CampgroundCtrl.upsert
 
+.on 'campgroundReviews.getById', authed CampgroundReviewCtrl.getById
 .on 'campgroundReviews.deleteById', authed CampgroundReviewCtrl.deleteById
 .on 'campgroundReviews.getAllByParentId',
   authed CampgroundReviewCtrl.getAllByParentId

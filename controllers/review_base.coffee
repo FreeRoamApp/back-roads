@@ -13,6 +13,10 @@ module.exports = class ReviewBaseCtrl
     @Model.getAllByParentId parentId
     .map EmbedService.embed {embed: @defaultEmbed}
 
+  getById: ({id}, {user}) =>
+    @Model.getById id
+    .then EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
+
   search: ({query}, {user}) =>
     @Model.search {query}
     .then (reviews) =>
@@ -50,13 +54,23 @@ module.exports = class ReviewBaseCtrl
 
     isUpdate = Boolean id
     Promise.all [
-      (if isUpdate then @Model.getById id else Promise.resolve null)
+      if isUpdate
+        @Model.getById id
+        .then EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
+      else
+        Promise.resolve null
+
       @ParentModel.getById parentId
     ]
     .then ([existingReview, parent]) =>
       totalStars = parent.rating * parent.ratingCount
-      totalStars += rating
-      newRatingCount = parent.ratingCount + 1
+      if isUpdate
+        totalStars -= existingReview.rating
+        totalStars += rating
+        newRatingCount = parent.ratingCount
+      else
+        totalStars += rating
+        newRatingCount = parent.ratingCount + 1
       newRating = totalStars / newRatingCount
 
       parentUpsert = {
@@ -92,7 +106,9 @@ module.exports = class ReviewBaseCtrl
             @upsertAttachments attachments, {parentId, userId: user.id}
 
           if extras
-            @upsertExtras {id: review?.id, parent, extras}, {user}
+            @upsertExtras {
+              id: review?.id, parent, extras, existingReview
+            }, {user}
         ]
 
   uploadImage: ({}, {user, file}) =>
@@ -129,11 +145,16 @@ module.exports = class ReviewBaseCtrl
 
         Promise.all _.filter [
           @ParentModel.upsert parentUpsert
+
           @Model.deleteByRow review
+
           @deleteAttachments _.map review.attachments, (attachment) ->
             _.defaults attachment, {
               parentId: review.parentId, userId: review.userId
             }
+          .catch (err) ->
+            console.log 'delete attachments err'
+
           if extras
             Promise.delay 100 # HACK: below upserts parentModel, which can't be done simultaneously with above
             .then =>
