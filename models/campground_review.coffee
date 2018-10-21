@@ -58,21 +58,6 @@ class CampgroundReview extends ReviewBase
         partitionKey: ['id']
     }
     {
-      name: 'campground_reviews_by_id'
-      keyspace: 'free_roam'
-      fields:
-        # common between all reviews
-        id: 'timeuuid'
-        parentId: 'uuid'
-        userId: 'uuid'
-        title: 'text'
-        body: 'text'
-        rating: 'int'
-        attachments: 'text' # json
-      primaryKey:
-        partitionKey: ['id']
-    }
-    {
       name: 'campground_review_extras_by_id'
       keyspace: 'free_roam'
       ignoreUpsert: true
@@ -100,27 +85,6 @@ class CampgroundReview extends ReviewBase
         rating: {type: 'integer'}
     }
   ]
-
-  getExtrasById: (id) =>
-    cknex().select '*'
-    .from 'campground_review_extras_by_id'
-    .where 'id', '=', id
-    .run {isSingle: true}
-    .then @defaultExtrasOutput
-
-  upsertExtras: (extras) =>
-    extras = @defaultExtrasInput extras
-
-    cknex().update 'campground_review_extras_by_id'
-    .set _.omit extras, ['id']
-    .where 'id', '=', extras.id
-    .run()
-
-  deleteExtrasById: (id) ->
-    cknex().delete()
-    .from 'campground_review_extras_by_id'
-    .where 'id', '=', id
-    .run()
 
   defaultExtrasInput: (extras) ->
     unless extras?

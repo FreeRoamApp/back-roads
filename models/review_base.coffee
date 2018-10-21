@@ -41,3 +41,24 @@ module.exports = class ReviewBase extends Base
     .limit limit
     .run()
     .map @defaultOutput
+
+  getExtrasById: (id) =>
+    cknex().select '*'
+    .from @SCYLLA_TABLES[3].name
+    .where 'id', '=', id
+    .run {isSingle: true}
+    .then @defaultExtrasOutput
+
+  upsertExtras: (extras) =>
+    extras = @defaultExtrasInput extras
+
+    cknex().update @SCYLLA_TABLES[3].name
+    .set _.omit extras, ['id']
+    .where 'id', '=', extras.id
+    .run()
+
+  deleteExtrasById: (id) =>
+    cknex().delete()
+    .from @SCYLLA_TABLES[3].name
+    .where 'id', '=', id
+    .run()
