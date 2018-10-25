@@ -2,6 +2,8 @@ _ = require 'lodash'
 router = require 'exoid-router'
 Joi = require 'joi'
 geoip = require 'geoip-lite'
+bcrypt = require 'bcrypt-nodejs'
+Promise = require 'bluebird'
 
 User = require '../models/user'
 Partner = require '../models/partner'
@@ -45,16 +47,13 @@ class UserCtrl
         Partner.getBySlug partnerSlug
     .then (partner) ->
       _.defaults partner, {
-          amazonAffiliateCode: config.AMAZON_AFFILIATE_CODE
+        amazonAffiliateCode: config.AMAZON_AFFILIATE_CODE
       }
 
   setPartner: ({partner}, {user}) ->
     User.setPartner user.id, partner
 
-  upsert: ({newUser}, {user}) ->
-    User.upsert _.defaults newUser, {id: user.id}
-
-  setAvatarImage: ({}, {user, file}) ->
+  _uploadAvatar: (userId, file) ->
     ImageService.uploadImageByUserIdAndFile(
       user.id, file, {
         folder: 'uav'
@@ -65,13 +64,79 @@ class UserCtrl
         useMin: false
       }
     )
-    .then (avatarImage) ->
-      User.updateByUser user, {avatarImage: avatarImage}
-    .then (response) ->
-      key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.id}"
-      CacheService.deleteByKey key
-      response
-    .then ->
-      User.getById user.id
+
+  upsert: ({userDiff}, {user, file}) =>
+    currentInsecurePassword = userDiff.currentPassword
+    newInsecurePassword = userDiff.password
+    username = userDiff.username
+    userDiff = _.pick userDiff, ['username']
+
+    valid = Joi.validate {username, password: newInsecurePassword}, {
+      password: Joi.string().min(6).max(1000)
+      email: Joi.string().email().allow('')
+      username: Joi.string().min(1).max(100).allow(null)
+                .regex /^[a-zA-Z0-9-_]+$/
+    }
+
+    if valid.error
+      errorField = valid.error.details[0].path
+      info = switch errorField
+        when 'username' then 'error.invalidUsername'
+        when 'password' then 'error.invalidPassword'
+        when 'email' then 'error.invalidEmail'
+        else 'error.invalid'
+      router.throw {
+        status: 400
+        info:
+          langKey: info
+          field: errorField
+        ignoreLog: true
+      }
+
+    Promise.all [
+      if file
+        @_uploadAvatar userId, file
+      else
+        Promise.resolve null
+
+      if newInsecurePassword
+        Promise.promisify(bcrypt.compare)(
+          currentInsecurePassword
+          user.password
+        )
+        .then (success) ->
+          unless success
+            router.throw {
+              status: 400
+              info:
+                langKey: 'error.invalidCurrentPassword'
+                field: 'currentPassword'
+              ignoreLog: true
+            }
+          Promise.promisify(bcrypt.hash)(
+            newInsecurePassword, bcrypt.genSaltSync(config.BCRYPT_ROUNDS), null
+          )
+      else
+        Promise.resolve null
+    ]
+    .then ([avatarImage, password]) ->
+      if password
+        userDiff.password = password
+
+      if avatarImage
+        userDiff.avatarImage = avatarImage
+
+      User.upsert _.defaults userDiff, {
+        id: user.id
+        username: user.username
+        email: user.email
+      }
+      .then (response) ->
+        key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.id}"
+        CacheService.deleteByKey key
+        response
+      .then ->
+        User.getById user.id
+
   #
 module.exports = new UserCtrl()

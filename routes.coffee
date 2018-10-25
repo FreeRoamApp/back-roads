@@ -18,6 +18,7 @@ ItemCtrl = require './controllers/item'
 LowClearanceCtrl = require './controllers/low_clearance'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
+OvernightCtrl = require './controllers/overnight'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 PushTopicCtrl = require './controllers/push_topic'
@@ -148,6 +149,8 @@ module.exports = router
 
 .on 'lowClearances.search', authed LowClearanceCtrl.search
 
+.on 'overnights.search', authed OvernightCtrl.search
+
 .on 'notifications.getAll', authed NotificationCtrl.getAll
 
 .on 'nps.create', authed NpsCtrl.create
@@ -192,6 +195,7 @@ module.exports = router
 .on 'users.setAvatarImage', authed UserCtrl.setAvatarImage
 .on 'users.setPartner', authed UserCtrl.setPartner
 .on 'users.getPartner', authed UserCtrl.getPartner
+.on 'users.upsert', authed UserCtrl.upsert
 
 .on 'userFollowers.getAllFollowingIds',
   authed UserFollowerCtrl.getAllFollowingIds

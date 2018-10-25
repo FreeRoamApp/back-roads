@@ -10,8 +10,6 @@ Auth = require '../models/auth'
 User = require '../models/user'
 config = require '../config'
 
-BCRYPT_ROUNDS = 10
-
 class AuthCtrl
   login: ({language}, {headers, connection}) ->
     ip = headers['x-forwarded-for'] or
@@ -72,7 +70,7 @@ class AuthCtrl
             ignoreLog: true
           }
 
-        Promise.promisify(bcrypt.hash)(insecurePassword, bcrypt.genSaltSync(BCRYPT_ROUNDS), null)
+        Promise.promisify(bcrypt.hash)(insecurePassword, bcrypt.genSaltSync(config.BCRYPT_ROUNDS), null)
         .then (password) ->
           User.updateByUser user, {username, password, email}
       .then ->
