@@ -26,7 +26,12 @@ scyllaFields =
     # administrativeArea: 'text' # state / province / region. iso when avail
     # postalCode: 'text'
     # country: 'text' # 2 char iso
+  contact: 'text' # json
+    # phone
+    # email
+    # website
   # end common
+  subType: 'text' # walmart, etc...
   noise: 'text' # json {day: {value: 3, count: 1}, night: {value: 0, count: 1}}
   safety: 'text' # json {value: 3, count: 1}
   cellSignal: 'text' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
@@ -60,6 +65,7 @@ class Overnight extends PlaceBase
         rating: {type: 'integer'}
         thumbnailUrl: {type: 'text'}
         # end common
+        subType: {type: 'text'}
         noise: {type: 'object'}
         safety: {type: 'integer'}
         cellSignal: {type: 'object'}
@@ -79,6 +85,7 @@ class Overnight extends PlaceBase
       noise: JSON.stringify overnight.noise
       cellSignal: JSON.stringify overnight.cellSignal
       address: JSON.stringify overnight.address
+      contact: JSON.stringify overnight.contact
     }, overnight
 
     # add data if non-existent
@@ -91,7 +98,7 @@ class Overnight extends PlaceBase
       return null
 
     jsonFields = [
-      'safety', 'noise', 'cellSignal', 'address'
+      'safety', 'noise', 'cellSignal', 'address', 'contact'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -111,7 +118,11 @@ class Overnight extends PlaceBase
     }, overnight
 
   defaultESOutput: (overnight) ->
-    _.pick overnight, [
+    amenity = _.defaults {
+      icon: if overnight.subType in ['walmart', 'restArea', 'casino'] \
+            then _.snakeCase overnight.subType
+            else 'default'
+    }, _.pick overnight, [
       'slug', 'name', 'location', 'rating', 'thumbnailUrl'
     ]
 

@@ -63,6 +63,12 @@ module.exports = class ReviewBaseCtrl
       @ParentModel.getById parentId
     ]
     .then ([existingReview, parent]) =>
+      if existingReview and (
+        "#{existingReview.userId}" isnt "#{user.id}" and
+          user.username isnt 'austin'
+      )
+        router.throw status: 401, info: 'unauthorized'
+
       totalStars = parent.rating * parent.ratingCount
       if isUpdate
         totalStars -= existingReview.rating
@@ -93,7 +99,7 @@ module.exports = class ReviewBaseCtrl
           @ParentModel.upsert parentUpsert
           @Model.upsert
             id: id
-            userId: user.id
+            userId: existingReview?.userId or user.id
             title: title
             body: body
             parentId: parentId

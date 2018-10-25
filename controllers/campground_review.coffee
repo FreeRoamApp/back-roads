@@ -65,7 +65,8 @@ class CampgroundReviewCtrl extends ReviewBaseCtrl
     # the better approach, just harder to code)
     (if existingReview?.extras
       @deleteExtras {id, parent, extras: existingReview.extras}
-      .then @ParentModel.getById parent.id
+      .then =>
+        @ParentModel.getById parent.id
     else
       Promise.resolve parent
     ).then (parent) =>

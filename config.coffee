@@ -38,6 +38,7 @@ config =
   VAPID_PUBLIC_KEY: env.BACK_ROADS_VAPID_PUBLIC_KEY
   VAPID_PRIVATE_KEY: env.BACK_ROADS_VAPID_PRIVATE_KEY
   HONEYPOT_ACCESS_KEY: env.HONEYPOT_ACCESS_KEY
+  BCRYPT_ROUNDS: 10
   COORDINATE_REGEX_STR: '(^[-+]?(?:[1-8]?\\d(?:\\.\\d+)?|90(?:\\.0+)?))\\s*,\\s*([-+]?(?:180(?:\\.0+)?|(?:(?:1[0-7]\\d)|(?:[1-9]?\\d))(?:\\.\\d+)?))$'
   YOUTUBE_ID_REGEX: ///
     ^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*)(?:(\?t|\&t|&start)=(\d+))?.*
