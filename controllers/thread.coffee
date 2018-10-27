@@ -82,7 +82,7 @@ class ThreadCtrl
     else
       return Promise.resolve null
 
-  upsert: ({thread, groupId, language}, {user, headers, connection}) =>
+  upsert: ({thread, groupId}, {user, headers, connection}) =>
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
@@ -180,19 +180,19 @@ class ThreadCtrl
       thread
 
   getAll: (options, {user}) ->
-    {category, language, sort, maxId, skip, limit, groupId} = options
+    {category, sort, maxId, skip, limit, groupId} = options
 
     if category is 'all'
       category = null
 
     key = CacheService.PREFIXES.THREADS_BY_CATEGORY + ':' + [
-      groupId, category, language, sort, skip, maxId, limit
+      groupId, category, sort, skip, maxId, limit
     ].join(':')
 
     CacheService.preferCache key, ->
       Group.getById groupId, {preferCache: true}
       Thread.getAll {
-        category, sort, language, groupId, skip, maxId, limit
+        category, sort, groupId, skip, maxId, limit
       }
       .map (thread) ->
         EmbedService.embed {
@@ -220,7 +220,7 @@ class ThreadCtrl
           thread
         threads
 
-  getById: ({id, language}, {user}) ->
+  getById: ({id}, {user}) ->
     key = CacheService.PREFIXES.THREAD_WITH_EMBEDS_BY_ID + ':' + id
 
     CacheService.preferCache key, ->
@@ -241,7 +241,7 @@ class ThreadCtrl
         thread.myVote = myVote
         thread
 
-  getBySlug: ({slug, language}, {user}) =>
+  getBySlug: ({slug}, {user}) ->
     key = CacheService.PREFIXES.THREAD_WITH_EMBEDS_BY_SLUG + ':' + slug
 
     CacheService.preferCache key, ->
@@ -353,9 +353,9 @@ class ThreadCtrl
             )
           ]
 
-    uploadImage: ({}, {user, file}) ->
-      ImageService.uploadImageByUserIdAndFile(
-        user.id, file, {folder: 'th'}
-      )
+  uploadImage: ({}, {user, file}) ->
+    ImageService.uploadImageByUserIdAndFile(
+      user.id, file, {folder: 'th'}
+    )
 
 module.exports = new ThreadCtrl()

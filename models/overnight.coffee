@@ -63,7 +63,7 @@ class Overnight extends PlaceBase
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
-        thumbnailUrl: {type: 'text'}
+        thumbnailPrefix: {type: 'text'}
         # end common
         subType: {type: 'text'}
         noise: {type: 'object'}
@@ -123,7 +123,7 @@ class Overnight extends PlaceBase
             then _.snakeCase overnight.subType
             else 'default'
     }, _.pick overnight, [
-      'slug', 'name', 'location', 'rating', 'thumbnailUrl'
+      'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
     ]
 
 module.exports = new Overnight()

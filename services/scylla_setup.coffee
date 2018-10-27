@@ -9,7 +9,7 @@ config = require '../config'
 
 class ScyllaSetupService
   setup: (tables) =>
-    CacheService.lock 'scylla_setup0', =>
+    CacheService.lock 'scylla_setup2', =>
       Promise.all [
         @createKeyspaceIfNotExists 'free_roam'
       ]

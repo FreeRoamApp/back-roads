@@ -18,15 +18,13 @@ class CampgroundAttachment extends AttachmentBase
         caption: 'text'
         tags: {type: 'set', subType: 'text'}
         type: 'text'
+        prefix: 'text'
         aspectRatio: 'double'
-        src: 'text'
-        smallSrc: 'text'
-        largeSrc: 'text'
 
         location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
       primaryKey:
         partitionKey: ['parentId']
-        clusteringColumns: ['id', 'src']
+        clusteringColumns: ['id']
       withClusteringOrderBy: ['id', 'desc']
     }
     {
@@ -40,15 +38,12 @@ class CampgroundAttachment extends AttachmentBase
         caption: 'text'
         tags: {type: 'set', subType: 'text'}
         type: 'text'
+        prefix: 'text'
         aspectRatio: 'double'
-        src: 'text'
-        smallSrc: 'text'
-        largeSrc: 'text'
 
         location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
       primaryKey:
         partitionKey: ['id']
-        clusteringColumns: ['src']
     }
     {
       name: 'campground_attachments_counter_by_id'

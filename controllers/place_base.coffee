@@ -11,11 +11,13 @@ config = require '../config'
 MAX_UNIQUE_ID_ATTEMPTS = 10
 
 module.exports = class PlaceBaseCtrl
+  defaultEmbed: []
+
   getBySlug: ({slug}, {user}) =>
     @Model.getBySlug slug
     .then (place) =>
       _.defaults {@type}, place
-    # .then EmbedService.embed {embed: defaultEmbed}
+    .then EmbedService.embed {embed: @defaultEmbed}
 
   search: ({query, sort}, {user}) =>
     @Model.search {query, sort}
