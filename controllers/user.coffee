@@ -55,7 +55,7 @@ class UserCtrl
 
   _uploadAvatar: (userId, file) ->
     ImageService.uploadImageByUserIdAndFile(
-      user.id, file, {
+      userId, file, {
         folder: 'uav'
         smallSize:
           width: AVATAR_SMALL_IMAGE_WIDTH, height: AVATAR_SMALL_IMAGE_HEIGHT
@@ -95,7 +95,7 @@ class UserCtrl
 
     Promise.all [
       if file
-        @_uploadAvatar userId, file
+        @_uploadAvatar user.id, file
       else
         Promise.resolve null
 

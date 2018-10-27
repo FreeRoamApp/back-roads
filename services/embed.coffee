@@ -7,6 +7,7 @@ cknex = require '../services/cknex'
 EmbedClasses =
   ban: require '../embeds/ban'
   category: require '../embeds/category'
+  campground: require '../embeds/campground'
   conversation: require '../embeds/conversation'
   conversationMessage: require '../embeds/conversation_message'
   group: require '../embeds/group'
@@ -30,6 +31,8 @@ TYPES =
     BANNED_BY_USER: 'ban:bannedByUser'
   CATEGORY:
     FIRST_ITEM_PRODUCT_SLUG: 'category:firstItemFirstProductSlug'
+  CAMPGROUND:
+    ATTACHMENTS_PREVIEW: 'campground:attachmentsPreview'
   CONVERSATION_MESSAGE:
     USER: 'conversationMessage:user'
     MENTIONED_USERS: 'conversationMessage:mentionedUsers'

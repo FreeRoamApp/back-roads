@@ -80,7 +80,7 @@ class Campground extends PlaceBase
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
-        thumbnailUrl: {type: 'text'}
+        thumbnailPrefix: {type: 'text'}
         # end common
         distanceTo: {type: 'object'}
         roadDifficulty: {type: 'integer'}
@@ -167,7 +167,7 @@ class Campground extends PlaceBase
 
   defaultESOutput: (campground) ->
     _.pick campground, [
-      'slug', 'name', 'location', 'rating', 'thumbnailUrl'
+      'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
     ]
 
 module.exports = new Campground()

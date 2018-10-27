@@ -29,7 +29,7 @@ module.exports = class ReviewBaseCtrl
     @AttachmentModel.batchUpsert _.map attachments, (attachment) ->
       attachment = _.pick attachment, [
         'id', 'caption', 'tags', 'type', 'aspectRatio', 'location'
-        'src', 'largeSrc', 'smallSrc'
+        'prefix'
       ]
       _.defaults attachment, {parentId, userId}
 
@@ -84,12 +84,13 @@ module.exports = class ReviewBaseCtrl
         rating: newRating, ratingCount: newRatingCount
       }
       # TODO: choose a good thumbnail for each campground instead of most recent
-      if attachments?[0]?.smallSrc
-        parentUpsert.thumbnailUrl = attachments?[0]?.smallSrc
+      if attachments?[0]
+        parentUpsert.thumbnailPrefix =
+          "#{config.USER_CDN_URL}/#{attachments[0].prefix}.small.jpg"
 
       (if user?.username is 'austin' and not rating
         Promise.all _.filter [
-          if parentUpsert.thumbnailUrl
+          if parentUpsert.thumbnailPrefix
             @ParentModel.upsert _.omit parentUpsert, ['rating', 'ratingCount']
 
           Promise.resolve {id: null}

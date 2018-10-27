@@ -16,31 +16,6 @@ MAX_UNIQUE_ID_ATTEMPTS = 10
 class ThreadModel extends Base
   SCYLLA_TABLES: [
     {
-      name: 'threads_counter_by_id'
-      ignoreUpsert: true
-      fields:
-        id: 'timeuuid'
-        upvotes: 'counter'
-        downvotes: 'counter'
-      primaryKey:
-        partitionKey: ['id']
-        clusteringColumns: null
-    }
-    {
-      name: 'threads_recent'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        partition: 'int' # always 1
-        id: 'timeuuid'
-        groupId: 'uuid'
-        category: 'text'
-      primaryKey:
-        partitionKey: ['partition']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
       name: 'threads_by_groupId'
       keyspace: 'free_roam'
       fields:
@@ -135,6 +110,31 @@ class ThreadModel extends Base
         timeBucket: 'text'
       primaryKey:
         partitionKey: ['slug']
+    }
+    {
+      name: 'threads_counter_by_id'
+      ignoreUpsert: true
+      fields:
+        id: 'timeuuid'
+        upvotes: 'counter'
+        downvotes: 'counter'
+      primaryKey:
+        partitionKey: ['id']
+        clusteringColumns: null
+    }
+    {
+      name: 'threads_recent'
+      keyspace: 'free_roam'
+      ignoreUpsert: true
+      fields:
+        partition: 'int' # always 1
+        id: 'timeuuid'
+        groupId: 'uuid'
+        category: 'text'
+      primaryKey:
+        partitionKey: ['partition']
+        clusteringColumns: ['id']
+      withClusteringOrderBy: ['id', 'desc']
     }
   ]
 
@@ -495,15 +495,12 @@ class ThreadModel extends Base
 
     return user?.username is 'austin' or thread.userId is user.id
 
-  defaultInput: (thread) =>
+  defaultInput: (thread) ->
     unless thread?
       return null
 
     thread?.lastUpdateTime = new Date()
     thread.attachments = JSON.stringify thread.attachments
-
-    threadByIdTable = _.find @SCYLLA_TABLES, {name: 'threads_by_id'}
-    thread = _.pick thread, _.keys threadByIdTable.fields
 
     _.defaults thread, {
       id: cknex.getTimeUuid()

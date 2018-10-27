@@ -3,10 +3,10 @@ gm = require('gm').subClass({imageMagick: true})
 request = require 'request-promise'
 Storage = require('@google-cloud/storage').Storage
 _ = require 'lodash'
-uuid = require 'node-uuid'
 generate = require 'node-chartist'
 ctBarLabels = require 'chartist-bar-labels'
 
+cknex = require '../services/cknex'
 config = require '../config'
 storage = new Storage {
   projectId: config.GOOGLE_PROJECT_ID
@@ -18,8 +18,9 @@ SMALL_VIDEO_PREVIEW_WIDTH = 360
 SMALL_VIDEO_PREVIEW_HEIGHT = 202
 LARGE_VIDEO_PREVIEW_WIDTH = 512
 LARGE_VIDEO_PREVIEW_HEIGHT = 288
-SMALL_IMAGE_SIZE = 200
-LARGE_IMAGE_SIZE = 1000
+TINY_IMAGE_SIZE = 144 # place tooltip
+SMALL_IMAGE_SIZE = 256 # image thumbnails
+LARGE_IMAGE_SIZE = 1024 # images
 
 class ImageService
   DEFAULT_IMAGE_QUALITY: DEFAULT_IMAGE_QUALITY
@@ -71,55 +72,60 @@ class ImageService
         resolve key
       .on 'error', reject
 
+  _getDimensions: ({size, max}) ->
+    aspectRatio = size.width / size.height
+    if (aspectRatio < 1 and aspectRatio < 10) or aspectRatio < 0.1
+      width = Math.min(size.width, max)
+      height = width / aspectRatio
+    else
+      height = Math.min(size.height, SMALL_IMAGE_SIZE)
+      width = height * aspectRatio
+    {width, height}
+
   uploadImageByUserIdAndFile: (userId, file, options = {}) =>
-    {folder, smallSize, largeSize, useMin} = options
+    {folder, tinySize, smallSize, largeSize, useMin} = options
     folder ?= 'misc'
     useMin ?= true
+    id = cknex.getTimeUuid()
 
     @getSizeByBuffer file.buffer
     .then (size) =>
-      key = "#{userId}_#{uuid.v4()}"
-      keyPrefix = "images/#{folder}/#{key}"
+      key = "#{userId}_#{id}"
+      keyPrefix = "#{folder}/#{key}"
 
-      aspectRatio = size.width / size.height
       # 10 is to prevent super wide/tall images from being uploaded
-      if (aspectRatio < 1 and aspectRatio < 10) or aspectRatio < 0.1
-        smallWidth = smallSize?.width or Math.min(size.width, SMALL_IMAGE_SIZE)
-        smallHeight = smallSize?.height or smallWidth / aspectRatio
-      else
-        smallHeight = smallSize?.height or Math.min(
-          size.height, SMALL_IMAGE_SIZE
-        )
-        smallWidth = smallSize?.width or smallHeight * aspectRatio
-
-      largeWidth = largeSize?.width or Math.min(size.width, smallWidth * 5)
-      largeHeight = largeSize?.height or Math.min(size.height, smallHeight * 5)
+      tinySize ?= @_getDimensions {size, max: TINY_IMAGE_SIZE}
+      smallSize ?= @_getDimensions {size, max: SMALL_IMAGE_SIZE}
+      largeSize ?= @_getDimensions {size, max: LARGE_IMAGE_SIZE}
 
       Promise.all [
         @uploadImage
-          key: "#{keyPrefix}.small.jpg"
+          key: "images/#{keyPrefix}.tiny.jpg"
           stream: @toStream
             buffer: file.buffer
-            width: smallWidth
-            height: smallHeight
+            width: tinySize.width
+            height: tinySize.height
             useMin: useMin
 
         @uploadImage
-          key: "#{keyPrefix}.large.jpg"
+          key: "images/#{keyPrefix}.small.jpg"
           stream: @toStream
             buffer: file.buffer
-            width: largeWidth
-            height: largeHeight
+            width: smallSize.width
+            height: smallSize.height
+            useMin: useMin
+
+        @uploadImage
+          key: "images/#{keyPrefix}.large.jpg"
+          stream: @toStream
+            buffer: file.buffer
+            width: largeSize.width
+            height: largeSize.height
             useMin: useMin
       ]
-      .then (imageKeys) ->
-        _.map imageKeys, (imageKey) ->
-          "https://#{config.CDN_HOST}/#{imageKey}"
-      .then ([smallUrl, largeUrl]) ->
-        {
-          aspectRatio, smallUrl, largeUrl, key
-          width: size.width, height: size.height
-        }
+      .then ->
+        aspectRatio = Math.round(100 * largeSize.width / largeSize.height) / 100
+        {aspectRatio, id, prefix: keyPrefix}
 
   uploadWeatherImageByPlace: (place) ->
     months = place?.weather?.months

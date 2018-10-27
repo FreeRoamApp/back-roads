@@ -56,7 +56,7 @@ class Amenity extends PlaceBase
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
-        thumbnailUrl: {type: 'text'}
+        thumbnailPrefix: {type: 'text'}
         # end common
         amenities: {type: 'text'} # array
     }

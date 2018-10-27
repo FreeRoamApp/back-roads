@@ -12,6 +12,7 @@ config =
   EMPTY_UUID: '00000000-0000-0000-0000-000000000000'
 
   # also in free-roam
+  USER_CDN_URL: 'https://fdn.uno/images'
   BASE_NAME_COLORS: ['#2196F3', '#8BC34A', '#FFC107', '#f44336', '#673AB7']
   AMAZON_AFFILIATE_CODE: 'freeroam-20'
   VERBOSE: if env.VERBOSE then env.VERBOSE is '1' else true

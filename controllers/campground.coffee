@@ -5,12 +5,14 @@ Campground = require '../models/campground'
 Amenity = require '../models/amenity'
 RoutingService = require '../services/routing'
 PlaceBaseCtrl = require './place_base'
+EmbedService = require '../services/embed'
 
 COMMON_AMENITIES = ['dump', 'water', 'groceries']
 
 class CampgroundCtrl extends PlaceBaseCtrl
   type: 'campground'
   Model: Campground
+  defaultEmbed: [EmbedService.TYPES.CAMPGROUND.ATTACHMENTS_PREVIEW]
 
   _setNearbyAmenities: (campground) ->
     Amenity.searchNearby campground.location

@@ -149,6 +149,7 @@ module.exports = router
 
 .on 'lowClearances.search', authed LowClearanceCtrl.search
 
+.on 'overnights.getBySlug', authed OvernightCtrl.getBySlug
 .on 'overnights.search', authed OvernightCtrl.search
 
 .on 'notifications.getAll', authed NotificationCtrl.getAll
