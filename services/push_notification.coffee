@@ -171,7 +171,9 @@ class PushNotificationService
         url: "https://#{config.FREE_ROAM_HOST}"
         icon: if group \
               then "#{cdnUrl}/groups/badges/#{group.badgeId}.png"
-              else meUser?.avatarImage?.versions[0].url
+              else if meUser?.avatarImage?.prefix
+              then "#{config.USER_CDN_URL}/#{meUser?.avatarImage?.prefix}.small.jpg"
+              else undefined
         data:
           conversationId: conversation.id
           contextId: conversation.id

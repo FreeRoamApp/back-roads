@@ -73,7 +73,7 @@ class Overnight extends PlaceBase
     }
   ]
 
-  seasonalFields: ['crowds', 'fullness']
+  seasonalFields: []
 
   defaultInput: (overnight) ->
     unless overnight?

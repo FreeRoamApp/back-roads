@@ -6,8 +6,7 @@ Amenity = require '../models/amenity'
 RoutingService = require '../services/routing'
 PlaceBaseCtrl = require './place_base'
 EmbedService = require '../services/embed'
-
-COMMON_AMENITIES = ['dump', 'water', 'groceries']
+config = require '../config'
 
 class CampgroundCtrl extends PlaceBaseCtrl
   type: 'campground'
@@ -17,7 +16,7 @@ class CampgroundCtrl extends PlaceBaseCtrl
   _setNearbyAmenities: (campground) ->
     Amenity.searchNearby campground.location
     .then (amenities) ->
-      closestAmenities = _.map COMMON_AMENITIES, (amenityType) ->
+      closestAmenities = _.map config.COMMON_AMENITIES, (amenityType) ->
         _.find amenities, ({amenities}) ->
           amenities.indexOf(amenityType) isnt -1
       Promise.props _.reduce closestAmenities, (obj, closestAmenity) ->
@@ -28,7 +27,7 @@ class CampgroundCtrl extends PlaceBaseCtrl
         obj
       , {}
       .then (distances) ->
-        _.reduce COMMON_AMENITIES, (obj, amenityType, i) ->
+        _.reduce config.COMMON_AMENITIES, (obj, amenityType, i) ->
           amenity = closestAmenities[i]
           unless amenity
             return obj
@@ -51,32 +50,5 @@ class CampgroundCtrl extends PlaceBaseCtrl
       unless id
         @_setNearbyAmenities campground
       null # don't block
-
-  # TODO: heavily cache this
-  getAmenityBoundsById: ({id}) ->
-    # get closest dump, water, groceries
-    Campground.getById id
-    .then (campground) ->
-      Amenity.searchNearby campground.location
-      .then (amenities) ->
-        closestAmenities = _.map COMMON_AMENITIES, (amenityType) ->
-          _.find amenities, ({amenities}) ->
-            amenities.indexOf(amenityType) isnt -1
-
-        place = {
-          location: campground.location
-        }
-        importantAmenities = _.filter [place].concat closestAmenities
-        minX = _.minBy importantAmenities, ({location}) -> location.lon
-        minY = _.minBy importantAmenities, ({location}) -> location.lat
-        maxX = _.maxBy importantAmenities, ({location}) -> location.lon
-        maxY = _.maxBy importantAmenities, ({location}) -> location.lat
-
-        {
-          x1: minX.location.lon
-          y1: maxY.location.lat
-          x2: maxX.location.lon
-          y2: minY.location.lat
-        }
 
 module.exports = new CampgroundCtrl()

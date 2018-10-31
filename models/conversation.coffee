@@ -88,11 +88,35 @@ class ConversationModel extends Base
   ]
 
   upsert: (conversation, {userId} = {}) =>
-    super conversation
+    conversation = @defaultInput conversation
+
+    Promise.all _.filter _.flatten [
+      _.map conversation.userIds, (conversationUserId) ->
+        conversation.isRead = "#{conversationUserId}" is "#{userId}"
+        cknex().update 'conversations_by_userId'
+        .set _.omit conversation, ['userId', 'id']
+        .where 'userId', '=', conversationUserId
+        .andWhere 'id', '=', conversation.id
+        .run()
+
+      if conversation.groupId
+        cknex().update 'conversations_by_groupId'
+        .set _.omit conversation, ['groupId', 'id']
+        .where 'groupId', '=', conversation.groupId
+        .andWhere 'id', '=', conversation.id
+        .run()
+
+      cknex().update 'conversations_by_id'
+      .set _.omit conversation, ['id']
+      .where 'id', '=', conversation.id
+      .run()
+    ]
     .tap ->
       prefix = CacheService.PREFIXES.CONVERSATION_ID
       key = "#{prefix}:#{conversation.id}"
       CacheService.deleteByKey key
+    .then ->
+      conversation
 
   getById: (id, {preferCache} = {}) =>
     preferCache ?= true

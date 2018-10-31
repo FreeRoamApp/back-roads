@@ -1,14 +1,15 @@
 _ = require 'lodash'
 Promise = require 'bluebird'
 
+config = require '../config'
 BaseMessage = require './base_message'
 
 class ConversationMessageEmbed
   user: (conversationMessage) ->
-    if conversationMessage.groupId and conversationMessage.userId
+    if conversationMessage.userId
       BaseMessage.user {
         userId: conversationMessage.userId
-        groupId: conversationMessage.groupId
+        groupId: conversationMessage.groupId or config.EMPTY_UUID
       }
 
   groupUser: (conversationMessage) ->
