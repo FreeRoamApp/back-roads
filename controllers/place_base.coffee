@@ -5,6 +5,7 @@ router = require 'exoid-router'
 EmbedService = require '../services/embed'
 GeocoderService = require '../services/geocoder'
 ImageService = require '../services/image'
+Amenity = require '../models/amenity'
 WeatherStation = require '../models/weather_station'
 config = require '../config'
 
@@ -47,7 +48,7 @@ module.exports = class PlaceBaseCtrl
     @Model.deleteByRow row
 
   upsert: (options, {user, headers, connection}) =>
-    {id, name, location, slug, videos} = options
+    {id, name, location, subType, slug, videos} = options
 
     matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec location
     unless matches?[0] and matches?[1]
@@ -88,8 +89,39 @@ module.exports = class PlaceBaseCtrl
       diff = {slug, name, location, address, videos}
       if weatherStation
         diff.weather = weatherStation.weather
+      if subType
+        diff.subType = subType
+
+      console.log 'upsert', diff
 
       @Model.upsert diff
       .tap (place) ->
         if place.weather
           ImageService.uploadWeatherImageByPlace place
+
+  # TODO: heavily cache this
+  getAmenityBoundsById: ({id}) =>
+    # get closest dump, water, groceries
+    @Model.getById id
+    .then (place) ->
+      Amenity.searchNearby place.location
+      .then (amenities) ->
+        closestAmenities = _.map config.COMMON_AMENITIES, (amenityType) ->
+          _.find amenities, ({amenities}) ->
+            amenities.indexOf(amenityType) isnt -1
+
+        place = {
+          location: place.location
+        }
+        importantAmenities = _.filter [place].concat closestAmenities
+        minX = _.minBy importantAmenities, ({location}) -> location.lon
+        minY = _.minBy importantAmenities, ({location}) -> location.lat
+        maxX = _.maxBy importantAmenities, ({location}) -> location.lon
+        maxY = _.maxBy importantAmenities, ({location}) -> location.lat
+
+        {
+          x1: minX.location.lon
+          y1: maxY.location.lat
+          x2: maxX.location.lon
+          y2: minY.location.lat
+        }

@@ -31,7 +31,6 @@ class CronService
       console.log 'qmin'
       CleanupService.clean()
       Thread.updateScores 'stale'
-      # FIXME: running these every minute seems to cause memory leak?
       if config.ENV is config.ENVS.DEV and config.SCYLLA.CONTACT_POINTS[0] is 'localhost' and config.ELASTICSEARCH.HOST is 'localhost'
         Promise.map allGroups, (group) ->
           Group.upsert _.cloneDeep group

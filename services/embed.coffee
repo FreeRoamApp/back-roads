@@ -5,6 +5,7 @@ config = require '../config'
 cknex = require '../services/cknex'
 
 EmbedClasses =
+  attachment: require '../embeds/attachment'
   ban: require '../embeds/ban'
   category: require '../embeds/category'
   campground: require '../embeds/campground'
@@ -24,8 +25,8 @@ EmbedClasses =
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
   ATTACHMENT:
-    TIME: 'review:time'
-    USER: 'review:user'
+    TIME: 'attachment:time'
+    USER: 'attachment:user'
   BAN:
     USER: 'ban:user'
     BANNED_BY_USER: 'ban:bannedByUser'

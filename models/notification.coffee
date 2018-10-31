@@ -49,18 +49,6 @@ class NotificationModel extends Base
       withClusteringOrderBy: [['groupId', 'desc'], ['id', 'desc']]
     }
     {
-      name: 'notifications_by_userId_and_uniqueId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        uniqueId: 'text' # used so there's not a bunch of dupe messages
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['uniqueId']
-    }
-    {
       name: 'notifications_by_roleId'
       keyspace: 'free_roam'
       fields:
@@ -78,10 +66,22 @@ class NotificationModel extends Base
         clusteringColumns: ['id']
       withClusteringOrderBy: ['id', 'desc']
     }
+    {
+      name: 'notifications_by_userId_and_uniqueId'
+      keyspace: 'free_roam'
+      fields:
+        id: 'timeuuid'
+        userId: 'uuid'
+        groupId: 'uuid'
+        uniqueId: 'text' # used so there's not a bunch of dupe messages
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['uniqueId']
+    }
   ]
 
   upsert: (notification) =>
-    notification = defaultNotification notification
+    notification = @defaultInput notification
 
     (if notification.uniqueId
       @getByUserIdAndUniqueId(

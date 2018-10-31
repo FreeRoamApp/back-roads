@@ -5,7 +5,7 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 StreamService = require '../services/stream'
 
-# TODO: handle item (items_by_category)
+# TODO: handle item (items_by_category), conversation (1 per userId)
 
 module.exports = class Base
   batchUpsert: (rows) =>
@@ -17,25 +17,26 @@ module.exports = class Base
       @index row
 
   upsert: (row, {ttl, prepareFn, isUpdate, map} = {}) =>
-    scyllaRow = _.pick row, _.keys @SCYLLA_TABLES[0].fields
-    scyllaRow = @defaultInput scyllaRow
+    scyllaRow = @defaultInput row
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
     Promise.all _.filter _.map(@SCYLLA_TABLES, (table) ->
       if table.ignoreUpsert
         return
+      scyllaTableRow = _.pick scyllaRow, _.keys table.fields
+
       keyColumns = _.filter table.primaryKey.partitionKey.concat(
         table.primaryKey.clusteringColumns
       )
 
-      if missing = _.find(keyColumns, (column) -> not scyllaRow[column])
+      if missing = _.find(keyColumns, (column) -> not scyllaTableRow[column])
         return console.log "missing #{missing} in #{table.name} upsert"
 
-      set = _.omit scyllaRow, keyColumns
+      set = _.omit scyllaTableRow, keyColumns
       q = cknex().update table.name
       .set set
       _.forEach keyColumns, (column) ->
-        q.andWhere column, '=', scyllaRow[column]
+        q.andWhere column, '=', scyllaTableRow[column]
       if ttl
         q.usingTTL ttl
       if map

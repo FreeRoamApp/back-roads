@@ -19,6 +19,8 @@ LowClearanceCtrl = require './controllers/low_clearance'
 NotificationCtrl = require './controllers/notification'
 NpsCtrl = require './controllers/nps'
 OvernightCtrl = require './controllers/overnight'
+OvernightReviewCtrl = require './controllers/overnight_review'
+OvernightAttachmentCtrl = require './controllers/overnight_attachment'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 PushTopicCtrl = require './controllers/push_topic'
@@ -150,7 +152,23 @@ module.exports = router
 .on 'lowClearances.search', authed LowClearanceCtrl.search
 
 .on 'overnights.getBySlug', authed OvernightCtrl.getBySlug
+.on 'overnights.getAmenityBoundsById',
+  authed OvernightCtrl.getAmenityBoundsById
 .on 'overnights.search', authed OvernightCtrl.search
+.on 'overnights.upsert', authed OvernightCtrl.upsert
+
+.on 'overnightReviews.getById', authed OvernightReviewCtrl.getById
+.on 'overnightReviews.deleteById', authed OvernightReviewCtrl.deleteById
+.on 'overnightReviews.getAllByParentId',
+  authed OvernightReviewCtrl.getAllByParentId
+.on 'overnightReviews.search', authed OvernightReviewCtrl.search
+.on 'overnightReviews.upsert', authed OvernightReviewCtrl.upsert
+.on 'overnightReviews.uploadImage', authed OvernightReviewCtrl.uploadImage
+
+.on 'overnightAttachments.getAllByParentId',
+  authed OvernightAttachmentCtrl.getAllByParentId
+.on 'overnightAttachments.deleteByRow',
+  authed OvernightAttachmentCtrl.deleteByRow
 
 .on 'notifications.getAll', authed NotificationCtrl.getAll
 
