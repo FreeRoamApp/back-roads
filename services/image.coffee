@@ -78,7 +78,7 @@ class ImageService
       width = Math.min(size.width, max)
       height = width / aspectRatio
     else
-      height = Math.min(size.height, SMALL_IMAGE_SIZE)
+      height = Math.min(size.height, max)
       width = height * aspectRatio
     {width, height}
 
@@ -127,7 +127,8 @@ class ImageService
         aspectRatio = Math.round(100 * largeSize.width / largeSize.height) / 100
         {aspectRatio, id, prefix: keyPrefix}
 
-  uploadWeatherImageByPlace: (place) ->
+  uploadWeatherImageByPlace: (place, {type} = {}) ->
+    type ?= 'campground'
     months = place?.weather?.months
     unless months
       throw new Error 'no weather found'
@@ -225,7 +226,7 @@ class ImageService
       contentType = 'image/svg+xml'
 
       new Promise (resolve, reject) ->
-        key = "images/weather/campground_#{place.id}.svg"
+        key = "images/weather/#{type}_#{place.id}.svg"
         file = storage.bucket('fdn.uno').file key
 
         file.createWriteStream {

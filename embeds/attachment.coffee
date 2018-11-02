@@ -1,10 +1,11 @@
 _ = require 'lodash'
 
 BaseMessage = require './base_message'
+config = require '../config'
 
 class AttachmentEmbed
   user: (attachment) ->
-    if attachment.userId
+    if attachment.userId and "#{attachment.userId}" isnt config.EMPTY_UUID
       BaseMessage.user {
         userId: attachment.userId
       }

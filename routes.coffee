@@ -24,6 +24,8 @@ OvernightAttachmentCtrl = require './controllers/overnight_attachment'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 PushTopicCtrl = require './controllers/push_topic'
+ReviewlessCampgroundCtrl = require './controllers/reviewless_campground'
+ReviewlessCampgroundAttachmentCtrl = require './controllers/reviewless_campground_attachment'
 ThreadCtrl = require './controllers/thread'
 ThreadCommentCtrl = require './controllers/thread_comment'
 ThreadVoteCtrl = require './controllers/thread_vote'
@@ -182,6 +184,17 @@ module.exports = router
 .on 'pushTopics.subscribe', authed PushTopicCtrl.subscribe
 .on 'pushTopics.unsubscribe', authed PushTopicCtrl.unsubscribe
 .on 'pushTopics.getAll', authed PushTopicCtrl.getAll
+
+.on 'reviewlessCampgrounds.getBySlug', authed ReviewlessCampgroundCtrl.getBySlug
+.on 'reviewlessCampgrounds.search', authed ReviewlessCampgroundCtrl.search
+.on 'reviewlessCampgrounds.getAmenityBoundsById',
+  authed ReviewlessCampgroundCtrl.getAmenityBoundsById
+.on 'reviewlessCampgrounds.upsert', authed ReviewlessCampgroundCtrl.upsert
+
+.on 'reviewlessCampgroundAttachments.getAllByParentId',
+  authed ReviewlessCampgroundAttachmentCtrl.getAllByParentId
+.on 'reviewlessCampgroundAttachments.deleteByRow',
+  authed ReviewlessCampgroundAttachmentCtrl.deleteByRow
 
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll
