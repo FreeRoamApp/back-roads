@@ -85,8 +85,7 @@ module.exports = class ReviewBaseCtrl
       }
       # TODO: choose a good thumbnail for each campground instead of most recent
       if attachments?[0]
-        parentUpsert.thumbnailPrefix =
-          "#{config.USER_CDN_URL}/#{attachments[0].prefix}.small.jpg"
+        parentUpsert.thumbnailPrefix = attachments[0].prefix
 
       (if user?.username is 'austin' and not rating
         Promise.all _.filter [

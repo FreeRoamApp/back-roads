@@ -164,7 +164,7 @@ campgrounds =
     safety: {value: 4, count: 1}
     minPrice: 0, maxPrice: 0, hasFreshWater: false, hasSewage: false, has30Amp: false, has50Amp: false
     maxDays: 14
-    restrooms: {pitToilet: true}
+    restrooms: {exists: true, pit: true}
     videos: [
       {sourceType: 'youtube', sourceId: '_SXesBB6x8I'}
     ]

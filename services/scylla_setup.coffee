@@ -9,16 +9,14 @@ config = require '../config'
 
 class ScyllaSetupService
   setup: (tables) =>
-    CacheService.lock 'scylla_setup3', =>
+    CacheService.lock 'scylla_setup4', =>
       Promise.all [
         @createKeyspaceIfNotExists 'free_roam'
       ]
       .then =>
-        if false and config.ENV is config.ENVS.DEV
+        if true and config.ENV is config.ENVS.DEV
           createTables = _.map _.filter(tables, ({name}) ->
-            name in [
-              'users_by_id'
-            ]
+            name.indexOf('reviewless') isnt -1
           )
           Promise.each createTables, @createTableIfNotExist
         else
@@ -50,6 +48,7 @@ class ScyllaSetupService
         throw err
 
   createTableIfNotExist: (table) =>
+    console.log 'create', table.name
     primaryColumns = _.filter(
       table.primaryKey.partitionKey.concat(table.primaryKey.clusteringColumns)
     )

@@ -26,6 +26,7 @@ scyllaFields =
     # administrativeArea: 'text' # state / province / region. iso when avail
     # postalCode: 'text'
     # country: 'text' # 2 char iso
+  contact: 'text' # json
   # end common
 
   drivingInstructions: 'text'

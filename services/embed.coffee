@@ -15,8 +15,10 @@ EmbedClasses =
   groupAuditLog: require '../embeds/group_audit_log'
   groupUser: require '../embeds/group_user'
   item: require '../embeds/item'
+  overnight: require '../embeds/overnight'
   product: require '../embeds/product'
   review: require '../embeds/review'
+  reviewlessCampground: require '../embeds/reviewless_campground'
   thread: require '../embeds/thread'
   threadComment: require '../embeds/thread_comment'
   user: require '../embeds/user'
@@ -56,6 +58,8 @@ TYPES =
     USER: 'groupUser:user'
   ITEM:
     FIRST_PRODUCT_SLUG: 'item:firstProductSlug'
+  OVERNIGHT:
+    ATTACHMENTS_PREVIEW: 'overnight:attachmentsPreview'
   PRODUCT:
     NAME_KEBAB: 'product:nameKebab'
     ITEM: 'product:item'
@@ -63,6 +67,8 @@ TYPES =
     EXTRAS: 'review:extras'
     TIME: 'review:time'
     USER: 'review:user'
+  REVIEWLESS_CAMPGROUND:
+    ATTACHMENTS_PREVIEW: 'reviewlessCampground:attachmentsPreview'
   THREAD_COMMENT:
     USER: 'threadComment:user'
     GROUP_USER: 'threadComment:groupUser'
