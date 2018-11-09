@@ -15,6 +15,9 @@ scyllaFields =
   details: 'text' # wikipedia style info. can be stylized with markdown
   address: 'text' # json:
   contact: 'text' # json
+  # end common
+
+  drivingInstructions: 'text'
 
   siteCount: 'text' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
   distanceTo: 'text' # json {groceries: {id: '', distance: 25, time: 22}} all in miles/min
@@ -132,6 +135,7 @@ class ReviewlessCampground extends PlaceBase
     ]
     _.defaults {
       icon: 'reviewless'
+      type: 'reviewlessCampground'
     }, reviewlessCampground
 
 module.exports = new ReviewlessCampground()

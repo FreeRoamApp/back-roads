@@ -58,6 +58,7 @@ class WeatherStation extends PlaceBase
 
   defaultESOutput: (weatherStation) ->
     weatherStation = _.defaults {
+      type: 'weatherStation'
       weather: try
         JSON.parse weatherStation.weather
       catch err

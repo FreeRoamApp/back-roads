@@ -22,11 +22,6 @@ module.exports = class PlaceBaseCtrl
 
   search: ({query, sort}, {user}) =>
     @Model.search {query, sort}
-    .then (places) =>
-      _.map places, (place) =>
-        _.defaults {@type}, place
-    # .then (results) ->
-    #   Promise.map results, EmbedService.embed {embed: defaultEmbed}
 
   getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
     slug = if suffix \
@@ -105,7 +100,8 @@ module.exports = class PlaceBaseCtrl
     @Model.getById id
     .then (place) ->
       Amenity.searchNearby place.location
-      .then (amenities) ->
+      .then ({places}) ->
+        amenities = places
         closestAmenities = _.map config.COMMON_AMENITIES, (amenityType) ->
           _.find amenities, ({amenities}) ->
             amenities.indexOf(amenityType) isnt -1

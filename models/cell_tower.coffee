@@ -57,6 +57,7 @@ class CellTower extends PlaceBase
     cellTower = _.defaults {
       name: "#{carriers[cellTower.carrier]} #{cellTower.tech}"
       icon: cellTower.carrier
-    }, _.pick cellTower, ['slug', 'name', 'icon', 'location']
+      type: 'cellTower'
+    }, _.pick cellTower, ['slug', 'name', 'location']
 
 module.exports = new CellTower()

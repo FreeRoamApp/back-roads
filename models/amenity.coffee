@@ -96,6 +96,7 @@ class Amenity extends PlaceBase
 
   defaultESOutput: (amenity) ->
     amenity = _.defaults {
+      type: 'amenity'
       icon: _.orderBy(amenity.amenities, (amenity) ->
         ICON_ORDER.indexOf(amenity)
       , ['desc'])[0]

@@ -8,19 +8,34 @@ elasticsearch = require '../services/elasticsearch'
 module.exports = class PlaceBase extends Base
   search: ({query, sort}, {outputFn} = {}) =>
     outputFn ?= @defaultESOutput
+    start = Date.now()
     elasticsearch.search {
       index: @ELASTICSEARCH_INDICES[0].name
       type: @ELASTICSEARCH_INDICES[0].name
       body:
-        query: query
+        query:
+          # random ordering so they don't clump on map
+          function_score:
+            query: query
+            random_score:
+              # static seed for everyone so points don't move around
+              # when zooming
+              seed: 'static'
+            boost_mode: 'replace'
         sort: sort
         from: 0
+        # it'd be nice to have these distributed more evently
+        # grab ~2,000 and get random 250?
+        # is this fast/efficient enough?
         size: 250
     }
     .then ({hits}) ->
-      # console.log 'got', hits
-      _.map hits.hits, ({_id, _source}) ->
-        outputFn _.defaults _source, {id: _id}
+      total = hits.total
+      {
+        total: total
+        places: _.map hits.hits, ({_id, _source}) ->
+          outputFn _.defaults _source, {id: _id}
+      }
 
   searchNearby: (location, {distance, outputFn} = {}) =>
     distance = 2.5 # TODO: maybe less than 2.5 lat/lon points

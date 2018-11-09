@@ -226,6 +226,11 @@ class UserModel extends Base
       language: 'en'
     }
 
+  sanitizePrivate: _.curry (requesterId, user) ->
+    unless user
+      return null
+    _.omit user, ['password']
+
   sanitizePublic: _.curry (requesterId, user) ->
     unless user
       return null

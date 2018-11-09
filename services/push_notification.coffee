@@ -256,7 +256,7 @@ class PushNotificationService
   sendToUserIds: (userIds, message, options = {}) ->
     {skipMe, fromUserId, groupId, conversation} = options
     Promise.each userIds, (userId) =>
-      unless userId is fromUserId
+      unless "#{userId}" is "#{fromUserId}"
         user = User.getById userId, {preferCache: true}
         if groupId
           user = user.then EmbedService.embed {

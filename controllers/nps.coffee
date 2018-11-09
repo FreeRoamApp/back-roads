@@ -9,7 +9,7 @@ class NpsCtrl
     if comment
       EmailService.send {
         to: EmailService.EMAILS.EVERYONE
-        subject: "Free Raom NPS (#{score})"
+        subject: "FreeRoam NPS (#{score})"
         text: """
         #{user?.username}:
 

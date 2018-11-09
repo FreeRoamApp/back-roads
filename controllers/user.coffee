@@ -20,8 +20,9 @@ AVATAR_LARGE_IMAGE_HEIGHT = 512
 defaultEmbed = [EmbedService.TYPES.USER.DATA]
 
 class UserCtrl
-  getMe: ({}, {user, headers, connection}) =>
+  getMe: ({}, {user, headers, connection}) ->
     EmbedService.embed {embed: defaultEmbed}, user
+    .then User.sanitizePrivate(null)
 
   getCountry: ({}, {headers, connection}) ->
     ip = headers['x-forwarded-for'] or

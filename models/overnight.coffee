@@ -119,6 +119,7 @@ class Overnight extends PlaceBase
 
   defaultESOutput: (overnight) ->
     amenity = _.defaults {
+      type: 'overnight'
       icon: if overnight.subType in ['walmart', 'restArea', 'casino'] \
             then _.snakeCase overnight.subType
             else 'default'

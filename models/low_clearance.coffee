@@ -53,7 +53,8 @@ class LowClearance extends PlaceBase
     lowClearance = _.defaults {
       name: if inches then "#{feet}' #{inches}\"" else "#{feet}'"
       description: lowClearance.name
+      type: 'lowClearance'
       icon: 'low_clearance'
-    }, _.pick lowClearance, ['name', 'icon', 'location']
+    }, _.pick lowClearance, ['name', 'location']
 
 module.exports = new LowClearance()

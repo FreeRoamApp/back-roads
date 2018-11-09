@@ -167,8 +167,9 @@ class Campground extends PlaceBase
     }, campground
 
   defaultESOutput: (campground) ->
-    _.pick campground, [
+    campground = _.pick campground, [
       'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
     ]
+    _.defaults {type: 'campground'}, campground
 
 module.exports = new Campground()
