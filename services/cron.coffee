@@ -34,8 +34,8 @@ class CronService
       if config.ENV is config.ENVS.DEV and config.SCYLLA.CONTACT_POINTS[0] is 'localhost' and config.ELASTICSEARCH.HOST is 'localhost'
         Promise.map allGroups, (group) ->
           Group.upsert _.cloneDeep group
-        Item.batchUpsert _.cloneDeep allItems
         Campground.batchUpsert _.cloneDeep allCampgrounds
+        Item.batchUpsert _.cloneDeep allItems
         Amenity.batchUpsert _.cloneDeep allAmenities
         Product.batchUpsert _.cloneDeep allProducts
         Category.batchUpsert _.cloneDeep allCategories

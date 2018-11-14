@@ -45,6 +45,7 @@ config =
   YOUTUBE_ID_REGEX: ///
     ^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*)(?:(\?t|\&t|&start)=(\d+))?.*
   ///i
+  CELL_SIGNAL_ESTIMATE_HOST: env.CELL_SIGNAL_ESTIMATE_HOST
   # also in free-roam
   DEFAULT_PERMISSIONS:
     readMessage: true

@@ -21,6 +21,7 @@ scyllaFields =
 
   siteCount: 'text' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
   distanceTo: 'text' # json {groceries: {id: '', distance: 25, time: 22}} all in miles/min
+  cellSignal: 'text' # json {verizon_lte: {signal: 3}, att: {signal: 3}} 1-5
 
   weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
 
@@ -68,6 +69,7 @@ class ReviewlessCampground extends PlaceBase
         # end common
         distanceTo: {type: 'object'}
         weather: {type: 'object'}
+        cellSignal: {type: 'object'}
 
         pets: {type: 'object'}
         padSurface: {type: 'text'}
@@ -100,6 +102,7 @@ class ReviewlessCampground extends PlaceBase
       contact: JSON.stringify reviewlessCampground.contact
       weather: JSON.stringify reviewlessCampground.weather
       distanceTo: JSON.stringify reviewlessCampground.distanceTo
+      cellSignal: JSON.stringify reviewlessCampground.cellSignal
       restrooms: JSON.stringify reviewlessCampground.restrooms
     }, reviewlessCampground
 
@@ -113,7 +116,7 @@ class ReviewlessCampground extends PlaceBase
       return null
 
     jsonFields = [
-      'siteCount', 'pets', 'address', 'weather',
+      'siteCount', 'pets', 'address', 'weather', 'cellSignal'
       'distanceTo', 'restrooms', 'contact'
     ]
     _.forEach jsonFields, (field) ->

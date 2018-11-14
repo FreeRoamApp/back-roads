@@ -40,7 +40,7 @@ scyllaFields =
   noise: 'text' # json {day: {value: 3, count: 1}, night: {value: 0, count: 1}}
   shade: 'text' # json {value: 3, count: 1}
   safety: 'text' # json {value: 3, count: 1}
-  cellSignal: 'text' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
+  cellSignal: 'text' # json {verizon_lte: {signal: 3}, att: {signal: 3}} 1-5
 
   weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
 

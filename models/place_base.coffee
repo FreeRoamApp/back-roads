@@ -38,7 +38,7 @@ module.exports = class PlaceBase extends Base
       }
 
   searchNearby: (location, {distance, outputFn} = {}) =>
-    distance = 2.5 # TODO: maybe less than 2.5 lat/lon points
+    distance ?= 2.5 # TODO: maybe less than 2.5 lat/lon points
     @search {
       query:
         bool:

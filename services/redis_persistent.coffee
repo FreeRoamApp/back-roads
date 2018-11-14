@@ -13,6 +13,7 @@ client = new Redis {
 events = ['connect', 'ready', 'error', 'close', 'reconnecting', 'end']
 _.map events, (event) ->
   client.on event, ->
+    console.log config.REDIS.PERSISTENT_HOST
     console.log "redislog persistent #{event}"
 
 module.exports = client

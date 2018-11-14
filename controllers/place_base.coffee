@@ -5,6 +5,8 @@ router = require 'exoid-router'
 EmbedService = require '../services/embed'
 GeocoderService = require '../services/geocoder'
 ImageService = require '../services/image'
+CellSignalService = require '../services/cell_signal'
+RoutingService = require '../services/routing'
 Amenity = require '../models/amenity'
 WeatherStation = require '../models/weather_station'
 config = require '../config'
@@ -42,8 +44,43 @@ module.exports = class PlaceBaseCtrl
 
     @Model.deleteByRow row
 
+  _setNearbyAmenities: (place) =>
+    Amenity.searchNearby place.location
+    .then ({places, total}) =>
+      amenities = places
+      unless amenities
+        return
+      closestAmenities = _.map config.COMMON_AMENITIES, (amenityType) ->
+        _.find amenities, ({amenities}) ->
+          amenities.indexOf(amenityType) isnt -1
+      Promise.props _.reduce closestAmenities, (obj, closestAmenity) ->
+        if closestAmenity
+          obj[closestAmenity.id] = RoutingService.getDistance(
+            place.location, closestAmenity.location
+          )
+        obj
+      , {}
+      .then (distances) ->
+        _.reduce config.COMMON_AMENITIES, (obj, amenityType, i) ->
+          amenity = closestAmenities[i]
+          unless amenity
+            return obj
+          distance = distances[amenity.id]
+          if amenity and distance
+            obj[amenityType] = _.defaults distance, {id: amenity.id}
+          obj
+        , {}
+    .then (distanceTo) =>
+      @Model.upsert {
+        id: place.id
+        slug: place.slug
+        distanceTo
+      }
+
   upsert: (options, {user, headers, connection}) =>
     {id, name, location, subType, slug, videos} = options
+
+    isUpdate = Boolean id
 
     matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec location
     unless matches?[0] and matches?[1]
@@ -75,8 +112,13 @@ module.exports = class PlaceBaseCtrl
         WeatherStation.getClosestToLocation location
       else
         Promise.resolve null
+
+      if not isUpdate and @Model.SCYLLA_TABLES[0].fields.cellSignal
+        CellSignalService.getEstimatesByLocation location
+        .catch ->
+          console.log 'cell estimation error'
     ]
-    .then ([slug, address, weatherStation]) =>
+    .then ([slug, address, weatherStation, cellSignal]) =>
       address =
         locality: address?[0]?.city
         administrativeArea: address?[0]?.state
@@ -86,11 +128,18 @@ module.exports = class PlaceBaseCtrl
         diff.weather = weatherStation.weather
       if subType
         diff.subType = subType
+      if cellSignal
+        cellSignal = _.mapValues cellSignal, (signal, carrier) ->
+          {signal, count: 0}
+        diff.cellSignal = _.defaults diff.cellSignal, cellSignal
 
       console.log 'upsert', diff
 
       @Model.upsert diff
-      .tap (place) ->
+      .tap (place) =>
+        if @Model.SCYLLA_TABLES[0].fields.distanceTo
+          @_setNearbyAmenities place
+
         if place.weather
           ImageService.uploadWeatherImageByPlace place
 

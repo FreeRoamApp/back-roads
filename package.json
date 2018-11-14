@@ -59,6 +59,7 @@
     "emailjs": "^1.0.11",
     "exoid-router": "git://github.com/claydotio/exoid-router.git",
     "express": "^4.13.3",
+    "fast-csv": "^2.4.1",
     "fb": "^1.1.1",
     "geodist": "^0.2.1",
     "geoip-lite": "^1.2.0",
