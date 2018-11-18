@@ -18,7 +18,6 @@ EmbedClasses =
   overnight: require '../embeds/overnight'
   product: require '../embeds/product'
   review: require '../embeds/review'
-  reviewlessCampground: require '../embeds/reviewless_campground'
   thread: require '../embeds/thread'
   threadComment: require '../embeds/thread_comment'
   user: require '../embeds/user'
@@ -67,8 +66,6 @@ TYPES =
     EXTRAS: 'review:extras'
     TIME: 'review:time'
     USER: 'review:user'
-  REVIEWLESS_CAMPGROUND:
-    ATTACHMENTS_PREVIEW: 'reviewlessCampground:attachmentsPreview'
   THREAD_COMMENT:
     USER: 'threadComment:user'
     GROUP_USER: 'threadComment:groupUser'
