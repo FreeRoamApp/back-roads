@@ -44,6 +44,14 @@ scyllaFields =
 
   weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
 
+  pets: 'text' # json {dogs: bool, largeDogs: bool, multipleDogs: bool}
+  padSurface: 'text'
+  seasonOpenDayOfYear: 'int'
+  seasonCloseDayOfYear: 'int'
+  attachmentCount: 'int'
+
+  source: 'text' # empty (user), coe, rec.gov, usfs
+
   maxDays: 'int'
   hasFreshWater: 'boolean'
   hasSewage: 'boolean'
@@ -81,6 +89,7 @@ class Campground extends PlaceBase
         name: {type: 'text'}
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
+        ratingCount: {type: 'integer'}
         thumbnailPrefix: {type: 'text'}
         # end common
         distanceTo: {type: 'object'}
@@ -92,6 +101,15 @@ class Campground extends PlaceBase
         safety: {type: 'integer'}
         cellSignal: {type: 'object'}
         weather: {type: 'object'}
+
+        pets: {type: 'object'}
+        padSurface: {type: 'text'}
+        seasonOpenDayOfYear: {type: 'integer'}
+        seasonCloseDayOfYear: {type: 'integer'}
+        attachmentCount: {type: 'integer'}
+
+        source: {type: 'text'} # empty (user), coe, rec.gov, usfs
+
         maxDays: {type: 'integer'}
         hasFreshWater: {type: 'boolean'}
         hasSewage: {type: 'boolean'}
@@ -114,12 +132,14 @@ class Campground extends PlaceBase
     campground = _.defaults {
       siteCount: JSON.stringify campground.siteCount
       crowds: JSON.stringify campground.crowds
+      contact: JSON.stringify campground.contact
       fullness: JSON.stringify campground.fullness
       shade: JSON.stringify campground.shade
       safety: JSON.stringify campground.safety
       roadDifficulty: JSON.stringify campground.roadDifficulty
       noise: JSON.stringify campground.noise
       cellSignal: JSON.stringify campground.cellSignal
+      pets: JSON.stringify campground.pets
       restrooms: JSON.stringify campground.restrooms
       videos: JSON.stringify campground.videos
       address: JSON.stringify campground.address
@@ -130,6 +150,8 @@ class Campground extends PlaceBase
     # add data if non-existent
     _.defaults campground, {
       id: cknex.getTimeUuid()
+      ratingCount: 0
+      attachmentCount: 0
     }
 
   defaultOutput: (campground) ->
@@ -138,8 +160,8 @@ class Campground extends PlaceBase
 
     jsonFields = [
       'siteCount', 'crowds', 'fullness', 'shade', 'safety', 'roadDifficulty'
-      'noise', 'cellSignal', 'restrooms', 'videos', 'address', 'weather'
-      'distanceTo'
+      'noise', 'cellSignal', 'pets', 'restrooms', 'videos', 'address', 'weather'
+      'distanceTo', 'contact'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -167,9 +189,14 @@ class Campground extends PlaceBase
     }, campground
 
   defaultESOutput: (campground) ->
+    ratingCount = campground.ratingCount
+    console.log 'rc', campground
     campground = _.pick campground, [
       'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
     ]
-    _.defaults {type: 'campground'}, campground
+    _.defaults {
+      type: 'campground'
+      icon: if ratingCount > 0 then 'default' else 'reviewless'
+    }, campground
 
 module.exports = new Campground()

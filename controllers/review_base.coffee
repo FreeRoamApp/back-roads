@@ -79,9 +79,13 @@ module.exports = class ReviewBaseCtrl
         newRatingCount = parent.ratingCount + 1
       newRating = totalStars / newRatingCount
 
+      newAttachmentCount = (parent.attachmentCount or 0) +
+                            (attachments?.length or 0)
+
       parentUpsert = {
         id: parent.id, slug: parent.slug
         rating: newRating, ratingCount: newRatingCount
+        attachmentCount: newAttachmentCount
       }
       # TODO: choose a good thumbnail for each campground instead of most recent
       if attachments?[0]
