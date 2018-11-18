@@ -6,7 +6,7 @@ config = require '../config'
 METERS_PER_MILE = 1609.34
 ONE_MINUTE_S = 60
 
-# TODO: replace here with own service using osrm or graphhopper
+# TODO: replace here with own service using valhalla, osrm or graphhopper
 ###
 osrm might be better if it has better truck / vehicle height support...
 graphhopper is faster / uses less memory

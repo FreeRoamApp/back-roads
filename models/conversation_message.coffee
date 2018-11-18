@@ -84,10 +84,6 @@ class ConversationMessageModel extends Base
               then cknex.getTimeUuidFromString(maxId).getDate()
               else undefined
 
-    timeBucket = TimeService.getScaledTimeByTimeScale(
-      'week', moment(minTime or maxTime)
-    )
-
     get = (timeBucket) ->
       q = cknex().select '*'
       .from 'conversation_messages_by_conversationId'
@@ -104,18 +100,26 @@ class ConversationMessageModel extends Base
       q.limit limit
       .run()
 
-    initial = get timeBucket
-    .then (results) ->
-      # if not enough results, check preivous time bucket. could do this more
-      #  than once, but last 2 weeks of messages seems fine
-      if limit and results.length < limit
-        get TimeService.getPreviousTimeByTimeScale(
-          'week', moment(minTime or maxTime)
-        )
-        .then (olderMessages) ->
-          _.filter (results or []).concat olderMessages
-      else
-        results
+    getAll = (time, count = 0, depth = 0) ->
+      if depth > 5
+        return Promise.resolve []
+
+      timeBucket = TimeService.getScaledTimeByTimeScale(
+        'week', time
+      )
+      get timeBucket
+      .then (results) ->
+        count += results.length
+        # if not enough results, check previous time buckets
+        if limit and count < limit
+          lastWeekTime = time.subtract 1, 'week'
+          getAll lastWeekTime, count, depth + 1
+          .then (olderMessages) ->
+            _.filter (results or []).concat olderMessages
+        else
+          results
+
+    initial = getAll moment(minTime or maxTime)
     .then (results) ->
       if reverse
         results.reverse()

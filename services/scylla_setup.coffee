@@ -14,7 +14,7 @@ class ScyllaSetupService
         @createKeyspaceIfNotExists 'free_roam'
       ]
       .then =>
-        if config.ENV is config.ENVS.DEV
+        if true or config.ENV is config.ENVS.DEV
           createTables = _.map _.filter(tables, ({name}) ->
             name.indexOf('reviewless') isnt -1
           )

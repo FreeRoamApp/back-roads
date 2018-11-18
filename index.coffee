@@ -71,12 +71,16 @@ setup = ->
     model = require('./models/' + modelFile)
     model?.ELASTICSEARCH_INDICES or []
 
-  Promise.all [
-    ScyllaSetupService.setup scyllaTables
-    .then -> console.log 'scylla setup'
+  shouldRunSetup = config.ENV is config.ENVS.PRODUCTION or
+                    config.SCYLLA.CONTACT_POINTS[0] is 'localhost'
 
-    ElasticsearchSetupService.setup elasticSearchIndices
-    .then -> console.log 'elasticsearch setup'
+  Promise.all _.filter [
+    if shouldRunSetup
+      ScyllaSetupService.setup scyllaTables
+      .then -> console.log 'scylla setup'
+    if shouldRunSetup
+      ElasticsearchSetupService.setup elasticSearchIndices
+      .then -> console.log 'elasticsearch setup'
   ]
   .catch (err) ->
     console.log 'setup', err
