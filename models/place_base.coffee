@@ -9,6 +9,10 @@ module.exports = class PlaceBase extends Base
   search: ({query, sort}, {outputFn} = {}) =>
     outputFn ?= @defaultESOutput
     start = Date.now()
+
+    if @ELASTICSEARCH_INDICES[0].mappings.ratingCount
+      sort ?= [{'ratingCount': 'desc'}, '_score']
+
     elasticsearch.search {
       index: @ELASTICSEARCH_INDICES[0].name
       type: @ELASTICSEARCH_INDICES[0].name

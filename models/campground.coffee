@@ -190,7 +190,6 @@ class Campground extends PlaceBase
 
   defaultESOutput: (campground) ->
     ratingCount = campground.ratingCount
-    console.log 'rc', campground
     campground = _.pick campground, [
       'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
     ]
