@@ -22,8 +22,8 @@ module.exports = class PlaceBaseCtrl
       _.defaults {@type}, place
     .then EmbedService.embed {embed: @defaultEmbed}
 
-  search: ({query, sort}, {user}) =>
-    @Model.search {query, sort}
+  search: ({query, sort, limit}, {user}) =>
+    @Model.search {query, sort, limit}
 
   getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
     slug = if suffix \
@@ -144,29 +144,13 @@ module.exports = class PlaceBaseCtrl
           ImageService.uploadWeatherImageByPlace place
 
   # TODO: heavily cache this
-  getAmenityBoundsById: ({id}) =>
+  getNearestAmenitiesById: ({id}) =>
     # get closest dump, water, groceries
     @Model.getById id
     .then (place) ->
       Amenity.searchNearby place.location
       .then ({places}) ->
         amenities = places
-        closestAmenities = _.map config.COMMON_AMENITIES, (amenityType) ->
+        _.filter _.map config.COMMON_AMENITIES, (amenityType) ->
           _.find amenities, ({amenities}) ->
             amenities.indexOf(amenityType) isnt -1
-
-        place = {
-          location: place.location
-        }
-        importantAmenities = _.filter [place].concat closestAmenities
-        minX = _.minBy importantAmenities, ({location}) -> location.lon
-        minY = _.minBy importantAmenities, ({location}) -> location.lat
-        maxX = _.maxBy importantAmenities, ({location}) -> location.lon
-        maxY = _.maxBy importantAmenities, ({location}) -> location.lat
-
-        {
-          x1: minX.location.lon
-          y1: maxY.location.lat
-          x2: maxX.location.lon
-          y2: minY.location.lat
-        }

@@ -6,7 +6,8 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 module.exports = class PlaceBase extends Base
-  search: ({query, sort}, {outputFn} = {}) =>
+  search: ({query, sort, limit}, {outputFn} = {}) =>
+    limit ?= 250
     outputFn ?= @defaultESOutput
     start = Date.now()
 
@@ -31,7 +32,7 @@ module.exports = class PlaceBase extends Base
         # it'd be nice to have these distributed more evently
         # grab ~2,000 and get random 250?
         # is this fast/efficient enough?
-        size: 250
+        size: limit
     }
     .then ({hits}) ->
       total = hits.total

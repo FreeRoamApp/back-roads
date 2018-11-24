@@ -67,8 +67,8 @@ module.exports = router
 
 .on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
 .on 'campgrounds.search', authed CampgroundCtrl.search
-.on 'campgrounds.getAmenityBoundsById',
-  authed CampgroundCtrl.getAmenityBoundsById
+.on 'campgrounds.getNearestAmenitiesById',
+  authed CampgroundCtrl.getNearestAmenitiesById
 .on 'campgrounds.upsert', authed CampgroundCtrl.upsert
 
 .on 'campgroundReviews.getById', authed CampgroundReviewCtrl.getById
@@ -155,8 +155,8 @@ module.exports = router
 .on 'lowClearances.search', authed LowClearanceCtrl.search
 
 .on 'overnights.getBySlug', authed OvernightCtrl.getBySlug
-.on 'overnights.getAmenityBoundsById',
-  authed OvernightCtrl.getAmenityBoundsById
+.on 'overnights.getNearestAmenitiesById',
+  authed OvernightCtrl.getNearestAmenitiesById
 .on 'overnights.search', authed OvernightCtrl.search
 .on 'overnights.upsert', authed OvernightCtrl.upsert
 
