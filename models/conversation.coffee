@@ -143,7 +143,7 @@ class ConversationModel extends Base
       _.find conversations, {name}
     .then @defaultOutput
 
-  getAllByUserId: (userId, {limit} = {}) =>
+  getAllByUserId: (userId, {limit, hasMessages} = {}) =>
     limit ?= 10
 
     # TODO: use a redis leaderboard for sorting by last update?
@@ -153,8 +153,9 @@ class ConversationModel extends Base
     .limit 1000
     .run()
     .then (conversations) ->
-      conversations = _.filter conversations, (conversation) ->
-        conversation.type is 'pm' and conversation.lastUpdateTime
+      if hasMessages
+        conversations = _.filter conversations, (conversation) ->
+          conversation.type is 'pm' and conversation.lastUpdateTime
       conversations = _.orderBy conversations, 'lastUpdateTime', 'desc'
       conversations = _.take conversations, limit
     .map @defaultOutput
@@ -171,7 +172,7 @@ class ConversationModel extends Base
     .then (conversations) ->
       _.find conversations, ({type, userIds}) ->
         type is 'pm' and _.every checkUserIds, (userId) ->
-          userIds.indexOf(userId) isnt -1
+          userIds.indexOf("#{userId}") isnt -1
     .then @defaultOutput
 
   markRead: ({id}, userId) ->

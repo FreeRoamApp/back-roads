@@ -47,7 +47,7 @@ class WeatherStation extends PlaceBase
       ]
     }
     .then (results) ->
-      results[0]
+      results.places[0]
 
   defaultESInput: (weatherStation) ->
     weatherStation = super weatherStation

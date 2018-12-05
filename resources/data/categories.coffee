@@ -5,7 +5,7 @@ config = require '../../config'
 
 categories =
   'starting-out':
-    name: 'RVers'
+    name: 'RV'
     description: 'Products to get you ready to start RVing'
     priority: 2
     data:

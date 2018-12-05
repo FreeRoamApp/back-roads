@@ -186,5 +186,51 @@ With complex products like batteries, it's best to watch a video or two to learn
   #   why: "" # 30A to 15A
   #   what: ""
 
+
+###
+some sort of introduction message / tooltip?
+
+Whether you're an experienced boondocker or just starting out, we want to help
+you learn about and find the most helpful products!
+
+basically no one uses search....
+
+could do "save to backpack", or a customized approach where we learn about user
+(rv type, experience, goals), and recommend items (and they can say what they already have)
+
+could add reviews now, but doubt anyone would leave any
+
+items: batteries, solar panel, generator, charge-controller, black-tank-treatment,
+       inverter, chocks, multimeter, leveling blocks ,sealant, fresh-water-host, ...
+
+      batteries 10x
+###
+
+
+  # camping chairs
+
+
+  # grill
+
+
+  # outdoor table
+
+
+  # cell plans / booster / hotspot
+
+  # propane heater
+
+  # shower head
+
+  # composting toilet
+
+  # water (collapsible?) containers
+
+  # air compressor
+
+  # laundry bag?
+
+
+
 module.exports = _.map items, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity

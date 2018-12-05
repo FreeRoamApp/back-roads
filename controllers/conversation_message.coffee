@@ -243,8 +243,7 @@ class ConversationMessageCtrl
         Conversation.upsert _.defaults(pickedConversation, {
           lastUpdateTime: new Date()
           isRead: false
-          userId: user.id
-        })
+        }), {userId: user.id}
 
         (if conversation.type is 'pm'
           Promise.resolve {userMentions: [], roleMentions: []}
