@@ -16,7 +16,7 @@ class ScyllaSetupService
       .then =>
         if true or config.ENV is config.ENVS.DEV
           createTables = _.map _.filter(tables, ({name}) ->
-            name.indexOf('campgrounds_') isnt -1
+            name.indexOf('saved_places') isnt -1
           )
           Promise.each createTables, @createTableIfNotExist
         else

@@ -39,6 +39,8 @@ class CacheService
     GROUP_USER_TOP: 'group_user:top3'
     GROUP_USERS_ONLINE: 'group_users:online2'
     HONEY_POT_BAN_IP: 'honey_pot:ban_ip'
+    SAVED_PLACES_GET_ALL: 'saved_places:getAll1'
+    SAVED_PLACES_GET_ALL_CATEGORY: 'saved_places:getAll:category'
     THREAD: 'thread:id:embedded3'
     THREAD_BY_SLUG: 'thread:slug'
     THREAD_BY_ID: 'thread:id'

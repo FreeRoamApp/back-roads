@@ -25,6 +25,7 @@ OvernightAttachmentCtrl = require './controllers/overnight_attachment'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 PushTopicCtrl = require './controllers/push_topic'
+SavedPlaceCtrl = require './controllers/saved_place'
 ThreadCtrl = require './controllers/thread'
 ThreadCommentCtrl = require './controllers/thread_comment'
 ThreadVoteCtrl = require './controllers/thread_vote'
@@ -185,6 +186,10 @@ module.exports = router
 .on 'pushTopics.subscribe', authed PushTopicCtrl.subscribe
 .on 'pushTopics.unsubscribe', authed PushTopicCtrl.unsubscribe
 .on 'pushTopics.getAll', authed PushTopicCtrl.getAll
+
+.on 'savedPlaces.getAll', authed SavedPlaceCtrl.getAll
+.on 'savedPlaces.upsert', authed SavedPlaceCtrl.upsert
+.on 'savedPlaces.deleteByRow', authed SavedPlaceCtrl.deleteByRow
 
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll

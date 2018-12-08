@@ -2,22 +2,41 @@ _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
 
-PlaceBase = require './place_base'
+Base = require './base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
-class SavedPlace extends PlaceBase
-  SCYLLA_TABLES: []
-  ELASTICSEARCH_INDICES: [
+scyllaFields =
+  # common between all places
+  id: 'timeuuid'
+  userId: 'uuid'
+  sourceType: 'text'
+  sourceId: 'text'
+
+class SavedPlace extends Base
+  SCYLLA_TABLES: [
     {
-      name: 'cell_towers'
-      mappings:
-        # common between all places
-        location: {type: 'geo_point'}
-        # end common
-        carrier: {type: 'text'}
-        tech: {type: 'text'}
+      name: 'saved_places_by_userId'
+      keyspace: 'free_roam'
+      fields: scyllaFields
+      primaryKey:
+        partitionKey: ['userId']
+        clusteringColumns: ['sourceId', 'sourceType']
     }
+  ]
+  # don't think we need elasticsearch for this since all values are grabbed
+  # at runtime instead of location, name, etc... being stored in ES
+  ELASTICSEARCH_INDICES: [
+    # {
+    #   name: 'saved_places'
+    #   mappings:
+    #     # common between all places
+    #     location: {type: 'geo_point'}
+    #     # end common
+    #     userId: {type: 'text'}
+    #     sourceType: {type: 'text'}
+    #     sourceId: {type: 'text'}
+    # }
   ]
 
   defaultInput: (savedPlace) ->
@@ -47,10 +66,26 @@ class SavedPlace extends PlaceBase
 
     _.defaults {type: 'savedPlace'}, savedPlace
 
-  defaultESOutput: (savedPlace) ->
-    savedPlace = _.defaults {
-      icon: savedPlace.icon
-      type: 'saved'
-    }, _.pick savedPlace, ['slug', 'name', 'location']
+  # defaultESOutput: (savedPlace) ->
+  #   savedPlace = _.defaults {
+  #     icon: savedPlace.icon
+  #     type: 'saved'
+  #   }, _.pick savedPlace, ['id', 'name', 'location']
+
+
+  search: ({query, sort, limit}, {outputFn} = {}) =>
+    null
+
+  getAllByUserId: (userId, {limit} = {}) =>
+    limit ?= 30
+
+    cknex().select '*'
+    .from @SCYLLA_TABLES[0].name
+    .where 'userId', '=', userId
+    .limit limit
+    .run()
+    .map @defaultOutput
+
+
 
 module.exports = new SavedPlace()

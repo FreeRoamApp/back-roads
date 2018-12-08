@@ -10,6 +10,8 @@ ONE_DAY_SECONDS = 3600 * 24
 THREE_HOURS_SECONDS = 3600 * 3
 SIXTY_DAYS_SECONDS = 60 * 3600 * 24
 
+# insert into free_roam.partners_by_slug (slug,"amazonAffiliateCode") values ('heathandalyssa', 'alyssapacom0b-20')
+
 class PartnerModel extends Base
   SCYLLA_TABLES: [
     {
