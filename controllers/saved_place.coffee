@@ -5,6 +5,7 @@ router = require 'exoid-router'
 SavedPlace = require '../models/saved_place'
 Amenity = require '../models/amenity'
 Campground = require '../models/campground'
+Coordinate = require '../models/coordinate'
 Overnight = require '../models/overnight'
 CacheService = require '../services/cache'
 config = require '../config'
@@ -37,6 +38,8 @@ class SavedPlaceCtrl
             Amenity.getById savedPlace.sourceId
           else if savedPlace.sourceType is 'overnight'
             Overnight.getById savedPlace.sourceId
+          else if savedPlace.sourceType is 'coordinate'
+            Coordinate.getByUserIdAndId user.id, savedPlace.sourceId
           else
             Campground.getById savedPlace.sourceId
           ).then (place) ->

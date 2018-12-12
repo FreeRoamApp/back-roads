@@ -69,6 +69,7 @@ class CampgroundReview extends ReviewBase
         fullness: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
         noise: 'text' # json {day: 3, night: 0}
         shade: 'int'
+        cleanliness: 'int'
         safety: 'int'
         cellSignal: 'text'
       primaryKey:

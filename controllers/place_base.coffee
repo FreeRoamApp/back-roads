@@ -105,8 +105,11 @@ module.exports = class PlaceBaseCtrl
         slug = _.kebabCase(name)
         @getUniqueSlug slug)
 
-      GeocoderService.reverse location
-      .catch -> null
+      if @Model.SCYLLA_TABLES[0].fields.address
+        GeocoderService.reverse location
+        .catch -> null
+      else
+        Promise.resolve null
 
       if @Model.SCYLLA_TABLES[0].fields.weather
         WeatherStation.getClosestToLocation location

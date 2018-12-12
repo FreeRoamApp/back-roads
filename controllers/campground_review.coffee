@@ -9,7 +9,7 @@ ReviewBaseCtrl = require './review_base'
 
 SEASONS = ['winter', 'spring', 'summer', 'fall']
 VALID_EXTRAS = [
-  'roadDifficulty', 'crowds', 'fullness', 'noise',
+  'roadDifficulty', 'cleanliness', 'crowds', 'fullness', 'noise',
   'shade', 'safety', 'cellSignal'
 ]
 

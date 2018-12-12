@@ -10,6 +10,7 @@ CampgroundAttachmentCtrl = require './controllers/campground_attachment'
 CellTowerCtrl = require './controllers/cell_tower'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
+CoordinateCtrl = require './controllers/coordinate'
 GeocoderCtrl = require './controllers/geocoder'
 GroupCtrl = require './controllers/group'
 GroupAuditLogCtrl = require './controllers/group_audit_log'
@@ -109,6 +110,9 @@ module.exports = router
   authed ConversationMessageCtrl.getAllByConversationId
 .on 'conversationMessages.unsubscribeByConversationId',
   authed ConversationMessageCtrl.unsubscribeByConversationId
+
+# .on 'coordinates.search', authed CoordinateCtrl.search
+.on 'coordinates.upsert', authed CoordinateCtrl.upsert
 
 .on 'geocoder.autocomplete', authed GeocoderCtrl.autocomplete
 

@@ -38,7 +38,7 @@ class ImageService
     quality ?= DEFAULT_IMAGE_QUALITY
     type ?= 'jpg'
 
-    image = gm(buffer or path)
+    image = gm(buffer or path).autoOrient()
 
     if width or height
       mode = if width and height and not useMin then '^' else null

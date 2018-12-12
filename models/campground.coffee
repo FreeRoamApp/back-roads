@@ -41,6 +41,7 @@ scyllaFields =
   shade: 'text' # json {value: 3, count: 1}
   safety: 'text' # json {value: 3, count: 1}
   cellSignal: 'text' # json {verizon_lte: {signal: 3}, att: {signal: 3}} 1-5
+  cleanliness: 'text' # json {value: 3, count: 1}
 
   weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
 
@@ -100,6 +101,7 @@ class Campground extends PlaceBase
         shade: {type: 'integer'}
         safety: {type: 'integer'}
         cellSignal: {type: 'object'}
+        cleanliness: {type: 'integer'}
         weather: {type: 'object'}
 
         pets: {type: 'object'}
@@ -139,6 +141,7 @@ class Campground extends PlaceBase
       roadDifficulty: JSON.stringify campground.roadDifficulty
       noise: JSON.stringify campground.noise
       cellSignal: JSON.stringify campground.cellSignal
+      cleanliness: JSON.stringify campground.cleanliness
       pets: JSON.stringify campground.pets
       restrooms: JSON.stringify campground.restrooms
       videos: JSON.stringify campground.videos
@@ -161,7 +164,7 @@ class Campground extends PlaceBase
     jsonFields = [
       'siteCount', 'crowds', 'fullness', 'shade', 'safety', 'roadDifficulty'
       'noise', 'cellSignal', 'pets', 'restrooms', 'videos', 'address', 'weather'
-      'distanceTo', 'contact'
+      'cleanliness', 'distanceTo', 'contact'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -182,6 +185,8 @@ class Campground extends PlaceBase
         campground.shade?.value
       safety: if campground.safety
         campground.safety?.value
+      cleanliness: if campground.cleanliness
+        campground.cleanliness?.value
       roadDifficulty: if campground.roadDifficulty
         campground.roadDifficulty?.value
       noise: if campground.noise

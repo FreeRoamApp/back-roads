@@ -71,7 +71,7 @@ setup = ->
     model = require('./models/' + modelFile)
     model?.ELASTICSEARCH_INDICES or []
 
-  shouldRunSetup = config.ENV is config.ENVS.PRODUCTION or
+  shouldRunSetup = true or config.ENV is config.ENVS.PRODUCTION or
                     config.SCYLLA.CONTACT_POINTS[0] is 'localhost'
 
   Promise.all _.filter [
