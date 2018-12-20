@@ -8,6 +8,7 @@ CampgroundCtrl = require './controllers/campground'
 CampgroundReviewCtrl = require './controllers/campground_review'
 CampgroundAttachmentCtrl = require './controllers/campground_attachment'
 CellTowerCtrl = require './controllers/cell_tower'
+CheckInCtrl = require './controllers/check_in'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
 CoordinateCtrl = require './controllers/coordinate'
@@ -26,10 +27,10 @@ OvernightAttachmentCtrl = require './controllers/overnight_attachment'
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 PushTopicCtrl = require './controllers/push_topic'
-SavedPlaceCtrl = require './controllers/saved_place'
 ThreadCtrl = require './controllers/thread'
 ThreadCommentCtrl = require './controllers/thread_comment'
 ThreadVoteCtrl = require './controllers/thread_vote'
+TripCtrl = require './controllers/trip'
 UserCtrl = require './controllers/user'
 UserBlockCtrl = require './controllers/user_block'
 UserFollowerCtrl = require './controllers/user_follower'
@@ -90,6 +91,11 @@ module.exports = router
 
 # .on 'cellTowers.getBySlug', authed CellTowerCtrl.getBySlug
 .on 'cellTowers.search', authed CellTowerCtrl.search
+
+.on 'checkIns.getAll', authed CheckInCtrl.getAll
+.on 'checkIns.getById', authed CheckInCtrl.getById
+.on 'checkIns.upsert', authed CheckInCtrl.upsert
+.on 'checkIns.deleteByRow', authed CheckInCtrl.deleteByRow
 
 .on 'conversations.create', authed ConversationCtrl.create
 .on 'conversations.updateById', authed ConversationCtrl.updateById
@@ -191,10 +197,6 @@ module.exports = router
 .on 'pushTopics.unsubscribe', authed PushTopicCtrl.unsubscribe
 .on 'pushTopics.getAll', authed PushTopicCtrl.getAll
 
-.on 'savedPlaces.getAll', authed SavedPlaceCtrl.getAll
-.on 'savedPlaces.upsert', authed SavedPlaceCtrl.upsert
-.on 'savedPlaces.deleteByRow', authed SavedPlaceCtrl.deleteByRow
-
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll
 .on 'threads.getById', authed ThreadCtrl.getById
@@ -218,6 +220,13 @@ module.exports = router
   authed ThreadCommentCtrl.deleteAllByGroupIdAndUserId
 
 .on 'time.get', authed -> {now: new Date()}
+
+.on 'trips.addCheckIn', authed TripCtrl.addCheckIn
+.on 'trips.getById', authed TripCtrl.getById
+.on 'trips.getByType', authed TripCtrl.getByType
+.on 'trips.getRoute', authed TripCtrl.getRoute
+.on 'trips.uploadImage', authed TripCtrl.uploadImage
+.on 'trips.upsert', authed TripCtrl.upsert
 
 .on 'users.getMe', authed UserCtrl.getMe
 .on 'users.getById', authed UserCtrl.getById

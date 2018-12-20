@@ -16,7 +16,16 @@ module.exports = class Base
     Promise.map rows, (row) =>
       @index row
 
-  upsert: (row, {ttl, prepareFn, isUpdate, map} = {}) =>
+  upsertByRow: (row, diff, options) =>
+    keyColumns = _.filter _.uniq _.flatten _.map @SCYLLA_TABLES, (table) ->
+      table.primaryKey.partitionKey.concat(
+        table.primaryKey.clusteringColumns
+      )
+    requiredValues = _.pick row, keyColumns
+    @upsert _.defaults(requiredValues, diff), options
+
+
+  upsert: (row, {ttl, prepareFn, isUpdate, add, remove} = {}) =>
     scyllaRow = @defaultInput row
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
@@ -32,6 +41,7 @@ module.exports = class Base
       if missing = _.find(keyColumns, (column) -> not scyllaTableRow[column])
         return console.log "missing #{missing} in #{table.name} upsert"
 
+
       set = _.omit scyllaTableRow, keyColumns
       q = cknex().update table.name
       .set set
@@ -39,9 +49,10 @@ module.exports = class Base
         q.andWhere column, '=', scyllaTableRow[column]
       if ttl
         q.usingTTL ttl
-      if map
-        _.forEach map, (value, column) ->
-          q.add column, value
+      if add
+        q.add add
+      if remove
+        q.remove remove
       q.run()
     ).concat [@index elasticSearchRow]
     .then =>

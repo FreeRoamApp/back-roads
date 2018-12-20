@@ -6,10 +6,6 @@ PlaceBase = require './place_base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
-# main should be like yelp, kayak, etc...? search page. when typing, prepopulate: boondocking, rv park, walmart
-# TODO: coordinates_translations_by_slug_and_language
-# override english values
-
 scyllaFields =
   # common between all places
   slug: 'text' # eg: old-settlers-rv-park

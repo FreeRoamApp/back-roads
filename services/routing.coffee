@@ -1,25 +1,65 @@
 request = require 'request-promise'
 Promise = require 'bluebird'
+polyline = require '@mapbox/polyline'
+simplify = require 'simplify-path'
+_ = require 'lodash'
 
+CacheService = require './cache'
 config = require '../config'
 
 METERS_PER_MILE = 1609.34
+ONE_HOUR_S = 3600
 ONE_MINUTE_S = 60
 
-# TODO: replace here with own service using valhalla, osrm or graphhopper
+# TODO: replace here with own service using valhalla
 ###
-osrm might be better if it has better truck / vehicle height support...
-graphhopper is faster / uses less memory
-graphhopper has this https://github.com/graphhopper/graphhopper/pull/936
-will take a ton of time and cpu/memory to preprocess north america for routing
+should be able to set height when picking route. also has it for sharp turns, etc...
+initially should just use truck route, but can customize later
+https://github.com/valhalla/valhalla/blob/63bfd80090e8722bb6e8abc0242262196b191848/src/sif/truckcost.cc
+constexpr float kDefaultTruckHeight = 4.11f;   // Meters (13 feet 6 inches)
+pbf_costing_options->set_height(kDefaultTruckHeight);
 
-http://download.geofabrik.de/north-america/us/south-dakota-latest.osm.pbf
-mv south-dakota-latest.osm.pbf data/europe_germany_berlin.pbf
-docker run -i --rm --name graphhopper -v /data:/data -p 8989:8989 -t graphhopper/graphhopper:stable
-# ^^ doesn't actually work atm, but it's a start
 ###
+
+
+
 class RoutingService
   constructor: -> null
+
+  getRoute: ({locations}) ->
+    key = CacheService.PREFIXES.ROUTING_ROUTE + JSON.stringify(locations)
+    CacheService.preferCache key, ->
+      request 'https://valhalla.freeroam.app/route',
+        json: true
+        qs:
+          json:
+            JSON.stringify {
+              narrative: false
+              locations: locations
+              costing: 'auto'
+              costing_options:
+                auto:
+                  country_crossing_penalty: 2000
+              directions_options:
+                units: 'miles'
+            }
+      .then (route) ->
+        unless route?.trip
+          return null
+        {
+          time: route.trip.summary.time
+          distance: route.trip.summary.length
+          legs: _.map route.trip.legs, (leg) ->
+            points = polyline.decode leg.shape
+            # ~ 10x reduction in size
+            shape = polyline.encode simplify(points, 0.01)
+            {
+              shape: shape
+              time: leg.summary.time
+              distance: leg.summary.length
+            }
+        }
+    , {expireSeconds: ONE_HOUR_S}
 
   # returns {distance: (mi), time: (min)}
   getDistance: (location1, location2) ->
@@ -38,5 +78,6 @@ class RoutingService
       distance = Math.round( 100 * distance / METERS_PER_MILE) / 100
       time = Math.round(baseTime / ONE_MINUTE_S)
       {distance, time}
+
 
 module.exports = new RoutingService()

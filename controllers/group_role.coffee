@@ -79,7 +79,7 @@ class GroupRoleCtrl
         router.throw status: 400, info: 'no permission'
 
       mapOptions = {
-        map:
+        add:
           channelPermissions:
             "#{channelId}": JSON.stringify permissions
       }

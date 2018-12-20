@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^2.0.3",
+    "@mapbox/polyline": "^1.0.0",
     "accounting": "^0.4.1",
     "amazon-product-api": "^0.4.4",
     "apn": "^2.1.2",
@@ -59,7 +60,6 @@
     "emailjs": "^1.0.11",
     "exoid-router": "git://github.com/claydotio/exoid-router.git",
     "express": "^4.13.3",
-    "fast-csv": "^2.4.1",
     "fb": "^1.1.1",
     "geodist": "^0.2.1",
     "geoip-lite": "^1.2.0",
@@ -96,6 +96,7 @@
     "semver": "^5.4.1",
     "short-uuid": "^3.0.0",
     "shortid": "^2.2.8",
+    "simplify-path": "^1.1.0",
     "socket.io": "^2.0.4",
     "socket.io-redis": "^5.2.0",
     "socketio-sticky-session": "^0.4.2",

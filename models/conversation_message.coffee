@@ -191,7 +191,7 @@ class ConversationMessageModel extends Base
 
   getLastByConversationId: (conversationId) =>
     @getAllByConversationId conversationId, {limit: 1}
-    .then (messages) =>
+    .then (messages) ->
       messages?[0]
     .then @defaultOutput
 

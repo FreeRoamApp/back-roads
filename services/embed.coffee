@@ -20,6 +20,7 @@ EmbedClasses =
   review: require '../embeds/review'
   thread: require '../embeds/thread'
   threadComment: require '../embeds/thread_comment'
+  trip: require '../embeds/trip'
   user: require '../embeds/user'
   userBlock: require '../embeds/user_block'
 
@@ -73,6 +74,8 @@ TYPES =
   THREAD:
     USER: 'thread:user'
     COMMENT_COUNT: 'thread:commentCount'
+  TRIP:
+    CHECK_INS: 'trip:checkIns'
   USER:
     DATA: 'user:data'
   USER_FOLLOWER:

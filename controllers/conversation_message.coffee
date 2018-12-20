@@ -331,13 +331,13 @@ class ConversationMessageCtrl
   getLastTimeByMeAndConversationId: ({conversationId}, {user}, {socket}) ->
     ConversationMessage.getLastTimeByUserIdAndConversationId user.id, conversationId
 
-  getAllByConversationId: (options, {user}, socketInfo) =>
+  getAllByConversationId: (options, {user}, socketInfo) ->
     console.log 'getall'
     {conversationId, minId, maxId, isStreamed} = options
     {emit, socket, route} = socketInfo
 
     Conversation.getById conversationId, {preferCache: true}
-    .then (conversation) =>
+    .then (conversation) ->
       (if conversation.groupId
         groupId = conversation.groupId
         permissions = [GroupUser.PERMISSIONS.READ_MESSAGE]
@@ -346,7 +346,7 @@ class ConversationMessageCtrl
         }
       else
         Conversation.pmHasPermission conversation, user.id)
-      .then (hasPermission) =>
+      .then (hasPermission) ->
         unless hasPermission
           router.throw status: 401, info: 'unauthorized'
 

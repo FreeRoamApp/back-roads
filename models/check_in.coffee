@@ -5,30 +5,44 @@ uuid = require 'node-uuid'
 Base = require './base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
+CacheService = require '../services/cache'
 
 scyllaFields =
   # common between all places
   id: 'timeuuid'
   userId: 'uuid'
+  name: 'text'
   sourceType: 'text'
   sourceId: 'text'
+  startTime: 'timestamp'
+  endTime: 'timestamp'
+  attachments: 'text' # json
+  tripIds: {type: 'list', subType: 'uuid'}
+  status: 'text' # planned | visited
 
-class SavedPlace extends Base
+class CheckIn extends Base
   SCYLLA_TABLES: [
     {
-      name: 'saved_places_by_userId'
+      name: 'check_ins_by_userId'
       keyspace: 'free_roam'
       fields: scyllaFields
       primaryKey:
         partitionKey: ['userId']
         clusteringColumns: ['sourceId', 'sourceType']
     }
+    {
+      name: 'check_ins_by_id'
+      keyspace: 'free_roam'
+      fields: scyllaFields
+      primaryKey:
+        partitionKey: ['id']
+    }
   ]
   # don't think we need elasticsearch for this since all values are grabbed
   # at runtime instead of location, name, etc... being stored in ES
   ELASTICSEARCH_INDICES: [
     # {
-    #   name: 'saved_places'
+    #   name: 'check_ins'
     #   mappings:
     #     # common between all places
     #     location: {type: 'geo_point'}
@@ -39,42 +53,56 @@ class SavedPlace extends Base
     # }
   ]
 
-  defaultInput: (savedPlace) ->
-    unless savedPlace?
+  upsert: ({userId}) ->
+    super
+    .tap ->
+      category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{userId}"
+      CacheService.deleteByCategory category
+
+  defaultInput: (checkIn) ->
+    unless checkIn?
       return null
 
     # transform existing data
-    savedPlace = _.defaults {
-    }, savedPlace
+    checkIn = _.defaults {
+    }, checkIn
 
 
     # add data if non-existent
-    _.defaults savedPlace, {
+    _.defaults checkIn, {
       id: cknex.getTimeUuid()
+      status: 'planned'
     }
 
-  defaultOutput: (savedPlace) ->
-    unless savedPlace?
+  defaultOutput: (checkIn) ->
+    unless checkIn?
       return null
 
     jsonFields = []
     _.forEach jsonFields, (field) ->
       try
-        savedPlace[field] = JSON.parse savedPlace[field]
+        checkIn[field] = JSON.parse checkIn[field]
       catch
         {}
 
-    _.defaults {type: 'savedPlace'}, savedPlace
+    checkIn
 
-  # defaultESOutput: (savedPlace) ->
-  #   savedPlace = _.defaults {
-  #     icon: savedPlace.icon
+  # defaultESOutput: (checkIn) ->
+  #   checkIn = _.defaults {
+  #     icon: checkIn.icon
   #     type: 'saved'
-  #   }, _.pick savedPlace, ['id', 'name', 'location']
+  #   }, _.pick checkIn, ['id', 'name', 'location']
 
 
-  search: ({query, sort, limit}, {outputFn} = {}) =>
+  search: ({query, sort, limit}, {outputFn} = {}) ->
     null
+
+  getById: (id) =>
+    cknex().select '*'
+    .from 'check_ins_by_id'
+    .where 'id', '=', id
+    .run {isSingle: true}
+    .then @defaultOutput
 
   getAllByUserId: (userId, {limit} = {}) =>
     limit ?= 30
@@ -88,4 +116,4 @@ class SavedPlace extends Base
 
 
 
-module.exports = new SavedPlace()
+module.exports = new CheckIn()

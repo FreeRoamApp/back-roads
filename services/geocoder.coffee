@@ -33,8 +33,8 @@ class GeocoderService
         {
           bbox: location.bbox
           location:
-            lat: location.geometry.coordinates[0]
-            lon: location.geometry.coordinates[1]
+            lat: location.geometry.coordinates[1]
+            lon: location.geometry.coordinates[0]
           text: location.properties.name
           locality: location.properties.locality
           administrativeArea: location.properties.region_a
