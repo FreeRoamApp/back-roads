@@ -94,6 +94,7 @@ module.exports = router
 
 .on 'checkIns.getAll', authed CheckInCtrl.getAll
 .on 'checkIns.getById', authed CheckInCtrl.getById
+.on 'checkIns.uploadImage', authed CheckInCtrl.uploadImage
 .on 'checkIns.upsert', authed CheckInCtrl.upsert
 .on 'checkIns.deleteByRow', authed CheckInCtrl.deleteByRow
 

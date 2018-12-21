@@ -21,13 +21,20 @@ defaultEmbed = [
   EmbedService.TYPES.TRIP.CHECK_INS
 ]
 
+# TODO: Trip.hasPermission (add as base model method)
+# TODO: Base controller component w/ upsert?
+
 class TripCtrl
   upsert: (diff, {user}) ->
     diff = _.pick diff, ['checkInIds', 'id', 'imagePrefix']
     diff = _.defaults {userId: user.id}, diff
-    Trip.getById diff.id
+    (if diff.id
+      Trip.getById diff.id
+    else
+      Promise.resolve null
+    )
     .then (trip) ->
-      unless "#{trip.userId}" is "#{user.id}"
+      if trip and "#{trip.userId}" isnt "#{user.id}"
         router.throw {status: 401, info: 'Unauthorized'}
       Trip.upsertByRow trip, diff
 
@@ -84,11 +91,9 @@ class TripCtrl
       .then (checkIn) ->
         Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}
 
-  uploadImage: ({}, {user, file}) =>
+  uploadImage: ({}, {user, file}) ->
     ImageService.uploadImageByUserIdAndFile(
       user.id, file, {folder: 'trips'}
     )
-    .tap (a) ->
-      console.log a
 
 module.exports = new TripCtrl()

@@ -65,6 +65,7 @@ class CheckIn extends Base
 
     # transform existing data
     checkIn = _.defaults {
+      attachments: JSON.stringify checkIn.attachments
     }, checkIn
 
 
@@ -78,7 +79,7 @@ class CheckIn extends Base
     unless checkIn?
       return null
 
-    jsonFields = []
+    jsonFields = ['attachments']
     _.forEach jsonFields, (field) ->
       try
         checkIn[field] = JSON.parse checkIn[field]

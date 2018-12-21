@@ -9,6 +9,7 @@ Campground = require '../models/campground'
 Coordinate = require '../models/coordinate'
 Overnight = require '../models/overnight'
 CacheService = require '../services/cache'
+ImageService = require '../services/image'
 config = require '../config'
 
 ONE_DAY_SECONDS = 3600 * 24
@@ -19,11 +20,22 @@ class CheckInCtrl
   getById: ({id}, {user}) ->
     CheckIn.getById id
 
-  upsert: ({sourceId, sourceType}, {user}) ->
-    CheckIn.upsert {
-      sourceId, sourceType
-      userId: user.id
-    }
+  upsert: (diff, {user}) ->
+    console.log 'up', diff
+    diff = _.pick diff, [
+      'id', 'sourceId', 'sourceType', 'name',
+      'attachments', 'startTime', 'endTime'
+    ]
+    diff = _.defaults {userId: user.id}, diff
+    (if diff.id
+      CheckIn.getById diff.id
+    else
+      Promise.resolve null
+    )
+    .then (checkIn) ->
+      if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
+        router.throw {status: 401, info: 'Unauthorized'}
+      CheckIn.upsertByRow checkIn, diff
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
       CacheService.deleteByCategory category
@@ -65,5 +77,10 @@ class CheckInCtrl
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
       CacheService.deleteByCategory category
 
+
+  uploadImage: ({}, {user, file}) ->
+    ImageService.uploadImageByUserIdAndFile(
+      user.id, file, {folder: 'checkin'}
+    )
 
 module.exports = new CheckInCtrl()
