@@ -64,6 +64,7 @@ class Overnight extends PlaceBase
         location: {type: 'geo_point'}
         rating: {type: 'integer'}
         thumbnailPrefix: {type: 'text'}
+        address: {type: 'object'}
         # end common
         subType: {type: 'text'}
         noise: {type: 'object'}

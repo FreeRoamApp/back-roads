@@ -226,6 +226,8 @@ module.exports = router
 .on 'trips.getById', authed TripCtrl.getById
 .on 'trips.getByType', authed TripCtrl.getByType
 .on 'trips.getRoute', authed TripCtrl.getRoute
+.on 'trips.getStats', authed TripCtrl.getStats
+.on 'trips.getStatesGeoJson', authed TripCtrl.getStatesGeoJson
 .on 'trips.uploadImage', authed TripCtrl.uploadImage
 .on 'trips.upsert', authed TripCtrl.upsert
 

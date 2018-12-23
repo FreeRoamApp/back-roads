@@ -92,6 +92,7 @@ class Campground extends PlaceBase
         rating: {type: 'integer'}
         ratingCount: {type: 'integer'}
         thumbnailPrefix: {type: 'text'}
+        address: {type: 'object'}
         # end common
         distanceTo: {type: 'object'}
         roadDifficulty: {type: 'integer'}

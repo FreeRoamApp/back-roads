@@ -3,6 +3,7 @@ _ = require 'lodash'
 
 Coordinate = require '../models/coordinate'
 EmbedService = require '../services/embed'
+GeocoderService = require '../services/geocoder'
 PlaceBaseCtrl = require './place_base'
 config = require '../config'
 
@@ -29,10 +30,12 @@ class CoordinateCtrl extends PlaceBaseCtrl
       lon: parseFloat(matches[2])
     }
 
-    Coordinate.getByUserIdAndSlug user.id, slug
-    .then (coordinate) ->
-      id = coordinate?.id
-      Coordinate.upsert {userId: user.id, location, name, slug, id}
+    GeocoderService.reverse location
+    .then (address) ->
+      Coordinate.getByUserIdAndSlug user.id, slug
+      .then (coordinate) ->
+        id = coordinate?.id
+        Coordinate.upsert {userId: user.id, location, address, name, slug, id}
 
 
 module.exports = new CoordinateCtrl()

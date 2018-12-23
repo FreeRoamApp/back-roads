@@ -122,10 +122,6 @@ module.exports = class PlaceBaseCtrl
           console.log 'cell estimation error'
     ]
     .then ([slug, address, weatherStation, cellSignal]) =>
-      address =
-        locality: address?[0]?.city
-        administrativeArea: address?[0]?.state
-
       diff = {slug, name, location, address, videos}
       if weatherStation
         diff.weather = weatherStation.weather

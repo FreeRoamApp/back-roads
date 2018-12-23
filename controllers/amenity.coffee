@@ -78,10 +78,6 @@ class AmenityCtrl extends PlaceBaseCtrl
       .catch -> null
     ]
     .then ([slug, address]) =>
-      address =
-        locality: address?[0]?.city
-        administrativeArea: address?[0]?.state
-
       @Model.upsert {slug, name, location, address, amenities, prices}
     .tap (amenity) =>
       unless id

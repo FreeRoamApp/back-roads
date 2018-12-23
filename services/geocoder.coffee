@@ -4,19 +4,19 @@ _ = require 'lodash'
 
 config = require '../config'
 
-# TODO: replace HERE with pelias
 class GeocoderService
-  constructor: ->
-    options = {
-      provider: 'here'
-      appId: config.HERE.APP_ID
-      appCode: config.HERE.APP_CODE
-    }
-
-    @geocoder = NodeGeocoder options
-
-  reverse: ({lat, lon}) =>
-    @geocoder.reverse {lat, lon}
+  reverse: ({lat, lon}) ->
+    request "#{config.PELIAS_API_URL}/reverse",
+      json: true
+      qs:
+        'point.lat': lat
+        'point.lon': lon
+    .then (response) ->
+      data = response.features?[0]?.properties
+      {
+        locality: data?.locality or data?.name
+        administrativeArea: data?.region_a
+      }
 
   autocomplete: ({query}) ->
     request "#{config.PELIAS_API_URL}/autocomplete",

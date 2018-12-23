@@ -13,6 +13,7 @@ scyllaFields =
   userId: 'uuid'
   name: 'text'
   location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
+  address: 'text' # json
 
 class Coordinate extends PlaceBase
   SCYLLA_TABLES: [
@@ -39,6 +40,7 @@ class Coordinate extends PlaceBase
         slug: {type: 'text'}
         name: {type: 'text'}
         location: {type: 'geo_point'}
+        address: {type: 'object'}
         # end common
         userId: {type: 'text'}
     }
@@ -66,6 +68,7 @@ class Coordinate extends PlaceBase
 
     # transform existing data
     coordinate = _.defaults {
+      address: JSON.stringify coordinate.address
     }, coordinate
 
     # add data if non-existent
@@ -77,7 +80,7 @@ class Coordinate extends PlaceBase
     unless coordinate?
       return null
 
-    jsonFields = []
+    jsonFields = ['address']
     _.forEach jsonFields, (field) ->
       try
         coordinate[field] = JSON.parse coordinate[field]

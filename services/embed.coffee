@@ -76,6 +76,8 @@ TYPES =
     COMMENT_COUNT: 'thread:commentCount'
   TRIP:
     CHECK_INS: 'trip:checkIns'
+    ROUTE: 'trip:route'
+    STATS: 'trip:stats'
   USER:
     DATA: 'user:data'
   USER_FOLLOWER:
