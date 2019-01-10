@@ -70,7 +70,10 @@ class UserCtrl
     currentInsecurePassword = userDiff.currentPassword
     newInsecurePassword = userDiff.password
     username = userDiff.username
-    userDiff = _.pick userDiff, ['username']
+    userDiff = _.pick userDiff, ['username', 'links']
+
+    if userDiff.links?.instagram and userDiff.links.instagram.indexOf('instagram.com') is -1
+      userDiff.links.instagram = "https://instagram.com/#{userDiff.links.instagram}"
 
     valid = Joi.validate {username, password: newInsecurePassword}, {
       password: Joi.string().min(6).max(1000)

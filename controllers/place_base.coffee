@@ -132,6 +132,8 @@ module.exports = class PlaceBaseCtrl
           {signal, count: 0}
         diff.cellSignal = _.defaults diff.cellSignal, cellSignal
 
+      diff.prices ?= {all: {mode: 0}} # TODO
+
       console.log 'upsert', diff
 
       @Model.upsert diff

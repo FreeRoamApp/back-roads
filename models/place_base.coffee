@@ -11,9 +11,6 @@ module.exports = class PlaceBase extends Base
     outputFn ?= @defaultESOutput
     start = Date.now()
 
-    if @ELASTICSEARCH_INDICES[0].mappings.ratingCount
-      sort ?= [{'ratingCount': 'desc'}, '_score']
-
     elasticsearch.search {
       index: @ELASTICSEARCH_INDICES[0].name
       type: @ELASTICSEARCH_INDICES[0].name
@@ -22,10 +19,23 @@ module.exports = class PlaceBase extends Base
           # random ordering so they don't clump on map
           function_score:
             query: query
-            random_score:
-              # static seed for everyone so points don't move around
-              # when zooming
-              seed: 'static'
+            functions: _.filter [
+              if @ELASTICSEARCH_INDICES[0].mappings.ratingCount
+                {
+                  filter:
+                    range:
+                      ratingCount:
+                        gte: 1
+                  weight: 50
+                }
+              {
+                random_score:
+                  # # static seed for everyone so points don't move around
+                  # # when zooming
+                  seed: 'static'
+                weight: 50
+              }
+            ]
             boost_mode: 'replace'
         sort: sort
         from: 0
@@ -92,6 +102,14 @@ module.exports = class PlaceBase extends Base
     .limit limit
     .run()
     .map @defaultOutput
+
+  changeSlug: (place, newSlug) =>
+    cknex().delete()
+    .from @SCYLLA_TABLES[0].name
+    .where 'slug', '=', place.slug
+    .run()
+    .then =>
+      @upsert _.defaults {slug: newSlug}, place
 
   defaultESInput: (place) ->
     if place.id

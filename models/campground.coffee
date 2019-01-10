@@ -45,21 +45,27 @@ scyllaFields =
 
   weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
 
-  pets: 'text' # json {dogs: bool, largeDogs: bool, multipleDogs: bool}
-  padSurface: 'text'
+  pets: 'text' # json {allowed: bool, dogs: bool, largeDogs: bool, multipleDogs: bool}
+  padSurface: 'text' # gravel, paved, dirt
+  entryType: 'text' # back-in, pull-thru
+  allowedTypes: 'text' # json {motorhome: true, trailer: true, tent: true}
   seasonOpenDayOfYear: 'int'
   seasonCloseDayOfYear: 'int'
   attachmentCount: 'int'
 
   source: 'text' # empty (user), coe, rec.gov, usfs
+  subType: 'text' # rvPark, publicCampground
+  # or... isPrivate: boolean for rvParks?
+  # affiliations: goodSam, passportAmerica, etc...
 
   maxDays: 'int'
   hasFreshWater: 'boolean'
   hasSewage: 'boolean'
   has30Amp: 'boolean'
   has50Amp: 'boolean'
-  minPrice: 'int'
-  maxPrice: 'int'
+  # minPrice: 'int'
+  # maxPrice: 'int'
+  prices: 'text' # json: {all: {min, max, avg, mode}, motorhome: {}}
   maxLength: 'int'
   restrooms: 'text'
   videos: 'text' # json
@@ -107,19 +113,25 @@ class Campground extends PlaceBase
 
         pets: {type: 'object'}
         padSurface: {type: 'text'}
+        entryType: {type: 'text'}
+        allowedTypes: {type: 'object'}
         seasonOpenDayOfYear: {type: 'integer'}
         seasonCloseDayOfYear: {type: 'integer'}
         attachmentCount: {type: 'integer'}
 
         source: {type: 'text'} # empty (user), coe, rec.gov, usfs
+        subType: {type: 'text'}
 
         maxDays: {type: 'integer'}
         hasFreshWater: {type: 'boolean'}
         hasSewage: {type: 'boolean'}
         has30Amp: {type: 'boolean'}
         has50Amp: {type: 'boolean'}
-        minPrice: {type: 'integer'}
-        maxPrice: {type: 'integer'}
+
+        # minPrice: {type: 'integer'}
+        # maxPrice: {type: 'integer'}
+        prices: {type: 'object'}
+
         maxLength: {type: 'integer'}
         restrooms: {type: 'object'}
     }
@@ -133,6 +145,8 @@ class Campground extends PlaceBase
 
     # transform existing data
     campground = _.defaults {
+      allowedTypes: JSON.stringify campground.allowedTypes
+      prices: JSON.stringify campground.prices
       siteCount: JSON.stringify campground.siteCount
       crowds: JSON.stringify campground.crowds
       contact: JSON.stringify campground.contact
@@ -163,9 +177,9 @@ class Campground extends PlaceBase
       return null
 
     jsonFields = [
-      'siteCount', 'crowds', 'fullness', 'shade', 'safety', 'roadDifficulty'
+      'prices', 'allowedTypes', 'siteCount', 'crowds', 'fullness', 'shade',
       'noise', 'cellSignal', 'pets', 'restrooms', 'videos', 'address', 'weather'
-      'cleanliness', 'distanceTo', 'contact'
+      'safety', 'roadDifficulty', 'cleanliness', 'distanceTo', 'contact'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -196,12 +210,19 @@ class Campground extends PlaceBase
 
   defaultESOutput: (campground) ->
     ratingCount = campground.ratingCount
+    prices = campground.prices
     campground = _.pick campground, [
       'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
     ]
     _.defaults {
       type: 'campground'
-      icon: if ratingCount > 0 then 'default' else 'reviewless'
+      icon: if prices?.all?.mode is 0 and ratingCount > 0 \
+            then 'free'
+            else if prices?.all?.mode is 0
+            then 'free_reviewless'
+            else if ratingCount > 0
+            then 'paid'
+            else 'paid_reviewless'
     }, campground
 
 module.exports = new Campground()
