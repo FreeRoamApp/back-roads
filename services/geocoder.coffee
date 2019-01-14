@@ -2,6 +2,7 @@ request = require 'request-promise'
 NodeGeocoder = require 'node-geocoder'
 _ = require 'lodash'
 
+Campground = require '../models/campground'
 config = require '../config'
 
 class GeocoderService
@@ -30,6 +31,13 @@ class GeocoderService
       if coordinates
         @reverse coordinates
 
+      Campground.search {
+        query:
+          prefix:
+            name: query
+        limit: 3
+      }
+
       request "#{config.PELIAS_API_URL}/autocomplete",
         json: true
         qs:
@@ -40,7 +48,7 @@ class GeocoderService
           'boundary.rect.min_lon': -171.791110603
           'boundary.rect.max_lon': -52.6480987209
     ]
-    .then ([coordinateLocation, response]) ->
+    .then ([coordinateLocation, campgrounds, response]) ->
       # TODO: prepend coordinates if query matches coordinates
       locations = _.map response.features, (location) ->
         {
@@ -60,6 +68,8 @@ class GeocoderService
           locality: coordinateLocation?.locality
           administrativeArea: coordinateLocation?.administrativeArea
         }
+      if campgrounds?.total
+        locations = campgrounds.places.concat locations
 
       locations
 

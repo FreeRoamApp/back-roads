@@ -17,7 +17,7 @@ pairwise = (arr) ->
   newArr
 
 class CheckInEmbed
-  checkIns: (trip, {userId}) ->
+  checkIns: (trip) ->
     # TODO: cache as a whole and maybe per checkinId
     trip.checkInIds ?= []
     Promise.map trip.checkInIds, (checkInId) ->
@@ -28,7 +28,7 @@ class CheckInEmbed
         else if checkIn.sourceType is 'overnight'
           Overnight.getById checkIn.sourceId
         else if checkIn.sourceType is 'coordinate'
-          Coordinate.getByUserIdAndId userId, checkIn.sourceId
+          Coordinate.getByUserIdAndId trip.userId, checkIn.sourceId
         else
           Campground.getById checkIn.sourceId
         ).then (place) ->
@@ -48,7 +48,6 @@ class CheckInEmbed
     # only need to cache for maybe an hour
     locations = _.map checkIns, 'location'
     pairs = pairwise locations
-
 
     Promise.map pairs, (pair) ->
       RoutingService.getRoute {locations: pair}

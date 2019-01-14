@@ -19,6 +19,8 @@ class CampgroundReview extends ReviewBase
         title: 'text'
         body: 'text'
         rating: 'int'
+        rigType: 'text'
+        rigLength: 'int'
         attachments: 'text' # json
       primaryKey:
         partitionKey: ['parentId']
@@ -36,6 +38,8 @@ class CampgroundReview extends ReviewBase
         title: 'text'
         body: 'text'
         rating: 'int'
+        rigType: 'text'
+        rigLength: 'int'
         attachments: 'text' # json
       primaryKey:
         partitionKey: ['userId']
@@ -53,6 +57,8 @@ class CampgroundReview extends ReviewBase
         title: 'text'
         body: 'text'
         rating: 'int'
+        rigType: 'text'
+        rigLength: 'int'
         attachments: 'text' # json
       primaryKey:
         partitionKey: ['id']
@@ -84,6 +90,8 @@ class CampgroundReview extends ReviewBase
         title: {type: 'text'}
         body: {type: 'text'}
         rating: {type: 'integer'}
+        rigType: {type: 'text'}
+        rigLength: {type: 'integer'}
     }
   ]
 

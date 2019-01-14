@@ -20,22 +20,38 @@ class CheckInCtrl
   getById: ({id}, {user}) ->
     CheckIn.getById id
 
+  # TODO: create past/future trip if it doesn't exist, and add check-in to trip
+  # TODO: replace trip.addCheckIn with this? accept tripType, tripId
   upsert: (diff, {user}) ->
-    console.log 'up', diff
     diff = _.pick diff, [
       'id', 'sourceId', 'sourceType', 'name',
-      'attachments', 'startTime', 'endTime'
+      'attachments', 'startTime', 'endTime', 'status', 'tripIds'
     ]
+
     diff = _.defaults {userId: user.id}, diff
-    (if diff.id
-      CheckIn.getById diff.id
-    else
-      Promise.resolve null
-    )
-    .then (checkIn) ->
+
+    Promise.all [
+      if diff.tripIds?[0]
+        Trip.getById diff.tripIds[0]
+      else
+        type = if diff.status is 'planned' then 'future' else 'past'
+        Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
+
+      if diff.id then CheckIn.getById diff.id else Promise.resolve null
+    ]
+    .then ([trip, checkIn]) ->
       if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
         router.throw {status: 401, info: 'Unauthorized'}
+      else if trip and "#{trip.userId}" isnt "#{user.id}"
+        router.throw {status: 401, info: 'Unauthorized'}
+
+      unless diff.id
+        diff.tripIds ?= [trip.id]
+
       CheckIn.upsertByRow checkIn, diff
+      .tap (checkIn) ->
+        unless diff.id
+          Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
       CacheService.deleteByCategory category
@@ -68,8 +84,11 @@ class CheckInCtrl
   deleteByRow: ({row}, {user}) ->
     CheckIn.getById row.id
     .then (checkIn) ->
+      unless checkIn or "#{checkIn.userId}" is "#{user.id}"
+        router.throw {status: 401, info: 'Unauthorized'}
+
       Promise.all [
-        Promise.map checkIn.tripIds, (tripId) ->
+        Promise.map (checkIn.tripIds or []), (tripId) ->
           Trip.deleteCheckInIdById tripId, checkIn.id
         CheckIn.deleteByRow _.defaults({userId: user.id}, checkIn)
       ]

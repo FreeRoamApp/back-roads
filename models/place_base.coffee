@@ -9,7 +9,6 @@ module.exports = class PlaceBase extends Base
   search: ({query, sort, limit}, {outputFn} = {}) =>
     limit ?= 250
     outputFn ?= @defaultESOutput
-    start = Date.now()
 
     elasticsearch.search {
       index: @ELASTICSEARCH_INDICES[0].name

@@ -9,14 +9,14 @@ config = require '../config'
 
 class ScyllaSetupService
   setup: (tables) =>
-    CacheService.lock 'scylla_setup2', =>
+    CacheService.lock 'scylla_setup8', =>
       Promise.all [
         @createKeyspaceIfNotExists 'free_roam'
       ]
       .then =>
-        if true or config.ENV is config.ENVS.DEV
+        if config.ENV is config.ENVS.DEV
           createTables = _.map _.filter(tables, ({name}) ->
-            name.indexOf('coord') isnt -1
+            name.indexOf('user_rig') isnt -1
           )
           Promise.each createTables, @createTableIfNotExist
         else

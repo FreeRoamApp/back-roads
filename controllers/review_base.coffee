@@ -2,6 +2,7 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 router = require 'exoid-router'
 
+UserRig = require '../models/user_rig'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 cknex = require '../services/cknex'
@@ -61,8 +62,10 @@ module.exports = class ReviewBaseCtrl
         Promise.resolve null
 
       @ParentModel.getById parentId
+
+      UserRig.getByUserId user.id
     ]
-    .then ([existingReview, parent]) =>
+    .then ([existingReview, parent, userRig]) =>
       if existingReview and (
         "#{existingReview.userId}" isnt "#{user.id}" and
           user.username isnt 'austin'
@@ -87,6 +90,20 @@ module.exports = class ReviewBaseCtrl
         rating: newRating, ratingCount: newRatingCount
         attachmentCount: newAttachmentCount
       }
+
+      # update maxLength and allowedTypes if we can
+      if rating > 3 and userRig
+        # TODO: problem with this is it's more of a maxReportedLength
+        # maxLength = parent.maxLength or 0
+        # if userRig.length > maxLength and userRig.length < 45
+        #   parentUpsert.maxLength = userRig.length
+
+        allowedTypes = parent.allowedTypes or {}
+        if userRig.type and not allowedTypes[userRig.type]
+          parentUpsert.allowedTypes = _.defaults {
+            "#{userRig.type}": true
+          }, allowedTypes
+
       # TODO: choose a good thumbnail for each campground instead of most recent
       if attachments?[0]
         parentUpsert.thumbnailPrefix = attachments[0].prefix
@@ -109,6 +126,8 @@ module.exports = class ReviewBaseCtrl
             parentId: parentId
             rating: rating
             attachments: attachments
+            rigType: userRig?.type
+            rigLength: userRig?.length
         ]
       ).tap ([parentUpsert, review]) =>
         Promise.all _.filter [

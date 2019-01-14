@@ -16,6 +16,7 @@ class UserRig extends Base
         # fifthWheel, travelTrailer, van, classA, classB, classC, car, tent
         type: 'text'
         length: 'int'
+        is4x4: 'boolean'
       primaryKey:
         partitionKey: ['userId']
     }
@@ -25,7 +26,7 @@ class UserRig extends Base
     cknex().select '*'
     .from 'user_rigs_by_userId'
     .where 'userId', '=', userId
-    .run()
+    .run {isSingle: true}
     .then @defaultOutput
 
 module.exports = new UserRig()

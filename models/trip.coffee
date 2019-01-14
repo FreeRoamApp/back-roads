@@ -79,14 +79,24 @@ class Trip extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
-  getByUserIdAndType: (userId, type) =>
+  getByUserIdAndType: (userId, type, {createIfNotExists} = {}) =>
     cknex().select '*'
     .from @SCYLLA_TABLES[0].name
     .where 'userId', '=', userId
     .andWhere 'type', '=', type
     .limit 1
     .run {isSingle: true}
+    .then (trip) =>
+      if createIfNotExists and not trip and type in ['past', 'future']
+        @upsert {
+          type
+          userId
+          name: _.startCase type
+        }
+      else
+        trip
     .then @defaultOutput
+
 
   deleteCheckInIdById: (id, checkInId) =>
     @getById id

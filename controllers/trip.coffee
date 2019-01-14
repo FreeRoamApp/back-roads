@@ -34,38 +34,18 @@ class TripCtrl
         router.throw {status: 401, info: 'Unauthorized'}
       Trip.upsertByRow trip, diff
 
+  getAll: ({}, {user}) ->
+    Trip.getAllByUserId user.id
+
   getById: ({id}, {user}) ->
     Trip.getById id
-    .then EmbedService.embed {embed: defaultEmbed, options: {userId: user.id}}
+    .then EmbedService.embed {embed: defaultEmbed}
     .then EmbedService.embed {embed: extrasEmbed}
 
   getByType: ({type}, {user}) ->
-    Trip.getByUserIdAndType user.id, type
+    Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
     .then EmbedService.embed {embed: defaultEmbed, options: {userId: user.id}}
     .then EmbedService.embed {embed: extrasEmbed}
-    .then (trip) ->
-      if not trip and type in ['past', 'future']
-        Trip.upsert {
-          type
-          userId: user.id
-          name: _.startCase type
-        }
-      else
-        trip
-
-  addCheckIn: ({id, name, sourceId, sourceType}, {user}) ->
-    Trip.getById id
-    .then (trip) ->
-      unless "#{trip.userId}" is "#{user.id}"
-        router.throw {status: 401, info: 'Unauthorized'}
-      CheckIn.upsert {
-        name, sourceId, sourceType
-        userId: user.id
-        tripIds: [id]
-        status: 'visited'
-      }
-      .then (checkIn) ->
-        Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}
 
   uploadImage: ({}, {user, file}) ->
     ImageService.uploadImageByUserIdAndFile(

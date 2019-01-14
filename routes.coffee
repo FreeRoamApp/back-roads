@@ -34,6 +34,7 @@ TripCtrl = require './controllers/trip'
 UserCtrl = require './controllers/user'
 UserBlockCtrl = require './controllers/user_block'
 UserFollowerCtrl = require './controllers/user_follower'
+UserRigCtrl = require './controllers/user_rig'
 
 authed = (handler) ->
   unless handler?
@@ -222,7 +223,7 @@ module.exports = router
 
 .on 'time.get', authed -> {now: new Date()}
 
-.on 'trips.addCheckIn', authed TripCtrl.addCheckIn
+.on 'trips.getAll', authed TripCtrl.getAll
 .on 'trips.getById', authed TripCtrl.getById
 .on 'trips.getByType', authed TripCtrl.getByType
 .on 'trips.getRoute', authed TripCtrl.getRoute
@@ -240,6 +241,11 @@ module.exports = router
 .on 'users.getPartner', authed UserCtrl.getPartner
 .on 'users.upsert', authed UserCtrl.upsert
 
+.on 'userBlocks.getAll', authed UserBlockCtrl.getAll
+.on 'userBlocks.getAllIds', authed UserBlockCtrl.getAllIds
+.on 'userBlocks.blockByUserId', authed UserBlockCtrl.blockByUserId
+.on 'userBlocks.unblockByUserId', authed UserBlockCtrl.unblockByUserId
+
 .on 'userFollowers.getAllFollowingIds',
   authed UserFollowerCtrl.getAllFollowingIds
 .on 'userFollowers.getAllFollowerIds',
@@ -249,7 +255,5 @@ module.exports = router
 .on 'userFollowers.followByUserId', authed UserFollowerCtrl.followByUserId
 .on 'userFollowers.unfollowByUserId', authed UserFollowerCtrl.unfollowByUserId
 
-.on 'userBlocks.getAll', authed UserBlockCtrl.getAll
-.on 'userBlocks.getAllIds', authed UserBlockCtrl.getAllIds
-.on 'userBlocks.blockByUserId', authed UserBlockCtrl.blockByUserId
-.on 'userBlocks.unblockByUserId', authed UserBlockCtrl.unblockByUserId
+.on 'userRigs.getByMe', authed UserRigCtrl.getByMe
+.on 'userRigs.upsert', authed UserRigCtrl.upsert
