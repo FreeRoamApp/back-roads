@@ -38,8 +38,6 @@
   "dependencies": {
     "@google-cloud/storage": "^2.3.4",
     "@mapbox/polyline": "^1.0.0",
-    "@turf/buffer": "^5.1.5",
-    "@turf/turf": "^5.1.6",
     "accounting": "^0.4.1",
     "amazon-product-api": "^0.4.4",
     "apn": "^2.1.2",
@@ -105,6 +103,7 @@
     "socket.io-redis": "^5.2.0",
     "socketio-sticky-session": "^0.4.2",
     "stripe": "^4.12.0",
+    "turf": "^3.0.14",
     "turndown": "^4.0.1",
     "twit": "^2.2.9",
     "universal-analytics": "^0.4.20",

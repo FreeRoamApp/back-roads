@@ -1,13 +1,19 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 router = require 'exoid-router'
+turf = require '@turf/turf'
+turfBuffer = require '@turf/buffer'
+polyline = require '@mapbox/polyline'
+simplify = require 'simplify-path'
 
 EmbedService = require '../services/embed'
 GeocoderService = require '../services/geocoder'
 ImageService = require '../services/image'
 CellSignalService = require '../services/cell_signal'
+EmbedService = require '../services/embed'
 RoutingService = require '../services/routing'
 Amenity = require '../models/amenity'
+Trip = require '../models/trip'
 WeatherStation = require '../models/weather_station'
 config = require '../config'
 
@@ -22,8 +28,36 @@ module.exports = class PlaceBaseCtrl
       _.defaults {@type}, place
     .then EmbedService.embed {embed: @defaultEmbed}
 
-  search: ({query, sort, limit}, {user}) =>
-    @Model.search {query, sort, limit}
+  search: ({query, tripId, sort, limit}, {user}) =>
+    (if tripId
+      # limit = 2000 # show them all
+      @_updateESQueryFromTripId tripId, query
+    else
+      Promise.resolve query
+    ).then (query) =>
+      @Model.search {query, sort, limit}
+
+  _updateESQueryFromTripId: (tripId, query) ->
+    Trip.getById tripId
+    .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.CHECK_INS]}
+    .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTE]}
+    .then (trip) ->
+      points = _.flatten _.map trip.route.legs, ({shape}) ->
+        simplify polyline.decode(shape), 0.5
+
+      points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
+      line = turf.lineString points
+      turfPolygon = turfBuffer line, '20', {units: 'miles'}
+      polygon = simplify _.flatten(turfPolygon.geometry.coordinates), 0.1
+
+      # topRight = _.map points, ([lat, lon]) ->
+      #   [lon / 10 + 0.5, lat / 10 + 0.5]
+      # bottomLeft = _.map(points, ([lat, lon]) ->
+      #   [lon / 10 - 0.5, lat / 10 - 0.5]).reverse() # reverse so we can get a continue line to draw polygon
+      # polygon = topRight.concat bottomLeft
+
+      query.bool.filter.push {geo_polygon: {location: points: polygon}}
+      query
 
   getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
     slug = if suffix \
