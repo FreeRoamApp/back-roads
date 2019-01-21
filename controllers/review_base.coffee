@@ -2,6 +2,7 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 router = require 'exoid-router'
 
+EarnAction = require '../models/earn_action'
 UserRig = require '../models/user_rig'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
@@ -37,6 +38,8 @@ module.exports = class ReviewBaseCtrl
   upsert: (options, {user, headers, connection}) =>
     {id, type, title, body, rating, attachments, extras, parentId} = options
 
+    console.log 'uppppppppp'
+
     # assign every attachment an id
     attachments = _.map attachments, (attachment) ->
       _.defaults attachment, {id: cknex.getTimeUuid()}
@@ -54,6 +57,7 @@ module.exports = class ReviewBaseCtrl
       router.throw status: 400, info: 'can\'t be empty'
 
     isUpdate = Boolean id
+
     Promise.all [
       if isUpdate
         @Model.getById id
@@ -64,6 +68,14 @@ module.exports = class ReviewBaseCtrl
       @ParentModel.getById parentId
 
       UserRig.getByUserId user.id
+
+      if isUpdate
+        Promise.resolve null
+      else
+        EarnAction.completeActionByUserId(
+          user.id
+          'review'
+        ).catch -> null
     ]
     .then ([existingReview, parent, userRig]) =>
       if existingReview and (

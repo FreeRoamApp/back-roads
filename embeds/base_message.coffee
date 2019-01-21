@@ -31,11 +31,9 @@ class BaseMessageEmbed
       )
       .then (groupUser) ->
         Promise.all [
-          GroupUserEmbed.karma groupUser
           GroupUserEmbed.roleNames groupUser
         ]
-        .then ([karma, roleNames]) ->
-          groupUser.karma = karma
+        .then ([roleNames]) ->
           groupUser.roleNames = roleNames
           groupUser
     , {expireSeconds: FIVE_MINUTES_SECONDS}

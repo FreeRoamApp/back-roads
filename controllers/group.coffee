@@ -15,7 +15,7 @@ config = require '../config'
 defaultEmbed = [
   # EmbedService.TYPES.GROUP.ME_GROUP_USER
   # EmbedService.TYPES.GROUP.STAR
-  EmbedService.TYPES.GROUP.USER_COUNT
+  # EmbedService.TYPES.GROUP.USER_COUNT
 ]
 userDataEmbed = [
   EmbedService.TYPES.USER.DATA

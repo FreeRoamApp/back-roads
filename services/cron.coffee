@@ -6,6 +6,7 @@ CacheService = require './cache'
 CleanupService = require './cleanup'
 Thread = require '../models/thread'
 Category = require '../models/category'
+EarnAction = require '../models/earn_action'
 Group = require '../models/group'
 Item = require '../models/item'
 Amenity = require '../models/amenity'
@@ -17,6 +18,7 @@ allGroups = require '../resources/data/groups'
 allItems = require '../resources/data/items'
 allAmenities = require '../resources/data/amenities'
 allCampgrounds = require '../resources/data/campgrounds'
+allEarnActions = require '../resources/data/earn_actions'
 allProducts = require '../resources/data/products'
 config = require '../config'
 
@@ -41,6 +43,7 @@ class CronService
         Category.batchUpsert _.cloneDeep allCategories
 
     @addCron 'tenMin', '0 */10 * * * *', ->
+      EarnAction.batchUpsert _.cloneDeep allEarnActions
       Thread.updateScores 'time'
 
 

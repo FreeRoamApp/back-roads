@@ -54,7 +54,6 @@ TYPES =
   GROUP_USER:
     ROLES: 'groupUser:roles'
     ROLE_NAMES: 'groupUser:roleNames'
-    KARMA: 'groupUser:karma'
     USER: 'groupUser:user'
   ITEM:
     FIRST_PRODUCT_SLUG: 'item:firstProductSlug'
@@ -79,7 +78,7 @@ TYPES =
     ROUTE: 'trip:route'
     STATS: 'trip:stats'
   USER:
-    DATA: 'user:data'
+    KARMA: 'user:karma'
   USER_FOLLOWER:
     USER: 'userFollower:user'
     FOLLOWED: 'userFollower:followed'

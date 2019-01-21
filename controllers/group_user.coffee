@@ -18,7 +18,6 @@ FIVE_MINUTES_SECONDS = 60 * 5
 
 defaultEmbed = [
   EmbedService.TYPES.GROUP_USER.ROLES
-  EmbedService.TYPES.GROUP_USER.KARMA
 ]
 userEmbed = [
   EmbedService.TYPES.GROUP_USER.USER
@@ -96,30 +95,6 @@ class GroupUserCtrl
           userId: userId
           groupId: groupId
         }, roleId
-
-  addKarmaByGroupIdAndUserId: ({groupId, userId, karma}, {user}) ->
-    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
-      GroupUser.PERMISSIONS.ADD_XP
-    ]
-    .then (hasPermission) ->
-      unless hasPermission
-        router.throw status: 400, info: 'no permission'
-
-      User.getById userId
-      .then (otherUser) ->
-        GroupAuditLog.upsert {
-          groupId
-          userId: user.id
-          actionText: Language.get 'audit.giveKarma', {
-            replacements:
-              name: User.getDisplayName otherUser
-              karma: karma
-            language: user.language
-          }
-        }
-
-        unless isNaN karma
-          GroupUser.incrementKarmaByGroupIdAndUserId groupId, userId, karma
 
   getByGroupIdAndUserId: ({groupId, userId}, {user}) ->
     GroupUser.getByGroupIdAndUserId groupId, userId

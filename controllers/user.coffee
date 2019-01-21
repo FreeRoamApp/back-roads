@@ -17,7 +17,7 @@ AVATAR_SMALL_IMAGE_HEIGHT = 96
 AVATAR_LARGE_IMAGE_WIDTH = 512
 AVATAR_LARGE_IMAGE_HEIGHT = 512
 
-defaultEmbed = [EmbedService.TYPES.USER.DATA]
+defaultEmbed = [EmbedService.TYPES.USER.KARMA]
 
 class UserCtrl
   getMe: ({}, {user, headers, connection}) ->

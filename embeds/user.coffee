@@ -1,5 +1,8 @@
+UserKarma = require '../models/user_karma'
+
 class UserEmbed
-  data: ->
-    null # TODO: this is an example, remove
+  karma: (user) ->
+    if user.id
+      UserKarma.getByUserId user.id
 
 module.exports = new UserEmbed()

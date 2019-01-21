@@ -317,12 +317,12 @@ class ThreadModel extends Base
 
   setScoreByThread: ({groupId, category, id}, score) ->
     groupAllPrefix = CacheService.STATIC_PREFIXES
-                    .THREAD_GROUP_LEADERBOARD_ALL
+                    .THREAD_KARMA_LEADERBOARD_ALL
     groupAllKey = "#{groupAllPrefix}:#{groupId}"
     CacheService.leaderboardUpdate groupAllKey, id, score
 
     groupCategoryPrefix = CacheService.STATIC_PREFIXES
-                          .THREAD_GROUP_LEADERBOARD_BY_CATEGORY
+                          .THREAD_KARMA_LEADERBOARD_BY_CATEGORY
     groupCategoryKey = "#{groupCategoryPrefix}:#{groupId}:#{category}"
     CacheService.leaderboardUpdate groupCategoryKey, id, score
 
@@ -346,12 +346,12 @@ class ThreadModel extends Base
   # need skip for redis-style (score), maxId for scylla-style (time)
   getAllScoreSorted: ({category, groupId, skip, limit} = {}) ->
     (if category
-      prefix = CacheService.STATIC_PREFIXES.THREAD_GROUP_LEADERBOARD_BY_CATEGORY
+      prefix = CacheService.STATIC_PREFIXES.THREAD_KARMA_LEADERBOARD_BY_CATEGORY
       CacheService.leaderboardGet "#{prefix}:#{groupId}:#{category}", {
         skip, limit
       }
     else
-      prefix = CacheService.STATIC_PREFIXES.THREAD_GROUP_LEADERBOARD_ALL
+      prefix = CacheService.STATIC_PREFIXES.THREAD_KARMA_LEADERBOARD_ALL
       CacheService.leaderboardGet "#{prefix}:#{groupId}", {skip, limit}
     )
     .then (results) ->
@@ -412,11 +412,11 @@ class ThreadModel extends Base
   # TODO: super() (deleteByRow)
   deleteByThread: (thread) ->
     groupAllPrefix = CacheService.STATIC_PREFIXES
-                    .THREAD_GROUP_LEADERBOARD_ALL
+                    .THREAD_KARMA_LEADERBOARD_ALL
     groupAllKey = "#{groupAllPrefix}:#{thread.groupId}"
 
     groupCategoryPrefix = CacheService.STATIC_PREFIXES
-                          .THREAD_GROUP_LEADERBOARD_BY_CATEGORY
+                          .THREAD_KARMA_LEADERBOARD_BY_CATEGORY
     groupCategoryKey = "#{groupCategoryPrefix}:" +
                         "#{thread.groupId}:#{thread.category}"
 

@@ -35,7 +35,6 @@ PERMISSIONS =
   BYPASS_SLOW_MODE: 'bypassSlowMode'
   READ_AUDIT_LOG: 'readAuditLog'
   MANAGE_INFO: 'manageInfo'
-  ADD_XP: 'addXp'
 
 class GroupUserModel extends Base
   SCYLLA_TABLES: [
@@ -66,19 +65,6 @@ class GroupUserModel extends Base
         roleIds: {type: 'set', subType: 'uuid'}
         data: 'text'
         time: 'timestamp'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['groupId']
-    }
-    {
-      name: 'group_users_karma_counter_by_userId'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        groupId: 'uuid'
-        userId: 'uuid'
-        karma: 'counter'
-        level: 'counter'
       primaryKey:
         partitionKey: ['userId']
         clusteringColumns: ['groupId']
@@ -212,47 +198,6 @@ class GroupUserModel extends Base
       # so roles can still be embedded
       groupUser or {groupId}
 
-  getXpByGroupIdAndUserId: (groupId, userId) ->
-    cknex().select '*'
-    .from 'group_users_karma_counter_by_userId'
-    .where 'groupId', '=', groupId
-    .andWhere 'userId', '=', userId
-    .run {isSingle: true}
-    .then (groupUser) ->
-      groupUser?.karma or 0
-
-  getTopByGroupId: (groupId) ->
-    prefix = CacheService.STATIC_PREFIXES.GROUP_LEADERBOARD
-    key = "#{prefix}:#{groupId}"
-    CacheService.leaderboardGet key
-    .then (results) ->
-      _.map _.chunk(results, 2), ([userId, karma], i) ->
-        {
-          rank: i + 1
-          groupId
-          userId
-          karma: parseInt karma
-        }
-
-  incrementXpByGroupIdAndUserId: (groupId, userId, amount) ->
-    updateXp = cknex().update 'group_users_karma_counter_by_userId'
-    .increment 'karma', amount
-    .where 'groupId', '=', groupId
-    .andWhere 'userId', '=', userId
-    .run()
-
-    Promise.all [
-      updateXp
-
-      prefix = CacheService.STATIC_PREFIXES.GROUP_LEADERBOARD
-      key = "#{prefix}:#{groupId}"
-      CacheService.leaderboardIncrement key, userId, amount, {
-        currentValueFn: =>
-          updateXp.then =>
-            @getXpByGroupIdAndUserId groupId, userId
-      }
-    ]
-
   deleteByGroupIdAndUserId: (groupId, userId) =>
     Promise.all [
       cknex().delete()
@@ -295,7 +240,7 @@ class GroupUserModel extends Base
     .then (groupUser) =>
       groupUser or= {}
       GroupRole.getAllByGroupId groupId, {preferCache: true}
-      .then (roles) ->
+      .then (roles) =>
         everyoneRole = _.find roles, {name: 'everyone'}
         groupUserRoles = _.filter _.map groupUser.roleIds, (roleId) ->
           _.find roles, (role) ->
@@ -303,8 +248,7 @@ class GroupUserModel extends Base
         if everyoneRole
           groupUserRoles = groupUserRoles.concat everyoneRole
         groupUser.roles = groupUserRoles
-        groupUser
-      .then =>
+
         @hasPermission {
           meGroupUser: groupUser
           permissions: permissions

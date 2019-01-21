@@ -142,8 +142,6 @@ module.exports = router
   authed GroupUserCtrl.addRoleByGroupIdAndUserId
 .on 'groupUsers.removeRoleByGroupIdAndUserId',
   authed GroupUserCtrl.removeRoleByGroupIdAndUserId
-.on 'groupUsers.addXpByGroupIdAndUserId',
-  authed GroupUserCtrl.addXpByGroupIdAndUserId
 .on 'groupUsers.getByGroupIdAndUserId',
   authed GroupUserCtrl.getByGroupIdAndUserId
 .on 'groupUsers.getTopByGroupId', authed GroupUserCtrl.getTopByGroupId

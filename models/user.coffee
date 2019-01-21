@@ -7,15 +7,6 @@ config = require '../config'
 
 PARTNER_TTL_S = 3600 * 24 * 31
 
-###
-alter table free_roam."users_by_id" add links map<text, text>
-alter table free_roam."users_by_username" add links map<text, text>
-alter table free_roam."users_by_email" add links map<text, text>
-
-update free_roam.users_by_username set links = links + {'instagram': 'https://instagram.com', 'web': ''} where username='austin'
-update free_roam.users_by_id set links = links + {'instagram': 'https://instagram.com', 'web': ''} where id=4120c690-aa76-11e8-a3bd-4a64b58f0b6a
-###
-
 class UserModel extends Base
   SCYLLA_TABLES: [
     # TODO: separate table for last_session_by_userId: lastActiveTime, lastActiveIp

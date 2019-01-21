@@ -57,11 +57,12 @@ class CacheService
     THREAD_USER: 'thread:user'
     USER_ID: 'user:id'
     USER_BLOCKS: 'user_blocks:all'
+  STATIC:
+    KARMA_LEADERBOARD: 'karma_leaderboard'
   STATIC_PREFIXES: # anything that's persistent (leaderboards, etc...)
     # these should stay, don't add a number to end to clear
-    GROUP_LEADERBOARD: 'group:leaderboard'
-    THREAD_GROUP_LEADERBOARD_BY_CATEGORY: 'thread:group_leaderboard:by_category'
-    THREAD_GROUP_LEADERBOARD_ALL: 'thread:group_leaderboard:by_all'
+    THREAD_KARMA_LEADERBOARD_BY_CATEGORY: 'thread:group_leaderboard:by_category'
+    THREAD_KARMA_LEADERBOARD_ALL: 'thread:group_leaderboard:by_all'
 
   constructor: ->
     @redlock = new Redlock [RedisService], {

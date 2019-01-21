@@ -25,14 +25,6 @@ class GroupUserEmbed
           "#{role.id}" is "#{roleId}")?.name
       groupUserRoleNames = groupUserRoleNames.concat 'everyone'
 
-  karma: (groupUser) ->
-    return Promise.resolve 0 # TODO
-
-    if groupUser.userId
-      GroupUser.getKarmaByGroupIdAndUserId(
-        groupUser.groupId, groupUser.userId
-      )
-
   user: (groupUser) ->
     if groupUser.userId
       User.getById groupUser.userId
