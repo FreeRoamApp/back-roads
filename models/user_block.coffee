@@ -11,19 +11,20 @@ config = require '../config'
 ONE_HOUR_SECONDS = 60
 
 class UserBlockModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'user_blocks_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        userId: 'uuid'
-        blockedId: 'uuid'
-        time: 'timestamp'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['blockedId']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'user_blocks_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'uuid'
+          blockedId: 'uuid'
+          time: 'timestamp'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['blockedId']
+      }
+    ]
 
   upsert: (userBlock) =>
     super userBlock

@@ -11,21 +11,22 @@ THREE_HOURS_SECONDS = 3600 * 3
 SIXTY_DAYS_SECONDS = 60 * 3600 * 24
 
 class GroupAuditLogModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'group_audit_log_by_id'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        actionText: 'text'
-      primaryKey:
-        partitionKey: ['groupId']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'group_audit_log_by_id'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          groupId: 'uuid'
+          actionText: 'text'
+        primaryKey:
+          partitionKey: ['groupId']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+    ]
 
   upsert: (groupAuditLog) =>
     super groupAuditLog, {ttl: SIXTY_DAYS_SECONDS}

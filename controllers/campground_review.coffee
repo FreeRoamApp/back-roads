@@ -5,7 +5,7 @@ EmbedService = require '../services/embed'
 CampgroundAttachment = require '../models/campground_attachment'
 CampgroundReview = require '../models/campground_review'
 Campground = require '../models/campground'
-ReviewBaseCtrl = require './review_base'
+PlaceReviewBaseCtrl = require './place_review_base'
 
 SEASONS = ['winter', 'spring', 'summer', 'fall']
 VALID_EXTRAS = [
@@ -13,8 +13,9 @@ VALID_EXTRAS = [
   'shade', 'safety', 'cellSignal'
 ]
 
-class CampgroundReviewCtrl extends ReviewBaseCtrl
+class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
   type: 'campgroundReview'
+  parentType: 'campground'
   imageFolder: 'rvcg'
   defaultEmbed: [EmbedService.TYPES.REVIEW.USER, EmbedService.TYPES.REVIEW.TIME]
   Model: CampgroundReview

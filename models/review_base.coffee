@@ -6,10 +6,82 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 module.exports = class ReviewBase extends Base
+  getScyllaTables: ->
+    [
+      {
+        name: 'reviews_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          # common between all reviews
+          id: 'timeuuid'
+          parentId: 'uuid'
+          parentType: 'text'
+          userId: 'uuid'
+          title: 'text'
+          body: 'text'
+          rating: 'int'
+          attachments: 'text' # json
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'reviews_counter_by_userId'
+        ignoreUpsert: true
+        fields:
+          id: 'uuid'
+          userId: 'uuid'
+          upvotes: 'counter'
+          downvotes: 'counter'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id']
+      }
+      {
+        name: 'reviews_counter_by_parentId'
+        ignoreUpsert: true
+        fields:
+          id: 'uuid'
+          parentId: 'uuid'
+          upvotes: 'counter'
+          downvotes: 'counter'
+        primaryKey:
+          partitionKey: ['parentId']
+          clusteringColumns: ['id']
+      }
+    ]
+
+  getCounterById: (id) ->
+    cknex().select '*'
+    .from 'reviews_counter_by_parentId'
+    .where 'id', '=', id
+    .run {isSingle: true}
+
+  voteByParent: (parent, values, userId) ->
+    qByUserId = cknex().update 'reviews_counter_by_userId'
+    _.forEach values, (value, key) ->
+      qByUserId = qByUserId.increment key, value
+    qByUserId = qByUserId.where 'userId', '=', userId
+    .andWhere 'id', '=', parent.id
+    .run()
+
+    qByTopId = cknex().update 'reviews_counter_by_parentId'
+    _.forEach values, (value, key) ->
+      qByTopId = qByTopId.increment key, value
+    qByTopId = qByTopId.where 'parentId', '=', parent.topId
+    .andWhere 'id', '=', parent.id
+    .run()
+
+    Promise.all [
+      qByUserId
+      qByTopId
+    ]
+
   search: ({query}) =>
     elasticsearch.search {
-      index: @ELASTICSEARCH_INDICES[0].name
-      type: @ELASTICSEARCH_INDICES[0].name
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
       body:
         query: query
         from : 0
@@ -21,44 +93,97 @@ module.exports = class ReviewBase extends Base
 
   getById: (id) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[2].name
+    .from @getScyllaTables()[1].name
     .where 'id', '=', id
     .run {isSingle: true}
     .then @defaultOutput
 
-  getAllByParentId: (parentId) =>
-    cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
-    .where 'parentId', '=', parentId
-    .run()
-    .map @defaultOutput
+  getAllByParentId: (parentId) ->
+    Promise.all [
+      cknex().select '*'
+      .from @getScyllaTables()[0].name
+      .where 'parentId', '=', parentId
+      .run()
+      .map @defaultOutput
+
+      cknex().select '*'
+      .from 'reviews_counter_by_parentId'
+      .where 'parentId', '=', parentId
+      .run()
+    ]
+    .then ([allReviews, voteCounts]) ->
+      allReviews = _.map allReviews, (review) ->
+        voteCount = _.find voteCounts, {id: review.id}
+        voteCount ?= {upvotes: 0, downvotes: 0}
+        review.upvotes = voteCount.upvotes
+        review.downvotes = voteCount.downvotes
+        review
+        # _.merge review, voteCount # messages with timeuuids
 
   getAll: ({limit} = {}) =>
     limit ?= 30
 
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .limit limit
     .run()
     .map @defaultOutput
 
+  deleteByRow: (row) ->
+    super(row).then ->
+      cknex().delete()
+      .from 'reviews_counter_by_parentId'
+      .where 'parentId', '=', row.parentId
+      .where 'id', '=', row.id
+      .run()
+
   getExtrasById: (id) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[3].name
+    .from @getScyllaTables()[2].name
     .where 'id', '=', id
     .run {isSingle: true}
     .then @defaultExtrasOutput
 
   upsertExtras: (extras) =>
     extras = @defaultExtrasInput extras
-
-    cknex().update @SCYLLA_TABLES[3].name
+    cknex().update @getScyllaTables()[2].name
     .set _.omit extras, ['id']
     .where 'id', '=', extras.id
     .run()
 
   deleteExtrasById: (id) =>
     cknex().delete()
-    .from @SCYLLA_TABLES[3].name
+    .from @getScyllaTables()[2].name
     .where 'id', '=', id
     .run()
+
+  defaultInput: (place) ->
+    unless place?
+      return null
+
+    # transform existing data
+    place = _.defaults {
+      attachments: JSON.stringify place.attachments
+    }, place
+
+
+    # add data if non-existent
+    _.defaults place, {
+      id: cknex.getTimeUuid()
+      rating: 0
+    }
+
+  defaultOutput: (place) =>
+    unless place?
+      return null
+
+    jsonFields = [
+      'attachments'
+    ]
+    _.forEach jsonFields, (field) ->
+      try
+        place[field] = JSON.parse place[field]
+      catch
+        {}
+
+    _.defaults {type: @type}, place

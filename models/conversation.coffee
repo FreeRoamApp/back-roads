@@ -10,82 +10,83 @@ Group = require './group'
 ONE_DAY_S = 3600 * 24
 
 class ConversationModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'conversations_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid' # not unique - 1 row per userId
-        slug: 'text'
-        userId: 'uuid'
-        userIds: {type: 'set', subType: 'uuid'}
-        groupId: 'uuid'
-        type: 'text'
-        rank: 'int' # ordering
-        data: 'text' # json: name, description, slowMode, slowModeCooldown
-        isRead: 'boolean'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'conversations_by_groupId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid' # not unique - 1 row per userId
-        slug: 'text'
-        userId: 'uuid'
-        userIds: {type: 'set', subType: 'uuid'}
-        groupId: 'uuid'
-        type: 'text'
-        rank: 'int' # ordering
-        data: 'text' # json: name, description, slowMode, slowModeCooldown
-        isRead: 'boolean'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['groupId']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'conversations_by_id'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        userId: 'uuid'
-        userIds: {type: 'set', subType: 'uuid'}
-        groupId: 'uuid'
-        type: 'text'
-        rank: 'int' # ordering
-        data: 'text' # json: name, description, slowMode, slowModeCooldown
-        isRead: 'boolean'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['id']
-        clusteringColumns: null
-    }
-    {
-      name: 'conversations_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        userId: 'uuid'
-        userIds: {type: 'set', subType: 'uuid'}
-        groupId: 'uuid'
-        type: 'text'
-        rank: 'int' # ordering
-        data: 'text' # json: name, description, slowMode, slowModeCooldown
-        isRead: 'boolean'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['slug']
-        clusteringColumns: null
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'conversations_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid' # not unique - 1 row per userId
+          slug: 'text'
+          userId: 'uuid'
+          userIds: {type: 'set', subType: 'uuid'}
+          groupId: 'uuid'
+          type: 'text'
+          rank: 'int' # ordering
+          data: 'text' # json: name, description, slowMode, slowModeCooldown
+          isRead: 'boolean'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'conversations_by_groupId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid' # not unique - 1 row per userId
+          slug: 'text'
+          userId: 'uuid'
+          userIds: {type: 'set', subType: 'uuid'}
+          groupId: 'uuid'
+          type: 'text'
+          rank: 'int' # ordering
+          data: 'text' # json: name, description, slowMode, slowModeCooldown
+          isRead: 'boolean'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['groupId']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'conversations_by_id'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          userId: 'uuid'
+          userIds: {type: 'set', subType: 'uuid'}
+          groupId: 'uuid'
+          type: 'text'
+          rank: 'int' # ordering
+          data: 'text' # json: name, description, slowMode, slowModeCooldown
+          isRead: 'boolean'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['id']
+          clusteringColumns: null
+      }
+      {
+        name: 'conversations_by_slug'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          userId: 'uuid'
+          userIds: {type: 'set', subType: 'uuid'}
+          groupId: 'uuid'
+          type: 'text'
+          rank: 'int' # ordering
+          data: 'text' # json: name, description, slowMode, slowModeCooldown
+          isRead: 'boolean'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['slug']
+          clusteringColumns: null
+      }
+    ]
 
   upsert: (conversation, {userId} = {}) =>
     conversation = @defaultInput conversation

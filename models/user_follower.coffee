@@ -11,74 +11,75 @@ config = require '../config'
 ONE_HOUR_SECONDS = 60
 
 class UserFollowerModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'user_followers_by_userId_sort_time'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        followedId: 'uuid'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['id', 'followedId']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'user_followers_by_followedId_sort_time'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        followedId: 'uuid'
-      primaryKey:
-        partitionKey: ['followedId']
-        clusteringColumns: ['id', 'userId']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'user_followers_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        followedId: 'uuid'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['followedId']
-    }
-    {
-      name: 'user_followers_by_followedId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        followedId: 'uuid'
-      primaryKey:
-        partitionKey: ['followedId']
-        clusteringColumns: ['userId']
-    }
-    {
-      name: 'user_followers_counter'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        userId: 'uuid'
-        count: 'counter'
-      primaryKey:
-        partitionKey: ['userId']
-    }
-    {
-      name: 'user_following_counter'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        userId: 'uuid'
-        count: 'counter'
-      primaryKey:
-        partitionKey: ['userId']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'user_followers_by_userId_sort_time'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          followedId: 'uuid'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id', 'followedId']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'user_followers_by_followedId_sort_time'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          followedId: 'uuid'
+        primaryKey:
+          partitionKey: ['followedId']
+          clusteringColumns: ['id', 'userId']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'user_followers_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          followedId: 'uuid'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['followedId']
+      }
+      {
+        name: 'user_followers_by_followedId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          followedId: 'uuid'
+        primaryKey:
+          partitionKey: ['followedId']
+          clusteringColumns: ['userId']
+      }
+      {
+        name: 'user_followers_counter'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          userId: 'uuid'
+          count: 'counter'
+        primaryKey:
+          partitionKey: ['userId']
+      }
+      {
+        name: 'user_following_counter'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          userId: 'uuid'
+          count: 'counter'
+        primaryKey:
+          partitionKey: ['userId']
+      }
+    ]
 
   upsert: (userFollower) =>
     super userFollower

@@ -13,51 +13,52 @@ ONE_DAY_SECONDS = 3600 * 24
 ONE_MONTH_SECONDS = 3600 * 24 * 31
 
 class BanModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'bans_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        groupId: 'uuid'
-        userId: 'uuid'
-        bannedById: 'uuid'
-        duration: 'text'
-        ip: 'text'
-      primaryKey:
-        partitionKey: ['groupId']
-        clusteringColumns: ['userId']
-    }
-    {
-      name: 'bans_by_ip'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        groupId: 'uuid'
-        userId: 'uuid'
-        bannedById: 'uuid'
-        duration: 'text'
-        ip: 'text'
-      primaryKey:
-        partitionKey: ['groupId']
-        clusteringColumns: ['ip']
-    }
-    {
-      name: 'bans_by_duration_and_id'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        groupId: 'uuid'
-        userId: 'uuid'
-        bannedById: 'uuid'
-        duration: 'text'
-        ip: 'text'
-      primaryKey:
-        partitionKey: ['groupId', 'duration']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'bans_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          groupId: 'uuid'
+          userId: 'uuid'
+          bannedById: 'uuid'
+          duration: 'text'
+          ip: 'text'
+        primaryKey:
+          partitionKey: ['groupId']
+          clusteringColumns: ['userId']
+      }
+      {
+        name: 'bans_by_ip'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          groupId: 'uuid'
+          userId: 'uuid'
+          bannedById: 'uuid'
+          duration: 'text'
+          ip: 'text'
+        primaryKey:
+          partitionKey: ['groupId']
+          clusteringColumns: ['ip']
+      }
+      {
+        name: 'bans_by_duration_and_id'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          groupId: 'uuid'
+          userId: 'uuid'
+          bannedById: 'uuid'
+          duration: 'text'
+          ip: 'text'
+        primaryKey:
+          partitionKey: ['groupId', 'duration']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+    ]
 
   upsert: (ban, {ttl} = {}) =>
     super ban, {ttl}

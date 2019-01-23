@@ -5,14 +5,15 @@ EmbedService = require '../services/embed'
 OvernightAttachment = require '../models/overnight_attachment'
 OvernightReview = require '../models/overnight_review'
 Overnight = require '../models/overnight'
-ReviewBaseCtrl = require './review_base'
+PlaceReviewBaseCtrl = require './place_review_base'
 
 VALID_EXTRAS = [
   'noise', 'safety', 'cellSignal'
 ]
 
-class OvernightReviewCtrl extends ReviewBaseCtrl
+class OvernightReviewCtrl extends PlaceReviewBaseCtrl
   type: 'overnightReview'
+  parentType: 'campground'
   imageFolder: 'rvov'
   defaultEmbed: [EmbedService.TYPES.REVIEW.USER, EmbedService.TYPES.REVIEW.TIME]
   Model: OvernightReview

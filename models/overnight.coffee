@@ -38,41 +38,43 @@ scyllaFields =
   maxDays: 'int'
 
 class Overnight extends PlaceBase
-  SCYLLA_TABLES: [
-    {
-      name: 'overnights_by_slug'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['slug']
-    }
-    {
-      name: 'overnights_by_id'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['id']
-    }
-  ]
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'overnights'
-      mappings:
-        # commeon
-        slug: {type: 'text'}
-        name: {type: 'text'}
-        location: {type: 'geo_point'}
-        rating: {type: 'integer'}
-        thumbnailPrefix: {type: 'text'}
-        address: {type: 'object'}
-        # end common
-        subType: {type: 'text'}
-        noise: {type: 'object'}
-        safety: {type: 'integer'}
-        cellSignal: {type: 'object'}
-        maxDays: {type: 'integer'}
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'overnights_by_slug'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['slug']
+      }
+      {
+        name: 'overnights_by_id'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['id']
+      }
+    ]
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'overnights'
+        mappings:
+          # commeon
+          slug: {type: 'text'}
+          name: {type: 'text'}
+          location: {type: 'geo_point'}
+          rating: {type: 'integer'}
+          thumbnailPrefix: {type: 'text'}
+          address: {type: 'object'}
+          # end common
+          subType: {type: 'text'}
+          noise: {type: 'object'}
+          safety: {type: 'integer'}
+          cellSignal: {type: 'object'}
+          maxDays: {type: 'integer'}
+      }
+    ]
 
   seasonalFields: []
 

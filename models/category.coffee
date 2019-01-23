@@ -6,23 +6,24 @@ Base = require './base'
 cknex = require '../services/cknex'
 
 class Category extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'categories_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        slug: 'text' # eg: starting-out
-        id: 'timeuuid'
-        name: 'text'
-        description: 'text'
-        type: 'text'
-        priority: 'int'
-        data: 'text'
-      primaryKey:
-        partitionKey: ['type']
-        clusteringColumns: ['slug']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'categories_by_slug'
+        keyspace: 'free_roam'
+        fields:
+          slug: 'text' # eg: starting-out
+          id: 'timeuuid'
+          name: 'text'
+          description: 'text'
+          type: 'text'
+          priority: 'int'
+          data: 'text'
+        primaryKey:
+          partitionKey: ['type']
+          clusteringColumns: ['slug']
+      }
+    ]
 
   getAll: ({limit} = {}) =>
     limit ?= 30

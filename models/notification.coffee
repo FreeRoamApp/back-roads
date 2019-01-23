@@ -10,75 +10,76 @@ UNREAD_TTL = 3600 * 24 * 365 # 1y
 READ_TTL = 3600 * 24 * 7 # 1w
 
 class NotificationModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'notifications_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        uniqueId: 'text' # used so there's not a bunch of dupe messages
-        fromId: 'uuid'
-        title: 'text'
-        text: 'text'
-        isRead: 'boolean'
-        data: 'text' # JSON conversationId
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: [['id', 'desc']]
-    }
-    # chat notifications
-    {
-      name: 'notifications_by_userId_and_groupId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        uniqueId: 'text' # used so there's not a bunch of dupe messages
-        fromId: 'uuid'
-        title: 'text'
-        text: 'text'
-        isRead: 'boolean'
-        data: 'text' # JSON conversationId
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['groupId', 'id']
-      withClusteringOrderBy: [['groupId', 'desc'], ['id', 'desc']]
-    }
-    {
-      name: 'notifications_by_roleId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        roleId: 'uuid'
-        groupId: 'uuid'
-        uniqueId: 'text' # used so there's not a bunch of dupe messages
-        fromId: 'uuid'
-        title: 'text'
-        text: 'text'
-        isRead: 'boolean'
-        data: 'text' # JSON conversationId
-      primaryKey:
-        partitionKey: ['roleId']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'notifications_by_userId_and_uniqueId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        uniqueId: 'text' # used so there's not a bunch of dupe messages
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['uniqueId']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'notifications_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          groupId: 'uuid'
+          uniqueId: 'text' # used so there's not a bunch of dupe messages
+          fromId: 'uuid'
+          title: 'text'
+          text: 'text'
+          isRead: 'boolean'
+          data: 'text' # JSON conversationId
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: [['id', 'desc']]
+      }
+      # chat notifications
+      {
+        name: 'notifications_by_userId_and_groupId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          groupId: 'uuid'
+          uniqueId: 'text' # used so there's not a bunch of dupe messages
+          fromId: 'uuid'
+          title: 'text'
+          text: 'text'
+          isRead: 'boolean'
+          data: 'text' # JSON conversationId
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['groupId', 'id']
+        withClusteringOrderBy: [['groupId', 'desc'], ['id', 'desc']]
+      }
+      {
+        name: 'notifications_by_roleId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          roleId: 'uuid'
+          groupId: 'uuid'
+          uniqueId: 'text' # used so there's not a bunch of dupe messages
+          fromId: 'uuid'
+          title: 'text'
+          text: 'text'
+          isRead: 'boolean'
+          data: 'text' # JSON conversationId
+        primaryKey:
+          partitionKey: ['roleId']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'notifications_by_userId_and_uniqueId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          groupId: 'uuid'
+          uniqueId: 'text' # used so there's not a bunch of dupe messages
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['uniqueId']
+      }
+    ]
 
   upsert: (notification) =>
     notification = @defaultInput notification

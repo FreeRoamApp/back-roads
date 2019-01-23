@@ -2,14 +2,20 @@ _ = require 'lodash'
 router = require 'exoid-router'
 Promise = require 'bluebird'
 
-Thread = require '../models/thread'
-ThreadComment = require '../models/thread_comment'
-ThreadVote = require '../models/thread_vote'
+Comment = require '../models/comment'
+Vote = require '../models/vote'
 config = require '../config'
 
-class ThreadVoteCtrl
+Parents =
+  comment: require '../models/comment'
+  thread: require '../models/thread'
+  campgroundReview: require '../models/campground_review'
+  overnightReview: require '../models/overnight_review'
+
+class VoteCtrl
   upsertByParent: ({parent, vote}, {user}) ->
-    ThreadVote.getByUserIdAndParent user.id, parent
+    console.log parent
+    Vote.getByUserIdAndParent user.id, parent
     .then (existingVote) ->
       voteNumber = if vote is 'up' then 1 else -1
 
@@ -29,19 +35,19 @@ class ThreadVoteCtrl
 
       voteTime = existingVote?.time or new Date()
 
+      topType = if parent.topId then parent.topType else parent.type
+
       Promise.all [
-        ThreadVote.upsert {
+        Vote.upsert {
           userId: user.id
-          parentTopId: parent.topId
+          topId: parent.topId
+          topType: topType
           parentType: parent.type
           parentId: parent.id
           vote: voteNumber
         }
 
-        if parent.type is 'thread'
-          Thread.incrementById parent.id, values
-        else
-          ThreadComment.voteByThreadComment parent, values
+        Parents[parent.type].voteByParent parent, values, user.id
       ]
 
-module.exports = new ThreadVoteCtrl()
+module.exports = new VoteCtrl()

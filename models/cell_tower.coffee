@@ -13,18 +13,19 @@ carriers =
   sprint: 'Sprint'
 
 class CellTower extends PlaceBase
-  SCYLLA_TABLES: []
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'cell_towers'
-      mappings:
-        # common between all places
-        location: {type: 'geo_point'}
-        # end common
-        carrier: {type: 'text'}
-        tech: {type: 'text'}
-    }
-  ]
+  getScyllaTables: -> []
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'cell_towers'
+        mappings:
+          # common between all places
+          location: {type: 'geo_point'}
+          # end common
+          carrier: {type: 'text'}
+          tech: {type: 'text'}
+      }
+    ]
 
   defaultInput: (cellTower) ->
     unless cellTower?

@@ -11,62 +11,63 @@ Base = require './base'
 config = require '../config'
 
 class ConversationMessageModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'conversation_messages_by_conversationId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        conversationId: 'uuid'
-        clientId: 'uuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        body: 'text'
-        card: 'text'
-        timeBucket: 'text'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['conversationId', 'timeBucket']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    # for showing all of a user's messages, and potentially deleting all
-    {
-      name: 'conversation_messages_by_groupId_and_userId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        conversationId: 'uuid'
-        clientId: 'uuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        body: 'text'
-        card: 'text'
-        timeBucket: 'text'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['groupId', 'userId', 'timeBucket']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    # for deleting by id
-    {
-      name: 'conversation_messages_by_id'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        conversationId: 'uuid'
-        clientId: 'uuid'
-        userId: 'uuid'
-        groupId: 'uuid'
-        body: 'text'
-        card: 'text'
-        timeBucket: 'text'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['id']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'conversation_messages_by_conversationId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          conversationId: 'uuid'
+          clientId: 'uuid'
+          userId: 'uuid'
+          groupId: 'uuid'
+          body: 'text'
+          card: 'text'
+          timeBucket: 'text'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['conversationId', 'timeBucket']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      # for showing all of a user's messages, and potentially deleting all
+      {
+        name: 'conversation_messages_by_groupId_and_userId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          conversationId: 'uuid'
+          clientId: 'uuid'
+          userId: 'uuid'
+          groupId: 'uuid'
+          body: 'text'
+          card: 'text'
+          timeBucket: 'text'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['groupId', 'userId', 'timeBucket']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      # for deleting by id
+      {
+        name: 'conversation_messages_by_id'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          conversationId: 'uuid'
+          clientId: 'uuid'
+          userId: 'uuid'
+          groupId: 'uuid'
+          body: 'text'
+          card: 'text'
+          timeBucket: 'text'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['id']
+      }
+    ]
 
   constructor: ->
     @streamChannelKey = 'conversation_message'

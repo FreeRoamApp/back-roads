@@ -9,25 +9,26 @@ cknex = require '../services/cknex'
 # use the devicePushTopic. for private channels, use devicePushTopic
 
 class PushTopic extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'push_topics_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        userId: 'uuid'
-        groupId: 'uuid' # config.EMPTY_UUID for all
-        sourceType: 'text' # conversation, video, thread, etc...
-        sourceId: 'text' # id or 'all'
-        token: 'text'
-        deviceId: 'text'
-        lastUpdateTime: 'timestamp'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: [
-          'token', 'groupId', 'sourceType', 'sourceId'
-        ]
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'push_topics_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'uuid'
+          groupId: 'uuid' # config.EMPTY_UUID for all
+          sourceType: 'text' # conversation, video, thread, etc...
+          sourceId: 'text' # id or 'all'
+          token: 'text'
+          deviceId: 'text'
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: [
+            'token', 'groupId', 'sourceType', 'sourceId'
+          ]
+      }
+    ]
 
   getAllByUserId: (userId) =>
     cknex().select '*'

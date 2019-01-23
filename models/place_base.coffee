@@ -11,15 +11,15 @@ module.exports = class PlaceBase extends Base
     outputFn ?= @defaultESOutput
 
     elasticsearch.search {
-      index: @ELASTICSEARCH_INDICES[0].name
-      type: @ELASTICSEARCH_INDICES[0].name
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
       body:
         query:
           # random ordering so they don't clump on map
           function_score:
             query: query
             functions: _.filter [
-              if @ELASTICSEARCH_INDICES[0].mappings.ratingCount
+              if @getElasticSearchIndices()[0].mappings.ratingCount
                 {
                   filter:
                     range:
@@ -81,14 +81,14 @@ module.exports = class PlaceBase extends Base
 
   getBySlug: (slug) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .where 'slug', '=', slug
     .run {isSingle: true}
     .then @defaultOutput
 
   getById: (id) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[1].name
+    .from @getScyllaTables()[1].name
     .where 'id', '=', id
     .run {isSingle: true}
     .then @defaultOutput
@@ -97,14 +97,14 @@ module.exports = class PlaceBase extends Base
     limit ?= 30
 
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .limit limit
     .run()
     .map @defaultOutput
 
   changeSlug: (place, newSlug) =>
     cknex().delete()
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .where 'slug', '=', place.slug
     .run()
     .then =>

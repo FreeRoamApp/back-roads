@@ -7,17 +7,18 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 class WeatherStation extends PlaceBase
-  SCYLLA_TABLES: []
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'weather_stations'
-      mappings:
-        # common between all places
-        location: {type: 'geo_point'}
-        # end common
-        weather: {type: 'text'}
-    }
-  ]
+  getScyllaTables: -> []
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'weather_stations'
+        mappings:
+          # common between all places
+          location: {type: 'geo_point'}
+          # end common
+          weather: {type: 'text'}
+      }
+    ]
 
   getClosestToLocation: (location) =>
     @search {

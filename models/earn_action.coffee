@@ -36,46 +36,47 @@ defaultEarnTransactionLockOutput = (earnTransactionLock) ->
   earnTransactionLock
 
 class EarnActionModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'earn_actions'
-      keyspace: 'free_roam'
-      fields:
-        bucket: 'text'
-        name: 'text'
-        action: 'text'
-        ttl: 'int'
-        data: 'text'
-        maxCount: 'int'
-      primaryKey:
-        partitionKey: ['bucket']
-        clusteringColumns: ['action']
-    }
-    {
-      name: 'earn_transaction_locks'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        userId: 'uuid'
-        action: 'text'
-        count: 'int'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['action']
-    }
-    {
-      name: 'earn_transactions'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        id: 'timeuuid'
-        userId: 'uuid'
-        action: 'text'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['id']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'earn_actions'
+        keyspace: 'free_roam'
+        fields:
+          bucket: 'text'
+          name: 'text'
+          action: 'text'
+          ttl: 'int'
+          data: 'text'
+          maxCount: 'int'
+        primaryKey:
+          partitionKey: ['bucket']
+          clusteringColumns: ['action']
+      }
+      {
+        name: 'earn_transaction_locks'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          userId: 'uuid'
+          action: 'text'
+          count: 'int'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['action']
+      }
+      {
+        name: 'earn_transactions'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          action: 'text'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id']
+      }
+    ]
 
   upsertTransaction: (earnTransaction) =>
     earnTransaction = defaultEarnTransaction earnTransaction

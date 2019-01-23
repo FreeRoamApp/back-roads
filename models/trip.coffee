@@ -17,23 +17,24 @@ scyllaFields =
   imagePrefix: 'text'
 
 class Trip extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'trips_by_userId'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['type', 'id']
-    }
-    {
-      name: 'trips_by_id'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['id']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'trips_by_userId'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['type', 'id']
+      }
+      {
+        name: 'trips_by_id'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['id']
+      }
+    ]
 
   defaultInput: (trip) ->
     unless trip?
@@ -66,7 +67,7 @@ class Trip extends Base
     limit ?= 30
 
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .where 'userId', '=', userId
     .limit limit
     .run()
@@ -74,14 +75,14 @@ class Trip extends Base
 
   getById: (id) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[1].name
+    .from @getScyllaTables()[1].name
     .where 'id', '=', id
     .run {isSingle: true}
     .then @defaultOutput
 
   getByUserIdAndType: (userId, type, {createIfNotExists} = {}) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .where 'userId', '=', userId
     .andWhere 'type', '=', type
     .limit 1

@@ -8,7 +8,7 @@ User = require '../models/user'
 Group = require '../models/group'
 GroupUser = require '../models/group_user'
 Thread = require '../models/thread'
-ThreadVote = require '../models/thread_vote'
+Vote = require '../models/vote'
 Ban = require '../models/ban'
 CacheService = require '../services/cache'
 EmbedService = require '../services/embed'
@@ -212,10 +212,10 @@ class ThreadCtrl
       if _.isEmpty threads
         return threads
       parents = _.map threads, ({id}) -> {type: 'thread', id}
-      ThreadVote.getAllByUserIdAndParents user.id, parents
-      .then (threadVotes) ->
+      Vote.getAllByUserIdAndParents user.id, parents
+      .then (votes) ->
         threads = _.map threads, (thread) ->
-          thread.myVote = _.find threadVotes, ({parentId}) ->
+          thread.myVote = _.find votes, ({parentId}) ->
             "#{parentId}" is "#{thread.id}"
           thread
         threads
@@ -236,7 +236,7 @@ class ThreadCtrl
       category: "#{CacheService.PREFIXES.THREAD_BY_ID_CATEGORY}:#{id}"
     }
     .then (thread) ->
-      ThreadVote.getByUserIdAndParent user.id, {id, type: 'thread'}
+      Vote.getByUserIdAndParent user.id, {id, type: 'thread'}
       .then (myVote) ->
         thread.myVote = myVote
         thread
@@ -257,7 +257,7 @@ class ThreadCtrl
       category: "#{CacheService.PREFIXES.THREAD_BY_SLUG_CATEGORY}:#{slug}"
     }
     .then (thread) ->
-      ThreadVote.getByUserIdAndParent user.id, {
+      Vote.getByUserIdAndParent user.id, {
         id: thread.id, type: 'thread'
       }
       .then (myVote) ->

@@ -14,129 +14,142 @@ ONE_HOUR_SECONDS = 3600
 MAX_UNIQUE_ID_ATTEMPTS = 10
 
 class ThreadModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'threads_by_groupId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        groupId: 'uuid'
-        userId: 'uuid'
-        category: 'text'
-        title: 'text'
-        body: 'text'
-        attachments: 'text'
-        lastUpdateTime: 'timestamp'
-        isPinned: 'boolean'
-        timeBucket: 'text'
-      primaryKey:
-        partitionKey: ['groupId', 'timeBucket']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'threads_by_groupId_and_category'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        groupId: 'uuid'
-        userId: 'uuid'
-        category: 'text'
-        title: 'text'
-        body: 'text'
-        attachments: 'text'
-        lastUpdateTime: 'timestamp'
-        isPinned: 'boolean'
-        timeBucket: 'text'
-      primaryKey:
-        partitionKey: ['groupId', 'category', 'timeBucket']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'threads_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        groupId: 'uuid'
-        userId: 'uuid'
-        category: 'text'
-        title: 'text'
-        body: 'text'
-        attachments: 'text'
-        lastUpdateTime: 'timestamp'
-        isPinned: 'boolean'
-        timeBucket: 'text'
-      primaryKey:
-        partitionKey: ['userId'] # may want to restructure with timeBucket
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-    {
-      name: 'threads_by_id'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        groupId: 'uuid'
-        userId: 'uuid'
-        category: 'text'
-        title: 'text'
-        body: 'text'
-        attachments: 'text'
-        lastUpdateTime: 'timestamp'
-        isPinned: 'boolean'
-        timeBucket: 'text'
-      primaryKey:
-        partitionKey: ['id']
-    }
-    {
-      name: 'threads_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        groupId: 'uuid'
-        userId: 'uuid'
-        category: 'text'
-        title: 'text'
-        body: 'text'
-        attachments: 'text'
-        lastUpdateTime: 'timestamp'
-        isPinned: 'boolean'
-        timeBucket: 'text'
-      primaryKey:
-        partitionKey: ['slug']
-    }
-    {
-      name: 'threads_counter_by_id'
-      ignoreUpsert: true
-      fields:
-        id: 'timeuuid'
-        upvotes: 'counter'
-        downvotes: 'counter'
-      primaryKey:
-        partitionKey: ['id']
-        clusteringColumns: null
-    }
-    {
-      name: 'threads_recent'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        partition: 'int' # always 1
-        id: 'timeuuid'
-        groupId: 'uuid'
-        category: 'text'
-      primaryKey:
-        partitionKey: ['partition']
-        clusteringColumns: ['id']
-      withClusteringOrderBy: ['id', 'desc']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'threads_by_groupId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          groupId: 'uuid'
+          userId: 'uuid'
+          category: 'text'
+          title: 'text'
+          body: 'text'
+          attachments: 'text'
+          lastUpdateTime: 'timestamp'
+          isPinned: 'boolean'
+          timeBucket: 'text'
+        primaryKey:
+          partitionKey: ['groupId', 'timeBucket']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'threads_by_groupId_and_category'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          groupId: 'uuid'
+          userId: 'uuid'
+          category: 'text'
+          title: 'text'
+          body: 'text'
+          attachments: 'text'
+          lastUpdateTime: 'timestamp'
+          isPinned: 'boolean'
+          timeBucket: 'text'
+        primaryKey:
+          partitionKey: ['groupId', 'category', 'timeBucket']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'threads_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          groupId: 'uuid'
+          userId: 'uuid'
+          category: 'text'
+          title: 'text'
+          body: 'text'
+          attachments: 'text'
+          lastUpdateTime: 'timestamp'
+          isPinned: 'boolean'
+          timeBucket: 'text'
+        primaryKey:
+          partitionKey: ['userId'] # may want to restructure with timeBucket
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+      {
+        name: 'threads_by_id'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          groupId: 'uuid'
+          userId: 'uuid'
+          category: 'text'
+          title: 'text'
+          body: 'text'
+          attachments: 'text'
+          lastUpdateTime: 'timestamp'
+          isPinned: 'boolean'
+          timeBucket: 'text'
+        primaryKey:
+          partitionKey: ['id']
+      }
+      {
+        name: 'threads_by_slug'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          groupId: 'uuid'
+          userId: 'uuid'
+          category: 'text'
+          title: 'text'
+          body: 'text'
+          attachments: 'text'
+          lastUpdateTime: 'timestamp'
+          isPinned: 'boolean'
+          timeBucket: 'text'
+        primaryKey:
+          partitionKey: ['slug']
+      }
+      {
+        name: 'threads_counter_by_id'
+        ignoreUpsert: true
+        fields:
+          id: 'timeuuid'
+          upvotes: 'counter'
+          downvotes: 'counter'
+        primaryKey:
+          partitionKey: ['id']
+          clusteringColumns: null
+      }
+      {
+        name: 'threads_counter_by_userId'
+        ignoreUpsert: true
+        fields:
+          id: 'timeuuid'
+          userId: 'uuid'
+          upvotes: 'counter'
+          downvotes: 'counter'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id']
+      }
+      {
+        name: 'threads_recent'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          partition: 'int' # always 1
+          id: 'timeuuid'
+          groupId: 'uuid'
+          category: 'text'
+        primaryKey:
+          partitionKey: ['partition']
+          clusteringColumns: ['id']
+        withClusteringOrderBy: ['id', 'desc']
+      }
+    ]
 
   getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
     if suffix is 1
@@ -399,15 +412,28 @@ class ThreadModel extends Base
       else
         results
 
-  incrementById: (id, diff) =>
-    @getById id, {preferCache: true, omitCounter: true}
+  voteByParent: (parent, diff, userId) =>
+    @getById parent.id, {preferCache: true, omitCounter: true}
     .then @setStaleByThread
 
-    q = cknex().update 'threads_counter_by_id'
-    _.forEach diff, (amount, key) ->
-      q = q.increment key, amount
-    q.where 'id', '=', id
+    qByUserId = cknex().update 'threads_counter_by_userId'
+    _.forEach values, (value, key) ->
+      qByUserId = qByUserId.increment key, value
+    qByUserId = qByUserId.where 'userId', '=', userId
+    .andWhere 'id', '=', parent.id
     .run()
+
+    qByTopId = cknex().update 'threads_counter_by_id'
+    _.forEach values, (value, key) ->
+      qByTopId = qByTopId.increment key, value
+    qByTopId = qByTopId.where 'id', '=', parent.id
+    .andWhere 'id', '=', parent.id
+    .run()
+
+    Promise.all [
+      qByUserId
+      qByTopId
+    ]
 
   # TODO: super() (deleteByRow)
   deleteByThread: (thread) ->

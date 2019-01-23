@@ -66,10 +66,10 @@ setup = ->
   models = fs.readdirSync('./models')
   scyllaTables = _.flatten _.map models, (modelFile) ->
     model = require('./models/' + modelFile)
-    model?.SCYLLA_TABLES or []
+    model?.getScyllaTables?() or []
   elasticSearchIndices = _.flatten _.map models, (modelFile) ->
     model = require('./models/' + modelFile)
-    model?.ELASTICSEARCH_INDICES or []
+    model?.getElasticSearchIndices?() or []
 
   shouldRunSetup = true or config.ENV is config.ENVS.PRODUCTION or
                     config.SCYLLA.CONTACT_POINTS[0] is 'localhost'

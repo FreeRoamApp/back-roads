@@ -8,82 +8,83 @@ config = require '../config'
 PARTNER_TTL_S = 3600 * 24 * 31
 
 class UserModel extends Base
-  SCYLLA_TABLES: [
-    # TODO: separate table for last_session_by_userId: lastActiveTime, lastActiveIp
-    {
-      name: 'users_by_id'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        username: 'text'
-        password: 'text'
-        email: 'text'
-        name: 'text'
-        avatarImage: 'text'
-        language: 'text'
-        flags: 'text'
-        links: {type: 'map', subType: 'text', subType2: 'text'}
-      primaryKey:
-        partitionKey: ['id']
-    }
-    {
-      name: 'users_by_username'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        username: 'text'
-        password: 'text'
-        email: 'text'
-        name: 'text'
-        avatarImage: 'text'
-        language: 'text'
-        flags: 'text'
-        links: {type: 'map', subType: 'text', subType2: 'text'}
-      primaryKey:
-        partitionKey: ['username']
-    }
-    {
-      name: 'users_by_email'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        username: 'text'
-        password: 'text'
-        email: 'text'
-        name: 'text'
-        avatarImage: 'text'
-        language: 'text'
-        flags: 'text'
-        links: {type: 'map', subType: 'text', subType2: 'text'}
-      primaryKey:
-        partitionKey: ['email']
-    }
+  getScyllaTables: ->
+    [
+      # TODO: separate table for last_session_by_userId: lastActiveTime, lastActiveIp
+      {
+        name: 'users_by_id'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          username: 'text'
+          password: 'text'
+          email: 'text'
+          name: 'text'
+          avatarImage: 'text'
+          language: 'text'
+          flags: 'text'
+          links: {type: 'map', subType: 'text', subType2: 'text'}
+        primaryKey:
+          partitionKey: ['id']
+      }
+      {
+        name: 'users_by_username'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          username: 'text'
+          password: 'text'
+          email: 'text'
+          name: 'text'
+          avatarImage: 'text'
+          language: 'text'
+          flags: 'text'
+          links: {type: 'map', subType: 'text', subType2: 'text'}
+        primaryKey:
+          partitionKey: ['username']
+      }
+      {
+        name: 'users_by_email'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          username: 'text'
+          password: 'text'
+          email: 'text'
+          name: 'text'
+          avatarImage: 'text'
+          language: 'text'
+          flags: 'text'
+          links: {type: 'map', subType: 'text', subType2: 'text'}
+        primaryKey:
+          partitionKey: ['email']
+      }
 
-    # referrals / partners
-    {
-      name: 'user_partners_by_userId'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        userId: 'timeuuid'
-        partnerSlug: 'text'
-      primaryKey:
-        partitionKey: ['userId']
-    }
-    # TODO: switch to use partnerUserId once we have a system setup where every
-    # partner has a user account
-    {
-      name: 'user_partners_by_partnerSlug'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        userId: 'timeuuid'
-        partnerSlug: 'text'
-      primaryKey:
-        partitionKey: ['partnerSlug']
-        clusteringColumns: ['userId']
-    }
-  ]
+      # referrals / partners
+      {
+        name: 'user_partners_by_userId'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          userId: 'timeuuid'
+          partnerSlug: 'text'
+        primaryKey:
+          partitionKey: ['userId']
+      }
+      # TODO: switch to use partnerUserId once we have a system setup where every
+      # partner has a user account
+      {
+        name: 'user_partners_by_partnerSlug'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          userId: 'timeuuid'
+          partnerSlug: 'text'
+        primaryKey:
+          partitionKey: ['partnerSlug']
+          clusteringColumns: ['userId']
+      }
+    ]
 
   getById: (id) =>
     cknex().select '*'

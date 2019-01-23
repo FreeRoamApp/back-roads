@@ -7,18 +7,19 @@ CacheService = require '../services/cache'
 config = require '../config'
 
 class UserKarma extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'user_karma_counter_by_userId'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        userId: 'uuid'
-        karma: 'counter'
-      primaryKey:
-        partitionKey: ['userId']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'user_karma_counter_by_userId'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          userId: 'uuid'
+          karma: 'counter'
+        primaryKey:
+          partitionKey: ['userId']
+      }
+    ]
 
   getByUserId: (userId) =>
     cknex().select '*'

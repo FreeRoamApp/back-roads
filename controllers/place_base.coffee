@@ -139,18 +139,18 @@ module.exports = class PlaceBaseCtrl
         slug = _.kebabCase(name)
         @getUniqueSlug slug)
 
-      if @Model.SCYLLA_TABLES[0].fields.address
+      if @Model.getScyllaTables()[0].fields.address
         GeocoderService.reverse location
         .catch -> null
       else
         Promise.resolve null
 
-      if @Model.SCYLLA_TABLES[0].fields.weather
+      if @Model.getScyllaTables()[0].fields.weather
         WeatherStation.getClosestToLocation location
       else
         Promise.resolve null
 
-      if not isUpdate and @Model.SCYLLA_TABLES[0].fields.cellSignal
+      if not isUpdate and @Model.getScyllaTables()[0].fields.cellSignal
         CellSignalService.getEstimatesByLocation location
         .catch ->
           console.log 'cell estimation error'
@@ -172,7 +172,7 @@ module.exports = class PlaceBaseCtrl
 
       @Model.upsert diff
       .tap (place) =>
-        if @Model.SCYLLA_TABLES[0].fields.distanceTo
+        if @Model.getScyllaTables()[0].fields.distanceTo
           @_setNearbyAmenities place
 
         if place.weather

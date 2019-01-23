@@ -6,44 +6,45 @@ Base = require './base'
 cknex = require '../services/cknex'
 
 class Product extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'products_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        slug: 'text' # eg: kebab-case name
-        id: 'timeuuid'
-        itemSlug: 'text'
-        source: 'text' # eg amazon
-        sourceId: 'text' # eg amazon
-        name: 'text'
-        description: 'text'
-        sellers: 'text' # [{seller: 'amazon', sellerId: 'amazon-id'}]
-        reviewersLiked: {type: 'set', subType: 'text'}
-        reviewersDisliked: {type: 'set', subType: 'text'}
-        data: 'text'
-      primaryKey:
-        partitionKey: ['slug']
-    }
-    {
-      name: 'products_by_itemSlug'
-      keyspace: 'free_roam'
-      fields:
-        slug: 'text' # eg: az-amazonid
-        id: 'timeuuid'
-        itemSlug: 'text'
-        source: 'text' # eg amazon
-        sourceId: 'text' # eg amazon
-        name: 'text'
-        description: 'text'
-        reviewersLiked: {type: 'set', subType: 'text'}
-        reviewersDisliked: {type: 'set', subType: 'text'}
-        data: 'text'
-      primaryKey:
-        partitionKey: ['itemSlug']
-        clusteringColumns: ['slug']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'products_by_slug'
+        keyspace: 'free_roam'
+        fields:
+          slug: 'text' # eg: kebab-case name
+          id: 'timeuuid'
+          itemSlug: 'text'
+          source: 'text' # eg amazon
+          sourceId: 'text' # eg amazon
+          name: 'text'
+          description: 'text'
+          sellers: 'text' # [{seller: 'amazon', sellerId: 'amazon-id'}]
+          reviewersLiked: {type: 'set', subType: 'text'}
+          reviewersDisliked: {type: 'set', subType: 'text'}
+          data: 'text'
+        primaryKey:
+          partitionKey: ['slug']
+      }
+      {
+        name: 'products_by_itemSlug'
+        keyspace: 'free_roam'
+        fields:
+          slug: 'text' # eg: az-amazonid
+          id: 'timeuuid'
+          itemSlug: 'text'
+          source: 'text' # eg amazon
+          sourceId: 'text' # eg amazon
+          name: 'text'
+          description: 'text'
+          reviewersLiked: {type: 'set', subType: 'text'}
+          reviewersDisliked: {type: 'set', subType: 'text'}
+          data: 'text'
+        primaryKey:
+          partitionKey: ['itemSlug']
+          clusteringColumns: ['slug']
+      }
+    ]
 
   getBySlug: (slug) =>
     cknex().select '*'
@@ -74,7 +75,7 @@ class Product extends Base
     limit ?= 30
 
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .limit limit
     .run()
     .map @defaultOutput

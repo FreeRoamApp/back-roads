@@ -10,23 +10,24 @@ ONE_DAY_SECONDS = 3600 * 24
 ONE_HOUR_SECONDS = 3600
 
 class GroupRoleModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'group_roles_by_groupId'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        groupId: 'uuid'
-        name: 'text'
-        globalPermissions: 'text' # json
-        channelPermissions: {type: 'map', subType: 'uuid', subType2: 'text'}
-      primaryKey:
-        # a little uneven since some groups will have a lot of roles, but each
-        # row is small
-        partitionKey: ['groupId']
-        clusteringColumns: ['id']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'group_roles_by_groupId'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          groupId: 'uuid'
+          name: 'text'
+          globalPermissions: 'text' # json
+          channelPermissions: {type: 'map', subType: 'uuid', subType2: 'text'}
+        primaryKey:
+          # a little uneven since some groups will have a lot of roles, but each
+          # row is small
+          partitionKey: ['groupId']
+          clusteringColumns: ['id']
+      }
+    ]
 
   upsert: (groupRole, {map} = {}) =>
     super groupRole, {map}

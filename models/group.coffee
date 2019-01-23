@@ -13,34 +13,35 @@ ONE_DAY_SECONDS = 3600 * 24
 ONE_HOUR_SECONDS = 3600
 
 class GroupModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'groups_by_id'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        name: 'text'
-        description: 'text'
-        userId: 'uuid'
-        data: 'text'
-      primaryKey:
-        partitionKey: ['id']
-    }
-    {
-      name: 'groups_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        id: 'timeuuid'
-        slug: 'text'
-        name: 'text'
-        description: 'text'
-        userId: 'uuid'
-        data: 'text'
-      primaryKey:
-        partitionKey: ['slug']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'groups_by_id'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          name: 'text'
+          description: 'text'
+          userId: 'uuid'
+          data: 'text'
+        primaryKey:
+          partitionKey: ['id']
+      }
+      {
+        name: 'groups_by_slug'
+        keyspace: 'free_roam'
+        fields:
+          id: 'timeuuid'
+          slug: 'text'
+          name: 'text'
+          description: 'text'
+          userId: 'uuid'
+          data: 'text'
+        primaryKey:
+          partitionKey: ['slug']
+      }
+    ]
 
   getById: (id) =>
     cknex().select '*'

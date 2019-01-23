@@ -6,21 +6,22 @@ cknex = require '../services/cknex'
 config = require '../config'
 
 class UserRig extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'user_rigs_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        userId: 'uuid'
-        name: 'text'
-        # fifthWheel, travelTrailer, van, classA, classB, classC, car, tent
-        type: 'text'
-        length: 'int'
-        is4x4: 'boolean'
-      primaryKey:
-        partitionKey: ['userId']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'user_rigs_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'uuid'
+          name: 'text'
+          # fifthWheel, travelTrailer, van, classA, classB, classC, car, tent
+          type: 'text'
+          length: 'int'
+          is4x4: 'boolean'
+        primaryKey:
+          partitionKey: ['userId']
+      }
+    ]
 
   getByUserId: (userId) =>
     cknex().select '*'

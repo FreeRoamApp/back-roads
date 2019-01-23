@@ -2,23 +2,23 @@ _ = require 'lodash'
 
 GroupUserEmbed = require './group_user'
 BaseMessage = require './base_message'
-ThreadComment = require '../models/thread_comment'
+Comment = require '../models/comment'
 CacheService = require '../services/cache'
 
 FIVE_MINUTES_SECONDS = 60 * 5
 
 class ThreadEmbed
   comments: (thread) ->
-    key = CacheService.PREFIXES.THREAD_COMMENTS + ':' + thread.id
+    key = CacheService.PREFIXES.COMMENTS_BY_TOP_ID + ':' + thread.id
     thread.comments = CacheService.preferCache key, ->
-      ThreadComment.getAllByThreadId thread.id
-      .map embedFn {embed: [TYPES.THREAD_COMMENT.USER]}
+      Comment.getAllByTopId thread.id
+      .map embedFn {embed: [TYPES.comment.USER]}
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
   commentCount: (thread) ->
-    key = CacheService.PREFIXES.THREAD_COMMENT_COUNT + ':' + thread.id
+    key = CacheService.PREFIXES.COMMENT_COUNT + ':' + thread.id
     thread.commentCount = CacheService.preferCache key, ->
-      ThreadComment.getCountByThreadId thread.id
+      Comment.getCountByTopId thread.id
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
   user: (thread, {groupId}) ->

@@ -19,7 +19,7 @@ EmbedClasses =
   product: require '../embeds/product'
   review: require '../embeds/review'
   thread: require '../embeds/thread'
-  threadComment: require '../embeds/thread_comment'
+  threadComment: require '../embeds/comment'
   trip: require '../embeds/trip'
   user: require '../embeds/user'
   userBlock: require '../embeds/user_block'
@@ -66,7 +66,7 @@ TYPES =
     EXTRAS: 'review:extras'
     TIME: 'review:time'
     USER: 'review:user'
-  THREAD_COMMENT:
+  comment:
     USER: 'threadComment:user'
     GROUP_USER: 'threadComment:groupUser'
     TIME: 'threadComment:time'

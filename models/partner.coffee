@@ -13,30 +13,31 @@ SIXTY_DAYS_SECONDS = 60 * 3600 * 24
 # insert into free_roam.partners_by_slug (slug,"amazonAffiliateCode") values ('heathandalyssa', 'alyssapacom0b-20')
 
 class PartnerModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'partners_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        userId: 'timeuuid'
-        slug: 'text'
-        name: 'text'
-        amazonAffiliateCode: 'text'
-      primaryKey:
-        partitionKey: ['userId']
-    }
-    {
-      name: 'partners_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        userId: 'timeuuid'
-        slug: 'text'
-        name: 'text'
-        amazonAffiliateCode: 'text'
-      primaryKey:
-        partitionKey: ['slug']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'partners_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'timeuuid'
+          slug: 'text'
+          name: 'text'
+          amazonAffiliateCode: 'text'
+        primaryKey:
+          partitionKey: ['userId']
+      }
+      {
+        name: 'partners_by_slug'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'timeuuid'
+          slug: 'text'
+          name: 'text'
+          amazonAffiliateCode: 'text'
+        primaryKey:
+          partitionKey: ['slug']
+      }
+    ]
 
   getByUserId: (userId) ->
     cknex().select '*'

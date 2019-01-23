@@ -4,16 +4,28 @@ router = require 'exoid-router'
 
 EarnAction = require '../models/earn_action'
 UserRig = require '../models/user_rig'
+Vote = require '../models/vote'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 cknex = require '../services/cknex'
 config = require '../config'
 
-module.exports = class ReviewBaseCtrl
+embedMyVotes = (reviews, reviewVotes) ->
+  _.map reviews, (review) ->
+    review.myVote = _.find reviewVotes, ({parentId}) ->
+      "#{parentId}" is "#{review.id}"
+    # review.children = embedMyVotes review.children, reviewVotes
+    review
+
+module.exports = class PlaceReviewBaseCtrl
   imageFolder: 'rv'
   getAllByParentId: ({parentId}, {user}) =>
     @Model.getAllByParentId parentId
     .map EmbedService.embed {embed: @defaultEmbed}
+    .then (reviews) =>
+      Vote.getAllByUserIdAndTopIdAndParentType user.id, parentId, @type
+      .then (votes) ->
+        embedMyVotes reviews, votes
 
   getById: ({id}, {user}) =>
     @Model.getById id
@@ -28,17 +40,16 @@ module.exports = class ReviewBaseCtrl
       Promise.map results, EmbedService.embed {embed: @defaultEmbed}
 
   upsertAttachments: (attachments, {parentId, userId}) =>
-    @AttachmentModel.batchUpsert _.map attachments, (attachment) ->
+    @AttachmentModel.batchUpsert _.map attachments, (attachment) =>
+      attachment.parentType = @parentType
       attachment = _.pick attachment, [
         'id', 'caption', 'tags', 'type', 'aspectRatio', 'location'
-        'prefix'
+        'prefix', 'parentType'
       ]
       _.defaults attachment, {parentId, userId}
 
   upsert: (options, {user, headers, connection}) =>
     {id, type, title, body, rating, attachments, extras, parentId} = options
-
-    console.log 'uppppppppp'
 
     # assign every attachment an id
     attachments = _.map attachments, (attachment) ->
@@ -136,6 +147,7 @@ module.exports = class ReviewBaseCtrl
             title: title
             body: body
             parentId: parentId
+            parentType: @parentType
             rating: rating
             attachments: attachments
             rigType: userRig?.type

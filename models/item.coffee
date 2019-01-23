@@ -7,48 +7,50 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 class Item extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'items_by_slug'
-      keyspace: 'free_roam'
-      fields:
-        slug: 'text' # eg: surge-protector
-        id: 'timeuuid'
-        categories: 'text'
-        name: 'text'
-        why: 'text'
-        what: 'text'
-        videos: 'text' # json (array of video objects)
-      primaryKey:
-        partitionKey: ['slug']
-    }
-    {
-      name: 'items_by_category'
-      keyspace: 'free_roam'
-      fields:
-        slug: 'text' # eg: surge-protector
-        id: 'timeuuid'
-        category: 'text'
-        name: 'text'
-        why: 'text'
-        what: 'text'
-        videos: 'text' # json (array of video objects)
-      primaryKey:
-        partitionKey: ['category']
-        clusteringColumns: ['slug']
-    }
-  ]
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'items'
-      mappings:
-        slug: {type: 'text'}
-        name: {type: 'text'}
-        categories: {type: 'text'}
-        why: {type: 'text'}
-        what: {type: 'text'}
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'items_by_slug'
+        keyspace: 'free_roam'
+        fields:
+          slug: 'text' # eg: surge-protector
+          id: 'timeuuid'
+          categories: 'text'
+          name: 'text'
+          why: 'text'
+          what: 'text'
+          videos: 'text' # json (array of video objects)
+        primaryKey:
+          partitionKey: ['slug']
+      }
+      {
+        name: 'items_by_category'
+        keyspace: 'free_roam'
+        fields:
+          slug: 'text' # eg: surge-protector
+          id: 'timeuuid'
+          category: 'text'
+          name: 'text'
+          why: 'text'
+          what: 'text'
+          videos: 'text' # json (array of video objects)
+        primaryKey:
+          partitionKey: ['category']
+          clusteringColumns: ['slug']
+      }
+    ]
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'items'
+        mappings:
+          slug: {type: 'text'}
+          name: {type: 'text'}
+          categories: {type: 'text'}
+          why: {type: 'text'}
+          what: {type: 'text'}
+      }
+    ]
 
   upsert: (item) =>
     item = @defaultInput item
@@ -71,8 +73,8 @@ class Item extends Base
 
   search: ({query}) ->
     elasticsearch.search {
-      index: @ELASTICSEARCH_INDICES[0].name
-      type: @ELASTICSEARCH_INDICES[0].name
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
       body:
         query: query
     }

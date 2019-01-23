@@ -21,37 +21,39 @@ scyllaFields =
   status: 'text' # planned | visited
 
 class CheckIn extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'check_ins_by_userId'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['sourceId', 'sourceType']
-    }
-    {
-      name: 'check_ins_by_id'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['id']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'check_ins_by_userId'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['sourceId', 'sourceType']
+      }
+      {
+        name: 'check_ins_by_id'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['id']
+      }
+    ]
   # don't think we need elasticsearch for this since all values are grabbed
   # at runtime instead of location, name, etc... being stored in ES
-  ELASTICSEARCH_INDICES: [
-    # {
-    #   name: 'check_ins'
-    #   mappings:
-    #     # common between all places
-    #     location: {type: 'geo_point'}
-    #     # end common
-    #     userId: {type: 'text'}
-    #     sourceType: {type: 'text'}
-    #     sourceId: {type: 'text'}
-    # }
-  ]
+  getElasticSearchIndices: ->
+    [
+      # {
+      #   name: 'check_ins'
+      #   mappings:
+      #     # common between all places
+      #     location: {type: 'geo_point'}
+      #     # end common
+      #     userId: {type: 'text'}
+      #     sourceType: {type: 'text'}
+      #     sourceId: {type: 'text'}
+      # }
+    ]
 
   upsert: ({userId}) ->
     super
@@ -109,7 +111,7 @@ class CheckIn extends Base
     limit ?= 30
 
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .where 'userId', '=', userId
     .limit limit
     .run()

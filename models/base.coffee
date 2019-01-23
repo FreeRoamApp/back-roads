@@ -17,7 +17,7 @@ module.exports = class Base
       @index row
 
   upsertByRow: (row, diff, options) =>
-    keyColumns = _.filter _.uniq _.flatten _.map @SCYLLA_TABLES, (table) ->
+    keyColumns = _.filter _.uniq _.flatten _.map @getScyllaTables(), (table) ->
       table.primaryKey.partitionKey.concat(
         table.primaryKey.clusteringColumns
       )
@@ -29,7 +29,7 @@ module.exports = class Base
     scyllaRow = @defaultInput row
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
-    Promise.all _.filter _.map(@SCYLLA_TABLES, (table) ->
+    Promise.all _.filter _.map(@getScyllaTables(), (table) ->
       if table.ignoreUpsert
         return
       scyllaTableRow = _.pick scyllaRow, _.keys table.fields
@@ -68,25 +68,25 @@ module.exports = class Base
         @defaultOutput scyllaRow
 
   index: (row) =>
-    if _.isEmpty @ELASTICSEARCH_INDICES
+    if _.isEmpty @getElasticSearchIndices?()
       Promise.resolve()
     else
       row = @defaultESInput row
       elasticsearch.update {
-        index: @ELASTICSEARCH_INDICES[0].name
-        type: @ELASTICSEARCH_INDICES[0].name
+        index: @getElasticSearchIndices?()[0].name
+        type: @getElasticSearchIndices?()[0].name
         id: row.id
         body:
           doc:
-            _.pick row, _.keys @ELASTICSEARCH_INDICES[0].mappings
+            _.pick row, _.keys @getElasticSearchIndices?()[0].mappings
           doc_as_upsert: true
       }
       .catch (err) =>
-        console.log 'elastic err', @ELASTICSEARCH_INDICES[0].name, err
+        console.log 'elastic err', @getElasticSearchIndices?()[0].name, err
         throw err
 
   deleteByRow: (row) =>
-    Promise.all _.filter _.map(@SCYLLA_TABLES, (table) ->
+    Promise.all _.filter _.map(@getScyllaTables(), (table) ->
       if table.ignoreUpsert
         return
       keyColumns = _.filter table.primaryKey.partitionKey.concat(
@@ -104,12 +104,12 @@ module.exports = class Base
       null
 
   deleteESById: (id) =>
-    if _.isEmpty @ELASTICSEARCH_INDICES
+    if _.isEmpty @getElasticSearchIndices?()
       Promise.resolve()
     else
       elasticsearch.delete {
-        index: @ELASTICSEARCH_INDICES[0].name
-        type: @ELASTICSEARCH_INDICES[0].name
+        index: @getElasticSearchIndices?()[0].name
+        type: @getElasticSearchIndices?()[0].name
         id: "#{id}"
       }
       .catch (err) ->

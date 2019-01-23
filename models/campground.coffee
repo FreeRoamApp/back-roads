@@ -71,71 +71,74 @@ scyllaFields =
   videos: 'text' # json
 
 class Campground extends PlaceBase
-  SCYLLA_TABLES: [
-    {
-      name: 'campgrounds_by_slug'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['slug']
-    }
-    {
-      name: 'campgrounds_by_id'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['id']
-    }
-  ]
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'campgrounds'
-      mappings:
-        # commeon
-        slug: {type: 'text'}
-        name: {type: 'text'}
-        location: {type: 'geo_point'}
-        rating: {type: 'integer'}
-        ratingCount: {type: 'integer'}
-        thumbnailPrefix: {type: 'text'}
-        address: {type: 'object'}
-        # end common
-        distanceTo: {type: 'object'}
-        roadDifficulty: {type: 'integer'}
-        crowds: {type: 'object'}
-        fullness: {type: 'object'}
-        noise: {type: 'object'}
-        shade: {type: 'integer'}
-        safety: {type: 'integer'}
-        cellSignal: {type: 'object'}
-        cleanliness: {type: 'integer'}
-        weather: {type: 'object'}
+  getScyllaTables: ->
+    [
+      {
+        name: 'campgrounds_by_slug'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['slug']
+      }
+      {
+        name: 'campgrounds_by_id'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['id']
+      }
+    ]
 
-        pets: {type: 'object'}
-        padSurface: {type: 'text'}
-        entryType: {type: 'text'}
-        allowedTypes: {type: 'object'}
-        seasonOpenDayOfYear: {type: 'integer'}
-        seasonCloseDayOfYear: {type: 'integer'}
-        attachmentCount: {type: 'integer'}
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'campgrounds'
+        mappings:
+          # commeon
+          slug: {type: 'text'}
+          name: {type: 'text'}
+          location: {type: 'geo_point'}
+          rating: {type: 'integer'}
+          ratingCount: {type: 'integer'}
+          thumbnailPrefix: {type: 'text'}
+          address: {type: 'object'}
+          # end common
+          distanceTo: {type: 'object'}
+          roadDifficulty: {type: 'integer'}
+          crowds: {type: 'object'}
+          fullness: {type: 'object'}
+          noise: {type: 'object'}
+          shade: {type: 'integer'}
+          safety: {type: 'integer'}
+          cellSignal: {type: 'object'}
+          cleanliness: {type: 'integer'}
+          weather: {type: 'object'}
 
-        source: {type: 'text'} # empty (user), coe, rec.gov, usfs
-        subType: {type: 'text'}
+          pets: {type: 'object'}
+          padSurface: {type: 'text'}
+          entryType: {type: 'text'}
+          allowedTypes: {type: 'object'}
+          seasonOpenDayOfYear: {type: 'integer'}
+          seasonCloseDayOfYear: {type: 'integer'}
+          attachmentCount: {type: 'integer'}
 
-        maxDays: {type: 'integer'}
-        hasFreshWater: {type: 'boolean'}
-        hasSewage: {type: 'boolean'}
-        has30Amp: {type: 'boolean'}
-        has50Amp: {type: 'boolean'}
+          source: {type: 'text'} # empty (user), coe, rec.gov, usfs
+          subType: {type: 'text'}
 
-        # minPrice: {type: 'integer'}
-        # maxPrice: {type: 'integer'}
-        prices: {type: 'object'}
+          maxDays: {type: 'integer'}
+          hasFreshWater: {type: 'boolean'}
+          hasSewage: {type: 'boolean'}
+          has30Amp: {type: 'boolean'}
+          has50Amp: {type: 'boolean'}
 
-        maxLength: {type: 'integer'}
-        restrooms: {type: 'object'}
-    }
-  ]
+          # minPrice: {type: 'integer'}
+          # maxPrice: {type: 'integer'}
+          prices: {type: 'object'}
+
+          maxLength: {type: 'integer'}
+          restrooms: {type: 'object'}
+      }
+    ]
 
   seasonalFields: ['crowds', 'fullness']
 

@@ -7,18 +7,19 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 class LowClearance extends PlaceBase
-  SCYLLA_TABLES: []
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'low_clearances'
-      mappings:
-        # common between all places
-        name: {type: 'text'}
-        location: {type: 'geo_point'}
-        # end common
-        heightInches: {type: 'integer'}
-    }
-  ]
+  getScyllaTables: -> []
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'low_clearances'
+        mappings:
+          # common between all places
+          name: {type: 'text'}
+          location: {type: 'geo_point'}
+          # end common
+          heightInches: {type: 'integer'}
+      }
+    ]
 
   defaultInput: (lowClearance) ->
     unless lowClearance?

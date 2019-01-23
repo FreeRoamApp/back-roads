@@ -37,64 +37,65 @@ PERMISSIONS =
   MANAGE_INFO: 'manageInfo'
 
 class GroupUserModel extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'group_users_by_groupId'
-      keyspace: 'free_roam'
-      fields:
-        groupId: 'uuid'
-        userId: 'uuid'
-        roleIds: {type: 'set', subType: 'uuid'}
-        data: 'text'
-        time: 'timestamp'
-      primaryKey:
-        # a little uneven since some groups will have a lot of users, but each
-        # row is small...
-        # TODO: probably sohuldn't add to group for public groups. dependent
-        # on switching getCountByGroupId to use a counter.
-        # 1/10/2018 largest row (500k users) is 20mb
-        partitionKey: ['groupId']
-        clusteringColumns: ['userId']
-    }
-    {
-      name: 'group_users_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        groupId: 'uuid'
-        userId: 'uuid'
-        roleIds: {type: 'set', subType: 'uuid'}
-        data: 'text'
-        time: 'timestamp'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['groupId']
-    }
-    {
-      name: 'group_users_counter_by_groupId'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        groupId: 'uuid'
-        userCount: 'counter'
-      primaryKey:
-        partitionKey: ['groupId']
-    }
-    {
-      name: 'group_user_settings'
-      keyspace: 'free_roam'
-      ignoreUpsert: true
-      fields:
-        groupId: 'uuid'
-        userId: 'uuid'
-        globalNotifications: 'text'
-        channelNotifications: {
-          type: 'map', subType: 'uuid', subType2: 'text'
-        }
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['groupId']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'group_users_by_groupId'
+        keyspace: 'free_roam'
+        fields:
+          groupId: 'uuid'
+          userId: 'uuid'
+          roleIds: {type: 'set', subType: 'uuid'}
+          data: 'text'
+          time: 'timestamp'
+        primaryKey:
+          # a little uneven since some groups will have a lot of users, but each
+          # row is small...
+          # TODO: probably sohuldn't add to group for public groups. dependent
+          # on switching getCountByGroupId to use a counter.
+          # 1/10/2018 largest row (500k users) is 20mb
+          partitionKey: ['groupId']
+          clusteringColumns: ['userId']
+      }
+      {
+        name: 'group_users_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          groupId: 'uuid'
+          userId: 'uuid'
+          roleIds: {type: 'set', subType: 'uuid'}
+          data: 'text'
+          time: 'timestamp'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['groupId']
+      }
+      {
+        name: 'group_users_counter_by_groupId'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          groupId: 'uuid'
+          userCount: 'counter'
+        primaryKey:
+          partitionKey: ['groupId']
+      }
+      {
+        name: 'group_user_settings'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          groupId: 'uuid'
+          userId: 'uuid'
+          globalNotifications: 'text'
+          channelNotifications: {
+            type: 'map', subType: 'uuid', subType2: 'text'
+          }
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['groupId']
+      }
+    ]
 
   PERMISSIONS: PERMISSIONS
 

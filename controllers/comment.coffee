@@ -2,9 +2,8 @@ _ = require 'lodash'
 router = require 'exoid-router'
 Promise = require 'bluebird'
 
-ThreadComment = require '../models/thread_comment'
-ThreadVote = require '../models/thread_vote'
-Thread = require '../models/thread'
+Comment = require '../models/comment'
+Vote = require '../models/vote'
 GroupUser = require '../models/group_user'
 Group = require '../models/group'
 Ban = require '../models/ban'
@@ -12,10 +11,15 @@ CacheService = require '../services/cache'
 EmbedService = require '../services/embed'
 config = require '../config'
 
+Tops =
+  thread: require '../models/thread'
+  campgroundReview: require '../models/campground_review'
+  overnightReview: require '../models/overnight_review'
+
 defaultEmbed = [
-  EmbedService.TYPES.THREAD_COMMENT.USER
-  EmbedService.TYPES.THREAD_COMMENT.GROUP_USER
-  EmbedService.TYPES.THREAD_COMMENT.TIME
+  EmbedService.TYPES.comment.USER
+  EmbedService.TYPES.comment.GROUP_USER
+  EmbedService.TYPES.comment.TIME
 ]
 
 MAX_LENGTH = 10000
@@ -69,8 +73,10 @@ embedMyVotes = (comments, commentVotes) ->
     comment.children = embedMyVotes comment.children, commentVotes
     comment
 
-class ThreadCommentCtrl
+class CommentCtrl
   checkIfBanned: (groupId, ipAddr, userId, router) ->
+    unless groupId
+      return Promise.resolve false
     ipAddr ?= 'n/a'
     Promise.all [
       Ban.getByGroupIdAndIp groupId, ipAddr, {preferCache: true}
@@ -80,7 +86,7 @@ class ThreadCommentCtrl
       if bannedIp?.ip or bannedUserId?.userId
         router.throw status: 403, 'unable to post'
 
-  create: ({body, threadId, parentId, parentType}, {user, headers, connection}) =>
+  create: ({body, topId, topType, parentId, parentType}, {user, headers, connection}) =>
     userAgent = headers['user-agent']
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
@@ -96,40 +102,40 @@ class ThreadCommentCtrl
     unless body
       router.throw status: 400, info: 'can\'t be empty'
 
-    Thread.getById threadId, {preferCache: true, omitCounter: true}
-    .then (thread) =>
-      @checkIfBanned thread.groupId, ip, user.id, router
+    Tops[topType].getById topId, {preferCache: true, omitCounter: true}
+    .then (top) =>
+      @checkIfBanned top.groupId, ip, user.id, router
       .then ->
-        ThreadComment.upsert
+        Comment.upsert
           userId: user.id
           body: body
-          threadId: threadId
+          topId: topId
           parentId: parentId
           parentType: parentType
       .then ->
-        prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
+        prefix = CacheService.PREFIXES.COMMENTS_BY_TOP_ID_CATEGORY
         Promise.all [
-          CacheService.deleteByCategory "#{prefix}:#{threadId}"
+          CacheService.deleteByCategory "#{prefix}:#{topId}"
         ]
 
-  getAllByThreadId: ({threadId, sort, skip, limit, groupId}, {user}) ->
+  getAllByTopId: ({topId, sort, skip, limit, groupId}, {user}) ->
     sort ?= 'popular'
     skip ?= 0
-    prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG
-    categoryPrefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
-    key = "#{prefix}:#{threadId}:#{sort}:#{skip}:#{limit}"
-    category = "#{categoryPrefix}:#{threadId}"
+    prefix = CacheService.PREFIXES.COMMENTS_BY_TOP_ID
+    categoryPrefix = CacheService.PREFIXES.COMMENTS_BY_TOP_ID_CATEGORY
+    key = "#{prefix}:#{topId}:#{sort}:#{skip}:#{limit}"
+    category = "#{categoryPrefix}:#{topId}"
     CacheService.preferCache key, ->
-      ThreadComment.getAllByThreadId threadId
+      Comment.getAllByTopId topId
       .map EmbedService.embed {embed: defaultEmbed, options: {groupId}}
       .catch (err) ->
         console.log err
       .then (allComments) ->
-        getCommentsTree allComments, threadId, {sort, skip, limit}
+        getCommentsTree allComments, topId, {sort, skip, limit}
     , {category, expireSeconds: TEN_MINUTES_SECONDS}
     .then (comments) ->
       comments = comments?.slice skip, skip + limit
-      ThreadVote.getAllByUserIdAndParentTopId user.id, threadId
+      Vote.getAllByUserIdAndTopIdAndParentType user.id, topId, 'comment'
       .then (commentVotes) ->
         embedMyVotes comments, commentVotes
 
@@ -138,34 +144,34 @@ class ThreadCommentCtrl
           connection.remoteAddress
 
     # TODO
-    ThreadComment.getById id
+    Comment.getById id
     .then EmbedService.embed {
-      embed: [EmbedService.TYPES.THREAD_COMMENT.USER]
+      embed: [EmbedService.TYPES.comment.USER]
     }
 
-  deleteByThreadComment: ({threadComment, groupId}, {user}) ->
+  deleteByComment: ({comment, groupId}, {user}) ->
     permission = GroupUser.PERMISSIONS.DELETE_FORUM_COMMENT
     GroupUser.hasPermissionByGroupIdAndUser groupId, user, [permission]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      ThreadComment.deleteByThreadComment threadComment
+      Comment.deleteByRow comment
       .tap ->
-        prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
-        CacheService.deleteByCategory "#{prefix}:#{threadComment.threadId}"
+        prefix = CacheService.PREFIXES.COMMENTS_BY_TOP_ID_CATEGORY
+        CacheService.deleteByCategory "#{prefix}:#{comment.topId}"
 
-  deleteAllByGroupIdAndUserId: ({groupId, userId, threadId}, {user}) ->
+  deleteAllByGroupIdAndUserId: ({groupId, userId, topId}, {user}) ->
     permission = GroupUser.PERMISSIONS.DELETE_FORUM_COMMENT
     GroupUser.hasPermissionByGroupIdAndUser groupId, user, [permission]
     .then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
-      ThreadComment.deleteAllByUserId userId
+      Comment.deleteAllByUserId userId
       .tap ->
-        if threadId
-          prefix = CacheService.PREFIXES.THREAD_COMMENTS_THREAD_SLUG_CATEGORY
-          CacheService.deleteByCategory "#{prefix}:#{threadId}"
+        if topId
+          prefix = CacheService.PREFIXES.COMMENTS_BY_TOP_ID_CATEGORY
+          CacheService.deleteByCategory "#{prefix}:#{topId}"
 
-module.exports = new ThreadCommentCtrl()
+module.exports = new CommentCtrl()

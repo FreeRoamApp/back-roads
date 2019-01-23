@@ -28,13 +28,13 @@ ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 PushTopicCtrl = require './controllers/push_topic'
 ThreadCtrl = require './controllers/thread'
-ThreadCommentCtrl = require './controllers/thread_comment'
-ThreadVoteCtrl = require './controllers/thread_vote'
 TripCtrl = require './controllers/trip'
 UserCtrl = require './controllers/user'
 UserBlockCtrl = require './controllers/user_block'
 UserFollowerCtrl = require './controllers/user_follower'
 UserRigCtrl = require './controllers/user_rig'
+CommentCtrl = require './controllers/comment'
+VoteCtrl = require './controllers/vote'
 
 authed = (handler) ->
   unless handler?
@@ -98,6 +98,15 @@ module.exports = router
 .on 'checkIns.uploadImage', authed CheckInCtrl.uploadImage
 .on 'checkIns.upsert', authed CheckInCtrl.upsert
 .on 'checkIns.deleteByRow', authed CheckInCtrl.deleteByRow
+
+.on 'comments.create', authed CommentCtrl.create
+.on 'comments.flag', authed CommentCtrl.flag
+.on 'comments.getAllByTopId',
+  authed CommentCtrl.getAllByTopId
+.on 'comments.deleteByComment',
+  authed CommentCtrl.deleteByComment
+.on 'comments.deleteAllByGroupIdAndUserId',
+  authed CommentCtrl.deleteAllByGroupIdAndUserId
 
 .on 'conversations.create', authed ConversationCtrl.create
 .on 'conversations.updateById', authed ConversationCtrl.updateById
@@ -207,18 +216,6 @@ module.exports = router
 .on 'threads.deleteById', authed ThreadCtrl.deleteById
 .on 'threads.uploadImage', authed ThreadCtrl.uploadImage
 
-.on 'threadVotes.upsertByParent',
-  authed ThreadVoteCtrl.upsertByParent
-
-.on 'threadComments.create', authed ThreadCommentCtrl.create
-.on 'threadComments.flag', authed ThreadCommentCtrl.flag
-.on 'threadComments.getAllByThreadId',
-  authed ThreadCommentCtrl.getAllByThreadId
-.on 'threadComments.deleteByThreadComment',
-  authed ThreadCommentCtrl.deleteByThreadComment
-.on 'threadComments.deleteAllByGroupIdAndUserId',
-  authed ThreadCommentCtrl.deleteAllByGroupIdAndUserId
-
 .on 'time.get', authed -> {now: new Date()}
 
 .on 'trips.getAll', authed TripCtrl.getAll
@@ -255,3 +252,6 @@ module.exports = router
 
 .on 'userRigs.getByMe', authed UserRigCtrl.getByMe
 .on 'userRigs.upsert', authed UserRigCtrl.upsert
+
+.on 'votes.upsertByParent',
+  authed VoteCtrl.upsertByParent

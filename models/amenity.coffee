@@ -31,36 +31,39 @@ scyllaFields =
   prices: 'text' # json
 
 class Amenity extends PlaceBase
-  SCYLLA_TABLES: [
-    {
-      name: 'amenities_by_slug'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['slug']
-    }
-    {
-      name: 'amenities_by_id'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['id']
-    }
-  ]
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'amenities'
-      mappings:
-        # common between all places
-        slug: {type: 'text'}
-        name: {type: 'text'}
-        location: {type: 'geo_point'}
-        rating: {type: 'integer'}
-        thumbnailPrefix: {type: 'text'}
-        # end common
-        amenities: {type: 'text'} # array
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'amenities_by_slug'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['slug']
+      }
+      {
+        name: 'amenities_by_id'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['id']
+      }
+    ]
+
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'amenities'
+        mappings:
+          # common between all places
+          slug: {type: 'text'}
+          name: {type: 'text'}
+          location: {type: 'geo_point'}
+          rating: {type: 'integer'}
+          thumbnailPrefix: {type: 'text'}
+          # end common
+          amenities: {type: 'text'} # array
+      }
+    ]
 
   defaultInput: (amenity) ->
     unless amenity?

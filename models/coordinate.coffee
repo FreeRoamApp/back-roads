@@ -16,39 +16,41 @@ scyllaFields =
   address: 'text' # json
 
 class Coordinate extends PlaceBase
-  SCYLLA_TABLES: [
-    {
-      name: 'coordinates_by_userId_and_slug'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['userId', 'slug']
-    }
-    {
-      name: 'coordinates_by_userId_and_id'
-      keyspace: 'free_roam'
-      fields: scyllaFields
-      primaryKey:
-        partitionKey: ['userId', 'id']
-    }
-  ]
-  ELASTICSEARCH_INDICES: [
-    {
-      name: 'coordinates'
-      mappings:
-        # commeon
-        slug: {type: 'text'}
-        name: {type: 'text'}
-        location: {type: 'geo_point'}
-        address: {type: 'object'}
-        # end common
-        userId: {type: 'text'}
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'coordinates_by_userId_and_slug'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['userId', 'slug']
+      }
+      {
+        name: 'coordinates_by_userId_and_id'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['userId', 'id']
+      }
+    ]
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'coordinates'
+        mappings:
+          # commeon
+          slug: {type: 'text'}
+          name: {type: 'text'}
+          location: {type: 'geo_point'}
+          address: {type: 'object'}
+          # end common
+          userId: {type: 'text'}
+      }
+    ]
 
   getByUserIdAndSlug: (userId, slug) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[0].name
+    .from @getScyllaTables()[0].name
     .where 'userId', '=', userId
     .andWhere 'slug', '=', slug
     .run {isSingle: true}
@@ -56,7 +58,7 @@ class Coordinate extends PlaceBase
 
   getByUserIdAndId: (userId, id) =>
     cknex().select '*'
-    .from @SCYLLA_TABLES[1].name
+    .from @getScyllaTables()[1].name
     .where 'userId', '=', userId
     .andWhere 'id', '=', id
     .run {isSingle: true}

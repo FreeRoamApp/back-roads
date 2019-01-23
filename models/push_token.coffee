@@ -8,36 +8,37 @@ cknex = require '../services/cknex'
 TWO_DAYS_SECONDS = 3600 * 24 * 2
 
 class PushToken extends Base
-  SCYLLA_TABLES: [
-    {
-      name: 'push_tokens_by_userId'
-      keyspace: 'free_roam'
-      fields:
-        userId: 'uuid'
-        token: 'text'
-        deviceId: 'text'
-        sourceType: 'text'
-        isActive: 'boolean'
-        errorCount: 'int'
-      primaryKey:
-        partitionKey: ['userId']
-        clusteringColumns: ['token']
-    }
-    {
-      name: 'push_tokens_by_token'
-      keyspace: 'free_roam'
-      fields:
-        userId: 'uuid'
-        token: 'text'
-        deviceId: 'text'
-        sourceType: 'text'
-        isActive: 'boolean'
-        errorCount: 'int'
-      primaryKey:
-        partitionKey: ['token']
-        clusteringColumns: ['userId']
-    }
-  ]
+  getScyllaTables: ->
+    [
+      {
+        name: 'push_tokens_by_userId'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'uuid'
+          token: 'text'
+          deviceId: 'text'
+          sourceType: 'text'
+          isActive: 'boolean'
+          errorCount: 'int'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['token']
+      }
+      {
+        name: 'push_tokens_by_token'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'uuid'
+          token: 'text'
+          deviceId: 'text'
+          sourceType: 'text'
+          isActive: 'boolean'
+          errorCount: 'int'
+        primaryKey:
+          partitionKey: ['token']
+          clusteringColumns: ['userId']
+      }
+    ]
 
   upsert: (token) =>
     if token.isActive
