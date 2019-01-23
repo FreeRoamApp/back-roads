@@ -29,6 +29,7 @@ TYPES =
   CHAT_MENTION: 'chatMention'
   PRIVATE_MESSAGE: 'privateMessage'
   GROUP: 'group'
+  CONTENT_LIKED: 'contentLiked'
 
 defaultUserEmbed = [
   EmbedService.TYPES.USER.GROUP_USER_SETTINGS

@@ -129,7 +129,6 @@ class EarnActionModel extends Base
     .then @defaultOutput
 
   completeActionByUserId: (userId, action) =>
-    console.log 'com'
     prefix = CacheService.PREFIXES.EARN_COMPLETE_TRANSACTION
     key = "#{prefix}:#{userId}:#{action}"
     CacheService.lock key, =>

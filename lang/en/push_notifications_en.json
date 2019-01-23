@@ -2,5 +2,9 @@
   "newGroupMember.title": "New group member",
   "newGroupMember.text": "{name} joined your group",
   "newFollower.title": "New follower",
-  "newFollower.text": "{name} followed you"
+  "newFollower.text": "{name} followed you",
+  "campgroundReviewLiked.title": "Review liked",
+  "campgroundReviewLiked.text": "{name} liked your review on {place}",
+  "overnightReviewLiked.title": "Review liked",
+  "overnightReviewLiked.text": "{name} liked your review on {place}"
 }

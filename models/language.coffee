@@ -7,6 +7,7 @@ class Language
     files = {
       strings: null
       backend: null
+      pushNotifications: null
     }
 
     @files = _.mapValues files, (val, file) ->

@@ -46,7 +46,7 @@ class UserFollowerCtrl
           titleObj:
             key: 'newFollower.title'
           type: PushNotificationService.TYPES.NEW_FRIEND
-          url: "https://#{config.SUPERNOVA_HOST}"
+          # url: "https://#{config.SUPERNOVA_HOST}"
           textObj:
             key: 'newFollower.text'
             replacements:
