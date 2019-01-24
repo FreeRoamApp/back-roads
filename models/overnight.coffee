@@ -37,6 +37,11 @@ scyllaFields =
   cellSignal: 'text' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
   maxDays: 'int'
 
+  isAllowedCount: 'int'
+  isNotAllowedCount: 'int'
+  isAllowedScore: 'double'
+
+
 class Overnight extends PlaceBase
   getScyllaTables: ->
     [
@@ -54,6 +59,19 @@ class Overnight extends PlaceBase
         primaryKey:
           partitionKey: ['id']
       }
+      {
+        name: 'overnights_isAllowed_by_userId'
+        keyspace: 'free_roam'
+        ignoreUpsert: true
+        fields:
+          id: 'timeuuid'
+          overnightId: 'uuid'
+          userId: 'uuid'
+          isAllowed: 'boolean'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['overnightId']
+      }
     ]
   getElasticSearchIndices: ->
     [
@@ -64,7 +82,8 @@ class Overnight extends PlaceBase
           slug: {type: 'text'}
           name: {type: 'text'}
           location: {type: 'geo_point'}
-          rating: {type: 'integer'}
+          rating: {type: 'double'}
+          ratingCount: {type: 'integer'}
           thumbnailPrefix: {type: 'text'}
           address: {type: 'object'}
           # end common
@@ -73,10 +92,28 @@ class Overnight extends PlaceBase
           safety: {type: 'integer'}
           cellSignal: {type: 'object'}
           maxDays: {type: 'integer'}
+
+          isAllowedCount: {type: 'integer'}
+          isNotAllowedCount: {type: 'integer'}
+          isAllowedScore: {type: 'doubleeger'}
       }
     ]
 
   seasonalFields: []
+
+  getIsOvernightAllowedByUserIdAndOvernightId: (userId, overnightId) ->
+    cknex().select '*'
+    .from 'overnights_isAllowed_by_userId'
+    .where 'userId', '=', userId
+    .andWhere 'overnightId', '=', overnightId
+    .run {isSingle: true}
+
+  upsertIsAllowed: (overnightIsAllowed) ->
+    cknex().update 'overnights_isAllowed_by_userId'
+    .set _.omit overnightIsAllowed, ['userId', 'overnightId']
+    .where 'userId', '=', overnightIsAllowed.userId
+    .andWhere 'overnightId', '=', overnightIsAllowed.overnightId
+    .run()
 
   defaultInput: (overnight) ->
     unless overnight?

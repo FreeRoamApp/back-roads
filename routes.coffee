@@ -179,6 +179,9 @@ module.exports = router
   authed OvernightCtrl.getNearestAmenitiesById
 .on 'overnights.search', authed OvernightCtrl.search
 .on 'overnights.upsert', authed OvernightCtrl.upsert
+.on 'overnights.getIsAllowedByMeAndId',
+  authed OvernightCtrl.getIsAllowedByMeAndId
+.on 'overnights.markIsAllowedById', authed OvernightCtrl.markIsAllowedById
 
 .on 'overnightReviews.getById', authed OvernightReviewCtrl.getById
 .on 'overnightReviews.deleteById', authed OvernightReviewCtrl.deleteById

@@ -3,6 +3,8 @@ Promise = require 'bluebird'
 router = require 'exoid-router'
 
 User = require '../models/user'
+RoutingService = require '../services/routing'
+CellSignalService = require '../services/cell_signal'
 config = require '../config'
 
 HEALTHCHECK_TIMEOUT = 20000
@@ -33,11 +35,37 @@ class HealthCtrl
       .timeout timeout
       .catch -> null
 
+      RoutingService.getRoute {
+        locations: [
+          # den -> arvada
+          {lat: 39.7392, lon: -104.9903}
+          {lat: 39.8028, lon: -105.0875}
+        ]
+      }, {preferCache: false}
+      .timeout timeout
+      .catch (err) -> null
+
+      CellSignalService.getEstimatesByLocation {
+        lat: 39.7392, lon: -104.9903 # denver
+      }
+      .timeout timeout
+      .catch (err) -> null
+
+      RoutingService.getDistance(
+          # den -> arvada
+        {lat: 39.7392, lon: -104.9903}
+        {lat: 39.8028, lon: -105.0875}
+      )
+      .timeout timeout
+      .catch (err) -> null
     ]
     .then (responses) ->
-      [user] = responses
+      [user, route, cellSignal, distance] = responses
       result =
         users: user?.username is AUSTIN_USERNAME
+        getRoute: route?.time > 1000
+        estimateCellSignal: cellSignal.verizon_lte is 3
+        distance: distance?.distance > 5
 
       result.healthy = _.every _.values result
       return result

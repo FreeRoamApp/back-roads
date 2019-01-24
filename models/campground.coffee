@@ -98,7 +98,7 @@ class Campground extends PlaceBase
           slug: {type: 'text'}
           name: {type: 'text'}
           location: {type: 'geo_point'}
-          rating: {type: 'integer'}
+          rating: {type: 'double'}
           ratingCount: {type: 'integer'}
           thumbnailPrefix: {type: 'text'}
           address: {type: 'object'}

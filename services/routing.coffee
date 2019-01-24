@@ -21,14 +21,13 @@ pbf_costing_options->set_height(kDefaultTruckHeight);
 
 ###
 
-
-
 class RoutingService
   constructor: -> null
 
-  getRoute: ({locations}) ->
-    key = CacheService.PREFIXES.ROUTING_ROUTE + JSON.stringify(locations)
-    CacheService.preferCache key, ->
+  getRoute: ({locations}, {preferCache} = {}) ->
+    preferCache ?= true
+
+    get = ->
       request 'https://valhalla.freeroam.app/route',
         json: true
         qs:
@@ -59,7 +58,12 @@ class RoutingService
               distance: leg.summary.length
             }
         }
-    , {expireSeconds: ONE_HOUR_S}
+
+    if preferCache
+      key = CacheService.PREFIXES.ROUTING_ROUTE + JSON.stringify(locations)
+      CacheService.preferCache key, get, {expireSeconds: ONE_HOUR_S}
+    else
+      get()
 
   # returns {distance: (mi), time: (min)}
   getDistance: (location1, location2) ->
