@@ -12,7 +12,7 @@ class ThreadEmbed
     key = CacheService.PREFIXES.COMMENTS_BY_TOP_ID + ':' + thread.id
     thread.comments = CacheService.preferCache key, ->
       Comment.getAllByTopId thread.id
-      .map embedFn {embed: [TYPES.comment.USER]}
+      .map embedFn {embed: [TYPES.COMMENT.USER]}
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
   commentCount: (thread) ->

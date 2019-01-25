@@ -3,6 +3,7 @@ _ = require 'lodash'
 BaseMessage = require './base_message'
 # FIXME: work with other types. probably should extend from base_review embed
 CampgroundReview = require '../models/campground_review'
+PlacesService = require '../services/places'
 
 class ReviewEmbed
   user: (review) ->
@@ -19,5 +20,9 @@ class ReviewEmbed
                then cknex.getTimeUuidFromString review.id
                else review.id
     id.getDate()
+
+  parent: (review) ->
+    PlacesService.getByTypeAndId review.parentType, review.parentId
+
 
 module.exports = new ReviewEmbed()

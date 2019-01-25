@@ -120,6 +120,28 @@ module.exports = class ReviewBase extends Base
         review
         # _.merge review, voteCount # messages with timeuuids
 
+  getAllByUserId: (userId) ->
+    Promise.all [
+      cknex().select '*'
+      .from 'reviews_by_userId'
+      .where 'userId', '=', userId
+      .run()
+      .map @defaultOutput
+
+      cknex().select '*'
+      .from 'reviews_counter_by_userId'
+      .where 'userId', '=', userId
+      .run()
+    ]
+    .then ([allReviews, voteCounts]) ->
+      allReviews = _.map allReviews, (review) ->
+        voteCount = _.find voteCounts, {id: review.id}
+        voteCount ?= {upvotes: 0, downvotes: 0}
+        review.upvotes = voteCount.upvotes
+        review.downvotes = voteCount.downvotes
+        review
+        # _.merge review, voteCount # messages with timeuuids
+
   getAll: ({limit} = {}) =>
     limit ?= 30
 

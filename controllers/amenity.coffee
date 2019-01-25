@@ -5,6 +5,7 @@ _ = require 'lodash'
 Amenity = require '../models/amenity'
 Campground = require '../models/campground'
 PlaceBaseCtrl = require './place_base'
+EmbedService = require '../services/embed'
 GeocoderService = require '../services/geocoder'
 RoutingService = require '../services/routing'
 config = require '../config'
@@ -12,6 +13,7 @@ config = require '../config'
 class AmenityCtrl extends PlaceBaseCtrl
   type: 'amenity'
   Model: Amenity
+  defaultEmbed: [EmbedService.TYPES.AMENITY.ATTACHMENTS_PREVIEW]
 
   _updateNearbyCampgrounds: (amenity) ->
     Campground.searchNearby amenity.location, {

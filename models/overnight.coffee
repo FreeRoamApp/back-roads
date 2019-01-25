@@ -19,6 +19,7 @@ scyllaFields =
   rating: 'double'
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown
+  thumbnailPrefix: 'text'
   address: 'text' # json:
     # thoroughfare: 'text' # address
     # premise: 'text' # apt, suite, etc...

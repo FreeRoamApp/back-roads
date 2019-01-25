@@ -7,7 +7,7 @@ RoutingService = require '../services/routing'
 CellSignalService = require '../services/cell_signal'
 config = require '../config'
 
-HEALTHCHECK_TIMEOUT = 20000
+HEALTHCHECK_TIMEOUT = 40000
 HEALTHCHECK_THROW_TIMEOUT = 40000
 AUSTIN_USERNAME = 'austin'
 
@@ -21,13 +21,29 @@ class HealthCtrl
 
   # used for readinessProbe
   checkThrow: (req, res, next) =>
-    @getStatus {timeout: HEALTHCHECK_THROW_TIMEOUT}
+    @getStatusReady {timeout: HEALTHCHECK_THROW_TIMEOUT}
     .then (status) ->
       if status.healthy
         res.send 'ok'
       else
         res.status(400).send 'fail'
 
+  getStatusReady: ({timeout} = {}) ->
+    timeout ?= HEALTHCHECK_TIMEOUT
+    Promise.all [
+      User.getByUsername AUSTIN_USERNAME
+      .timeout timeout
+      .catch -> null
+    ]
+    .then (responses) ->
+      [user] = responses
+      result =
+        users: user?.username is AUSTIN_USERNAME
+
+      result.healthy = _.every _.values result
+      return result
+
+  # kind of extreme, don't run super-often
   getStatus: ({timeout} = {}) ->
     timeout ?= HEALTHCHECK_TIMEOUT
     Promise.all [
@@ -61,10 +77,11 @@ class HealthCtrl
     ]
     .then (responses) ->
       [user, route, cellSignal, distance] = responses
+      console.log cellSignal
       result =
         users: user?.username is AUSTIN_USERNAME
         getRoute: route?.time > 1000
-        estimateCellSignal: cellSignal.verizon_lte is 3
+        estimateCellSignal: cellSignal?.verizon_lte is 3
         distance: distance?.distance > 5
 
       result.healthy = _.every _.values result

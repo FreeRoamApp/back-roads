@@ -1,6 +1,8 @@
 router = require 'exoid-router'
 
 AmenityCtrl = require './controllers/amenity'
+AmenityReviewCtrl = require './controllers/amenity_review'
+AmenityAttachmentCtrl = require './controllers/amenity_attachment'
 AuthCtrl = require './controllers/auth'
 BanCtrl = require './controllers/ban'
 CategoryCtrl = require './controllers/category'
@@ -24,6 +26,7 @@ NpsCtrl = require './controllers/nps'
 OvernightCtrl = require './controllers/overnight'
 OvernightReviewCtrl = require './controllers/overnight_review'
 OvernightAttachmentCtrl = require './controllers/overnight_attachment'
+PlaceReviewCtrl = require './controllers/campground_review' # HACK: use since place_review_base isn't instantiated
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
 PushTopicCtrl = require './controllers/push_topic'
@@ -62,6 +65,19 @@ module.exports = router
 .on 'amenities.search', authed AmenityCtrl.search
 .on 'amenities.upsert', authed AmenityCtrl.upsert
 .on 'amenities.deleteByRow', authed AmenityCtrl.deleteByRow
+
+.on 'amenityReviews.getById', authed AmenityReviewCtrl.getById
+.on 'amenityReviews.deleteById', authed AmenityReviewCtrl.deleteById
+.on 'amenityReviews.getAllByParentId',
+  authed AmenityReviewCtrl.getAllByParentId
+.on 'amenityReviews.search', authed AmenityReviewCtrl.search
+.on 'amenityReviews.upsert', authed AmenityReviewCtrl.upsert
+.on 'amenityReviews.uploadImage', authed AmenityReviewCtrl.uploadImage
+
+.on 'amenityAttachments.getAllByParentId',
+  authed AmenityAttachmentCtrl.getAllByParentId
+.on 'amenityAttachments.deleteByRow',
+  authed AmenityAttachmentCtrl.deleteByRow
 
 .on 'bans.getAllByGroupId', authed BanCtrl.getAllByGroupId
 .on 'bans.getByGroupIdAndUserId', authed BanCtrl.getByGroupIdAndUserId
@@ -195,6 +211,8 @@ module.exports = router
   authed OvernightAttachmentCtrl.getAllByParentId
 .on 'overnightAttachments.deleteByRow',
   authed OvernightAttachmentCtrl.deleteByRow
+
+.on 'placeReviews.getAllByUserId', authed PlaceReviewCtrl.getAllByUserId
 
 .on 'notifications.getAll', authed NotificationCtrl.getAll
 

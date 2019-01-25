@@ -47,7 +47,7 @@ class CronService
       Thread.updateScores 'time'
 
 
-    @addCron 'oneHour', '0 24 * * * *', ->
+    @addCron 'oneHour', '0 42 * * * *', ->
       CleanupService.trimLeaderboards()
       Promise.map allGroups, (group) ->
         Group.upsert _.cloneDeep group

@@ -4,12 +4,9 @@ router = require 'exoid-router'
 
 CheckIn = require '../models/check_in'
 Trip = require '../models/trip'
-Amenity = require '../models/amenity'
-Campground = require '../models/campground'
-Coordinate = require '../models/coordinate'
-Overnight = require '../models/overnight'
 CacheService = require '../services/cache'
 ImageService = require '../services/image'
+PlacesService = require '../services/places'
 config = require '../config'
 
 ONE_DAY_SECONDS = 3600 * 24
@@ -66,15 +63,10 @@ class CheckInCtrl
       CheckIn.getAllByUserId user.id
       .map (checkIn) ->
         if includeDetails
-          (if checkIn.sourceType is 'amenity'
-            Amenity.getById checkIn.sourceId
-          else if checkIn.sourceType is 'overnight'
-            Overnight.getById checkIn.sourceId
-          else if checkIn.sourceType is 'coordinate'
-            Coordinate.getByUserIdAndId user.id, checkIn.sourceId
-          else
-            Campground.getById checkIn.sourceId
-          ).then (place) ->
+          PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
+            userId: user.id
+          }
+          .then (place) ->
             _.defaults place, checkIn
         else
           checkIn

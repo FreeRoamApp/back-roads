@@ -12,12 +12,14 @@ config = require '../config'
 Parents =
   comment: require '../models/comment'
   thread: require '../models/thread'
+  amenityReview: require '../models/amenity_review'
   campgroundReview: require '../models/campground_review'
   overnightReview: require '../models/overnight_review'
 
 Tops =
   comment: require '../models/comment'
   thread: require '../models/thread'
+  amenity: require '../models/amenity'
   campground: require '../models/campground'
   overnight: require '../models/overnight'
 

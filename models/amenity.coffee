@@ -7,7 +7,7 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 # low to high
-ICON_ORDER = ['gas', 'propane', 'groceries', 'water', 'dump']
+ICON_ORDER = ['gas', 'npwater', 'propane', 'groceries', 'water', 'dump']
 
 scyllaFields =
   # common between all places
@@ -18,6 +18,7 @@ scyllaFields =
   rating: 'double'
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown
+  thumbnailPrefix: 'text'
   address: 'text' # json:
     # thoroughfare: 'text' # address
     # premise: 'text' # apt, suite, etc...
@@ -58,7 +59,8 @@ class Amenity extends PlaceBase
           slug: {type: 'text'}
           name: {type: 'text'}
           location: {type: 'geo_point'}
-          rating: {type: 'integer'}
+          rating: {type: 'double'}
+          ratingCount: {type: 'integer'}
           thumbnailPrefix: {type: 'text'}
           # end common
           amenities: {type: 'text'} # array
@@ -103,6 +105,6 @@ class Amenity extends PlaceBase
       icon: _.orderBy(amenity.amenities, (amenity) ->
         ICON_ORDER.indexOf(amenity)
       , ['desc'])[0]
-    }, _.pick amenity, ['id', 'slug', 'name', 'location', 'amenities']
+    }, _.pick amenity, ['id', 'slug', 'name', 'location', 'rating', 'amenities']
 
 module.exports = new Amenity()

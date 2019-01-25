@@ -17,9 +17,9 @@ Tops =
   overnightReview: require '../models/overnight_review'
 
 defaultEmbed = [
-  EmbedService.TYPES.comment.USER
-  EmbedService.TYPES.comment.GROUP_USER
-  EmbedService.TYPES.comment.TIME
+  EmbedService.TYPES.COMMENT.USER
+  EmbedService.TYPES.COMMENT.GROUP_USER
+  EmbedService.TYPES.COMMENT.TIME
 ]
 
 MAX_LENGTH = 10000
@@ -146,7 +146,7 @@ class CommentCtrl
     # TODO
     Comment.getById id
     .then EmbedService.embed {
-      embed: [EmbedService.TYPES.comment.USER]
+      embed: [EmbedService.TYPES.COMMENT.USER]
     }
 
   deleteByComment: ({comment, groupId}, {user}) ->

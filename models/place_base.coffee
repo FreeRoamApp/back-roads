@@ -93,14 +93,17 @@ module.exports = class PlaceBase extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
-  getAll: ({limit} = {}) =>
+  getAll: ({limit, allowFiltering} = {}) =>
     limit ?= 30
 
-    cknex().select '*'
-    .from @getScyllaTables()[0].name
-    .limit limit
-    .run()
-    .map @defaultOutput
+    elasticsearch.search {
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
+      size: limit
+    }
+    .then ({hits}) ->
+      _.map hits.hits, ({_id, _source}) ->
+        _.defaults _source, {id: _id}
 
   changeSlug: (place, newSlug) =>
     cknex().delete()

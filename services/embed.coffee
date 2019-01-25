@@ -5,6 +5,7 @@ config = require '../config'
 cknex = require '../services/cknex'
 
 EmbedClasses =
+  amenity: require '../embeds/amenity'
   attachment: require '../embeds/attachment'
   ban: require '../embeds/ban'
   category: require '../embeds/category'
@@ -26,6 +27,8 @@ EmbedClasses =
 
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
+  AMENITY:
+    ATTACHMENTS_PREVIEW: 'amenity:attachmentsPreview'
   ATTACHMENT:
     TIME: 'attachment:time'
     USER: 'attachment:user'
@@ -66,7 +69,8 @@ TYPES =
     EXTRAS: 'review:extras'
     TIME: 'review:time'
     USER: 'review:user'
-  comment:
+    PARENT: 'review:parent'
+  COMMENT:
     USER: 'threadComment:user'
     GROUP_USER: 'threadComment:groupUser'
     TIME: 'threadComment:time'
