@@ -10,7 +10,7 @@ PlaceReviewBaseCtrl = require './place_review_base'
 SEASONS = ['winter', 'spring', 'summer', 'fall']
 VALID_EXTRAS = [
   'roadDifficulty', 'cleanliness', 'crowds', 'fullness', 'noise',
-  'shade', 'safety', 'cellSignal'
+  'shade', 'safety', 'cellSignal', 'pricePaid'
 ]
 
 class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
@@ -21,43 +21,6 @@ class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
   Model: CampgroundReview
   ParentModel: Campground
   AttachmentModel: CampgroundAttachment
-
-  getParentDiff: ({parent, extras, operator}) ->
-    operator ?= 'add'
-    multiplier = if operator is 'add' then 1 else -1
-    _.reduce extras, (diff, addValue, key) ->
-      valueKey = if key is 'cellSignal' then 'signal' else 'value'
-      if typeof addValue is 'object' # seasonal, cell, day/night
-        diff[key] = parent[key] or {}
-        _.forEach addValue, (subAddValue, subKey) ->
-          value = parent[key]?[subKey]?[valueKey] or 0
-          count = parent[key]?[subKey]?.count or 0
-          newCount = count + (1 * multiplier)
-          if newCount is 0
-            newValue = 0
-          else
-            newValue = (value * count + (subAddValue * multiplier)) / newCount
-            newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
-          diff[key] = _.defaults {
-            "#{subKey}":
-              "#{valueKey}": newValue
-              count: newCount
-          }, diff[key]
-      else if addValue
-        value = parent[key]?[valueKey] or 0
-        count = parent[key]?.count or 0
-        newCount = count + (1 * multiplier)
-        if newCount is 0
-          newValue = 0
-        else
-          newValue = (value * count + (addValue * multiplier)) / newCount
-          newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
-        diff[key] = _.defaults {
-          "#{valueKey}": newValue
-          count: newCount
-        }
-      diff
-    , {}
 
   upsertExtras: ({id, parent, extras, existingReview}, {user}) =>
     # remove old values so we can replace with new
@@ -82,6 +45,19 @@ class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
 
       # update averages
       parentDiff = @getParentDiff {parent, extras, operator: 'add'}
+
+      # HACK: TODO: change to calculate from all price data points
+      if extras.pricePaid?
+        extras.pricePaid = parseInt extras.pricePaid
+        delete parentDiff.pricePaid
+        parentDiff.prices = {
+          all: {
+            min: parseInt extras.pricePaid
+            max: parseInt extras.pricePaid
+            mode: parseInt extras.pricePaid
+            avg: parseInt extras.pricePaid
+          }
+        }
 
       # if this campground doesn't have a value for a certain season, set it to
       # whatever value we have, as an estimate

@@ -62,6 +62,7 @@ class CampgroundReview extends ReviewBase
           cleanliness: 'int'
           safety: 'int'
           cellSignal: 'text'
+          pricePaid: 'double'
         primaryKey:
           partitionKey: ['id']
       }

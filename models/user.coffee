@@ -234,6 +234,7 @@ class UserModel extends Base
       'username'
       'name'
       'bio'
+      'karma'
       'avatarImage'
       'links'
       'embedded'

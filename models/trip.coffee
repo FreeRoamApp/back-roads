@@ -14,6 +14,7 @@ scyllaFields =
   type: 'text' # past, future, custom
   userId: 'uuid'
   name: 'text'
+  privacy: 'text' # public, private, friends
   # 'set's don't appear to work with ordering
   checkInIds: {type: 'list', subType: 'uuid'}
   lastUpdateTime: 'timestamp'
@@ -52,6 +53,7 @@ class Trip extends Base
     _.defaults trip, {
       id: cknex.getTimeUuid()
       lastUpdateTime: new Date()
+      privacy: 'public'
     }
 
   defaultOutput: (trip) ->

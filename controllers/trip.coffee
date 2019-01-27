@@ -17,12 +17,9 @@ extrasEmbed = [
   EmbedService.TYPES.TRIP.STATS
 ]
 
-# TODO: Trip.hasPermission (add as base model method)
-# TODO: Base controller component w/ upsert?
-
 class TripCtrl
   upsert: (diff, {user}) ->
-    diff = _.pick diff, ['checkInIds', 'id', 'imagePrefix']
+    diff = _.pick diff, ['checkInIds', 'id', 'imagePrefix', 'privacy']
     diff = _.defaults {userId: user.id}, diff
     (if diff.id
       Trip.getById diff.id
@@ -39,6 +36,9 @@ class TripCtrl
 
   getById: ({id}, {user}) ->
     Trip.getById id
+    .tap (trip) ->
+      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+        router.throw status: 401, info: 'Unauthorized'
     .then EmbedService.embed {embed: defaultEmbed}
     .then EmbedService.embed {embed: extrasEmbed}
 
@@ -49,6 +49,9 @@ class TripCtrl
 
   getByUserIdAndType: ({userId, type}, {user}) ->
     Trip.getByUserIdAndType userId, type
+    .tap (trip) ->
+      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+        router.throw status: 401, info: 'Unauthorized'
     .then EmbedService.embed {embed: defaultEmbed, options: {userId}}
     # .then EmbedService.embed {embed: extrasEmbed}
 

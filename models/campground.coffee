@@ -66,6 +66,8 @@ scyllaFields =
   has50Amp: 'boolean'
   # minPrice: 'int'
   # maxPrice: 'int'
+  # TODO: separate table for campground_prices_paid_by_id?
+  # TODO: or use review_extras (though can't pull in govt data for that)
   prices: 'text' # json: {all: {min, max, avg, mode}, motorhome: {}}
   maxLength: 'int'
   restrooms: 'text'

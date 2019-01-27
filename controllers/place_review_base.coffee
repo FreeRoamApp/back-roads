@@ -203,6 +203,7 @@ module.exports = class PlaceReviewBaseCtrl
             @upsertAttachments attachments, {parentId, userId: user.id}
 
           if extras
+            console.log 'up extras', extras
             @upsertExtras {
               id: review?.id, parent, extras, existingReview
             }, {user}
