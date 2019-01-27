@@ -17,8 +17,6 @@ class CheckInCtrl
   getById: ({id}, {user}) ->
     CheckIn.getById id
 
-  # TODO: create past/future trip if it doesn't exist, and add check-in to trip
-  # TODO: replace trip.addCheckIn with this? accept tripType, tripId
   upsert: (diff, {user}) ->
     diff = _.pick diff, [
       'id', 'sourceId', 'sourceType', 'name',
@@ -49,6 +47,9 @@ class CheckInCtrl
       .tap (checkIn) ->
         unless diff.id
           Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}
+      .tap ->
+        Trip.updateMapByRow trip
+        null # don't block
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
       CacheService.deleteByCategory category

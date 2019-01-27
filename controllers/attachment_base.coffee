@@ -10,6 +10,10 @@ module.exports = class AttachmentBaseCtrl
     @Model.getAllByParentId parentId
     .map EmbedService.embed {embed: @defaultEmbed}
 
+  getAllByUserId: ({userId}, {user}) =>
+    @Model.getAllByUserId userId
+    # .map EmbedService.embed {embed: @defaultEmbed}
+
   deleteByRow: ({row}, {user}) =>
     @Model.getById row.id
     .then (attachment) =>

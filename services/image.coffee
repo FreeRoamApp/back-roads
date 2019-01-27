@@ -55,7 +55,7 @@ class ImageService
         .interlace 'Line' # progressive jpeg
 
     return image
-      .quality DEFAULT_IMAGE_QUALITY
+      .quality quality
       .stream type
 
   # Note: images are never removed from gcloud

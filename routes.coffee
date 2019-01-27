@@ -26,6 +26,7 @@ NpsCtrl = require './controllers/nps'
 OvernightCtrl = require './controllers/overnight'
 OvernightReviewCtrl = require './controllers/overnight_review'
 OvernightAttachmentCtrl = require './controllers/overnight_attachment'
+PlaceAttachmentCtrl = require './controllers/campground_attachment' # HACK: use since place_review_base isn't instantiated
 PlaceReviewCtrl = require './controllers/campground_review' # HACK: use since place_review_base isn't instantiated
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
@@ -212,6 +213,7 @@ module.exports = router
 .on 'overnightAttachments.deleteByRow',
   authed OvernightAttachmentCtrl.deleteByRow
 
+.on 'placeAttachments.getAllByUserId', authed PlaceAttachmentCtrl.getAllByUserId
 .on 'placeReviews.getAllByUserId', authed PlaceReviewCtrl.getAllByUserId
 
 .on 'notifications.getAll', authed NotificationCtrl.getAll
@@ -242,6 +244,7 @@ module.exports = router
 .on 'trips.getAll', authed TripCtrl.getAll
 .on 'trips.getById', authed TripCtrl.getById
 .on 'trips.getByType', authed TripCtrl.getByType
+.on 'trips.getByUserIdAndType', authed TripCtrl.getByUserIdAndType
 .on 'trips.getRoute', authed TripCtrl.getRoute
 .on 'trips.getStats', authed TripCtrl.getStats
 .on 'trips.getStatesGeoJson', authed TripCtrl.getStatesGeoJson

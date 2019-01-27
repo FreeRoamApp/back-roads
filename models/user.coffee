@@ -24,6 +24,7 @@ class UserModel extends Base
           language: 'text'
           flags: 'text'
           links: {type: 'map', subType: 'text', subType2: 'text'}
+          bio: 'text'
         primaryKey:
           partitionKey: ['id']
       }
@@ -40,6 +41,7 @@ class UserModel extends Base
           language: 'text'
           flags: 'text'
           links: {type: 'map', subType: 'text', subType2: 'text'}
+          bio: 'text'
         primaryKey:
           partitionKey: ['username']
       }
@@ -56,6 +58,7 @@ class UserModel extends Base
           language: 'text'
           flags: 'text'
           links: {type: 'map', subType: 'text', subType2: 'text'}
+          bio: 'text'
         primaryKey:
           partitionKey: ['email']
       }
@@ -230,6 +233,7 @@ class UserModel extends Base
       'id'
       'username'
       'name'
+      'bio'
       'avatarImage'
       'links'
       'embedded'

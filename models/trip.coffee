@@ -1,10 +1,12 @@
 _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
+request = require 'request-promise'
 
 Base = require './base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
+config = require '../config'
 
 scyllaFields =
   # common between all places
@@ -14,6 +16,7 @@ scyllaFields =
   name: 'text'
   # 'set's don't appear to work with ordering
   checkInIds: {type: 'list', subType: 'uuid'}
+  lastUpdateTime: 'timestamp'
   imagePrefix: 'text'
 
 class Trip extends Base
@@ -48,6 +51,7 @@ class Trip extends Base
     # add data if non-existent
     _.defaults trip, {
       id: cknex.getTimeUuid()
+      lastUpdateTime: new Date()
     }
 
   defaultOutput: (trip) ->
@@ -62,6 +66,23 @@ class Trip extends Base
         {}
 
     trip
+
+  updateMapByRow: (trip) =>
+    imagePrefix = "trips/#{trip.id}_profile"
+    Promise.resolve request "#{config.SCREENSHOTTER_HOST}/screenshot",
+      json: true
+      qs:
+        imagePrefix: imagePrefix
+        clipY: 32
+        viewportHeight: 424
+        width: 600
+        height: 360
+        # TODO: https
+        url: "http://#{config.FREE_ROAM_HOST}/travel-map-screenshot/#{trip.id}"
+    .then =>
+      @upsertByRow trip, {
+        imagePrefix
+      }
 
   getAllByUserId: (userId, {limit} = {}) =>
     limit ?= 30

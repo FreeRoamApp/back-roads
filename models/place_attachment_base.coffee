@@ -29,6 +29,30 @@ module.exports = class PlaceAttachment extends AttachmentBase
           clusteringColumns: ['id']
         withClusteringOrderBy: ['id', 'desc']
       }
+      {
+        name: 'place_attachments_counter_by_userId'
+        ignoreUpsert: true
+        fields:
+          id: 'uuid'
+          userId: 'uuid'
+          upvotes: 'counter'
+          downvotes: 'counter'
+        primaryKey:
+          partitionKey: ['userId']
+          clusteringColumns: ['id']
+      }
+      {
+        name: 'place_attachments_counter_by_parentId'
+        ignoreUpsert: true
+        fields:
+          id: 'uuid'
+          parentId: 'uuid'
+          upvotes: 'counter'
+          downvotes: 'counter'
+        primaryKey:
+          partitionKey: ['parentId']
+          clusteringColumns: ['id']
+      }
     ].concat super
 
   defaultInput: (place) ->

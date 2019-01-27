@@ -47,6 +47,11 @@ class TripCtrl
     .then EmbedService.embed {embed: defaultEmbed, options: {userId: user.id}}
     .then EmbedService.embed {embed: extrasEmbed}
 
+  getByUserIdAndType: ({userId, type}, {user}) ->
+    Trip.getByUserIdAndType userId, type
+    .then EmbedService.embed {embed: defaultEmbed, options: {userId}}
+    # .then EmbedService.embed {embed: extrasEmbed}
+
   uploadImage: ({}, {user, file}) ->
     ImageService.uploadImageByUserIdAndFile(
       user.id, file, {folder: 'trips'}
