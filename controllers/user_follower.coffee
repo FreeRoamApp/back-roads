@@ -1,6 +1,7 @@
 _ = require 'lodash'
 router = require 'exoid-router'
 
+Subscription = require '../models/subscription'
 UserFollower = require '../models/user_follower'
 User = require '../models/user'
 EmbedService = require '../services/embed'
@@ -45,7 +46,7 @@ class UserFollowerCtrl
         PushNotificationService.send otherUser, {
           titleObj:
             key: 'newFollower.title'
-          type: PushNotificationService.TYPES.NEW_FRIEND
+          type: Subscription.TYPES.SOCIAL
           # url: "https://#{config.SUPERNOVA_HOST}"
           textObj:
             key: 'newFollower.text'

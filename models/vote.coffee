@@ -31,6 +31,7 @@ class VoteModel extends Base
     ]
 
   getByUserIdAndParent: (userId, parent) ->
+    console.log 'get vote', parent
     cknex().select '*'
     .from 'votes_by_userId'
     .where 'userId', '=', userId

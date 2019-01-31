@@ -30,7 +30,7 @@ PlaceAttachmentCtrl = require './controllers/campground_attachment' # HACK: use 
 PlaceReviewCtrl = require './controllers/campground_review' # HACK: use since place_review_base isn't instantiated
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
-PushTopicCtrl = require './controllers/push_topic'
+SubscriptionCtrl = require './controllers/subscription'
 ThreadCtrl = require './controllers/thread'
 TripCtrl = require './controllers/trip'
 UserCtrl = require './controllers/user'
@@ -171,10 +171,10 @@ module.exports = router
 .on 'groupUsers.getByGroupIdAndUserId',
   authed GroupUserCtrl.getByGroupIdAndUserId
 .on 'groupUsers.getTopByGroupId', authed GroupUserCtrl.getTopByGroupId
-.on 'groupUsers.getMeSettingsByGroupId',
-  authed GroupUserCtrl.getMeSettingsByGroupId
-.on 'groupUsers.updateMeSettingsByGroupId',
-  authed GroupUserCtrl.updateMeSettingsByGroupId
+# .on 'groupUsers.getMeSettingsByGroupId',
+#   authed GroupUserCtrl.getMeSettingsByGroupId
+# .on 'groupUsers.updateMeSettingsByGroupId',
+#   authed GroupUserCtrl.updateMeSettingsByGroupId
 .on 'groupUsers.getOnlineCountByGroupId',
   authed GroupUserCtrl.getOnlineCountByGroupId
 
@@ -225,9 +225,10 @@ module.exports = router
 
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert
 
-.on 'pushTopics.subscribe', authed PushTopicCtrl.subscribe
-.on 'pushTopics.unsubscribe', authed PushTopicCtrl.unsubscribe
-.on 'pushTopics.getAll', authed PushTopicCtrl.getAll
+.on 'subscriptions.subscribe', authed SubscriptionCtrl.subscribe
+.on 'subscriptions.unsubscribe', authed SubscriptionCtrl.unsubscribe
+.on 'subscriptions.getAllByGroupId', authed SubscriptionCtrl.getAllByGroupId
+.on 'subscriptions.sync', authed SubscriptionCtrl.sync
 
 .on 'threads.upsert', authed ThreadCtrl.upsert
 .on 'threads.getAll', authed ThreadCtrl.getAll

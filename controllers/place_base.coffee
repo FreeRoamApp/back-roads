@@ -25,7 +25,8 @@ module.exports = class PlaceBaseCtrl
   getBySlug: ({slug}, {user}) =>
     @Model.getBySlug slug
     .then (place) =>
-      _.defaults {@type}, place
+      if place
+        _.defaults {@type}, place
     .then EmbedService.embed {embed: @defaultEmbed}
 
   search: ({query, tripId, sort, limit}, {user}) =>

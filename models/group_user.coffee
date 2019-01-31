@@ -80,21 +80,17 @@ class GroupUserModel extends Base
         primaryKey:
           partitionKey: ['groupId']
       }
-      {
-        name: 'group_user_settings'
-        keyspace: 'free_roam'
-        ignoreUpsert: true
-        fields:
-          groupId: 'uuid'
-          userId: 'uuid'
-          globalNotifications: 'text'
-          channelNotifications: {
-            type: 'map', subType: 'uuid', subType2: 'text'
-          }
-        primaryKey:
-          partitionKey: ['userId']
-          clusteringColumns: ['groupId']
-      }
+      # {
+      #   name: 'group_user_settings'
+      #   keyspace: 'free_roam'
+      #   ignoreUpsert: true
+      #   fields:
+      #     groupId: 'uuid'
+      #     userId: 'uuid'
+      #   primaryKey:
+      #     partitionKey: ['userId']
+      #     clusteringColumns: ['groupId']
+      # }
     ]
 
   PERMISSIONS: PERMISSIONS
@@ -216,22 +212,22 @@ class GroupUserModel extends Base
       @incrementCountByGroupId groupId, -1
     ]
 
-  getSettingsByGroupIdAndUserId: (groupId, userId) =>
-    cknex().select '*'
-    .from 'group_user_settings'
-    .where 'groupId', '=', groupId
-    .andWhere 'userId', '=', userId
-    .run {isSingle: true}
-    .then @defaultGroupUserSettingsOutput
-
-  upsertSettings: (settings) =>
-    settings = @defaultGroupUserSettings settings
-
-    cknex().update 'group_user_settings'
-    .set _.omit settings, ['userId', 'groupId']
-    .where 'groupId', '=', settings.groupId
-    .andWhere 'userId', '=', settings.userId
-    .run()
+  # getSettingsByGroupIdAndUserId: (groupId, userId) =>
+  #   cknex().select '*'
+  #   .from 'group_user_settings'
+  #   .where 'groupId', '=', groupId
+  #   .andWhere 'userId', '=', userId
+  #   .run {isSingle: true}
+  #   .then @defaultGroupUserSettingsOutput
+  #
+  # upsertSettings: (settings) =>
+  #   settings = @defaultGroupUserSettings settings
+  #
+  #   cknex().update 'group_user_settings'
+  #   .set _.omit settings, ['userId', 'groupId']
+  #   .where 'groupId', '=', settings.groupId
+  #   .andWhere 'userId', '=', settings.userId
+  #   .run()
 
   hasPermissionByGroupIdAndUser: (groupId, user, permissions, options) =>
     options ?= {}
@@ -283,6 +279,9 @@ class GroupUserModel extends Base
     groupUserSettings.globalNotifications = JSON.stringify(
       groupUserSettings.globalNotifications
     )
+    groupUserSettings.channelNotifications = JSON.stringify(
+      groupUserSettings.channelNotifications
+    )
 
     groupUserSettings
 
@@ -292,6 +291,11 @@ class GroupUserModel extends Base
 
     groupUserSettings.globalNotifications = try
       JSON.parse groupUserSettings.globalNotifications
+    catch error
+      {}
+
+    groupUserSettings.channelNotifications = try
+      JSON.parse groupUserSettings.channelNotifications
     catch error
       {}
 

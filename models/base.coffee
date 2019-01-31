@@ -22,11 +22,14 @@ module.exports = class Base
         table.primaryKey.clusteringColumns
       )
     requiredValues = _.pick row, keyColumns
-    @upsert _.defaults(requiredValues, diff), options
+    @upsert(
+      _.defaults(requiredValues, diff)
+      _.defaults options, {skipDefaults: true}
+    )
 
 
-  upsert: (row, {ttl, prepareFn, isUpdate, add, remove} = {}) =>
-    scyllaRow = @defaultInput row
+  upsert: (row, {ttl, prepareFn, isUpdate, add, remove, skipDefaults} = {}) =>
+    scyllaRow = if skipDefaults then row else @defaultInput row
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
     Promise.all _.filter _.map(@getScyllaTables(), (table) ->
@@ -85,7 +88,22 @@ module.exports = class Base
         console.log 'elastic err', @getElasticSearchIndices?()[0].name, err
         throw err
 
+  # parts of row -> full row
+  getByRow: (row) =>
+    scyllaRow = @defaultInput row
+    table = @getScyllaTables()[0]
+    keyColumns = _.filter table.primaryKey.partitionKey.concat(
+      table.primaryKey.clusteringColumns
+    )
+    q = cknex().select '*'
+    .from table.name
+    _.forEach keyColumns, (column) ->
+      q.andWhere column, '=', scyllaRow[column]
+    q.run {isSingle: true}
+
+
   deleteByRow: (row) =>
+    scyllaRow = @defaultInput row
     Promise.all _.filter _.map(@getScyllaTables(), (table) ->
       if table.ignoreUpsert
         return
@@ -95,7 +113,7 @@ module.exports = class Base
       q = cknex().delete()
       .from table.name
       _.forEach keyColumns, (column) ->
-        q.andWhere column, '=', row[column]
+        q.andWhere column, '=', scyllaRow[column]
       q.run()
     ).concat [@deleteESById row.id]
     .then =>

@@ -86,6 +86,7 @@ setup = ->
     console.log 'setup', err
   .tap ->
     console.log 'scylla & elasticsearch setup'
+    cknex.enableErrors()
     CronService.start()
     console.log 'cron started'
     # KueRunnerService.listen() # TODO: child instance too
@@ -93,6 +94,7 @@ setup = ->
 
 childSetup = ->
   # KueRunnerService.listen()
+  cknex.enableErrors()
   return Promise.resolve null # don't block
 
 app = express()

@@ -4,6 +4,7 @@ Promise = require 'bluebird'
 
 Comment = require '../models/comment'
 EarnAction = require '../models/earn_action'
+Subscription = require '../models/subscription'
 User = require '../models/user'
 Vote = require '../models/vote'
 PushNotificationService = require '../services/push_notification'
@@ -31,7 +32,7 @@ class VoteCtrl
     ]
     .then ([otherUser, top]) ->
       PushNotificationService.send otherUser, {
-        type: PushNotificationService.TYPES.CONTENT_LIKED
+        type: Subscription.TYPES.SOCIAL
         titleObj:
           key: "#{parentRow.type}Liked.title"
         textObj:

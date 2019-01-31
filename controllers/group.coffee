@@ -7,6 +7,7 @@ Group = require '../models/group'
 GroupUser = require '../models/group_user'
 GroupRole = require '../models/group_role'
 Conversation = require '../models/conversation'
+Subscription = require '../models/subscription'
 EmbedService = require '../services/embed'
 CacheService = require '../services/cache'
 PushNotificationService = require '../services/push_notification'
@@ -92,7 +93,7 @@ class GroupCtrl
       #     textObj:
       #       key: 'newGroupMember.text'
       #       replacements: {name}
-      #     type: PushNotificationService.TYPES.GROUP
+      #     type: Subscription.TYPES.SOCIAL
       #     url: "https://#{config.CLIENT_HOST}"
       #     path:
       #       key: 'groupChat'
@@ -104,7 +105,7 @@ class GroupCtrl
 
       Group.addUser group.id, userId
       .then ->
-        PushNotificationService.subscribeToGroupTopics {
+        Subscription.subscribeToGroup {
           userId, groupId: group.id
         }
 
@@ -126,7 +127,7 @@ class GroupCtrl
         PushNotificationService.sendToGroupTopic group, {
           title: title
           text: description
-          type: PushNotificationService.TYPES.NEWS
+          type: Subscription.TYPES.NEWS
           data:
             path:
               key: pathKey

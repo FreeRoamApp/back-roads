@@ -9,6 +9,7 @@ GroupUser = require '../models/group_user'
 GroupRole = require '../models/group_role'
 Group = require '../models/group'
 Language = require '../models/language'
+Subscription = require '../models/subscription'
 EmbedService = require '../services/embed'
 CacheService = require '../services/cache'
 PushNotificationService = require '../services/push_notification'
@@ -51,8 +52,10 @@ class GroupUserCtrl
             }
           }
 
-        PushNotificationService.subscribeToPushTopic {
-          userId, groupId, sourceType: 'role', sourceId: role.name
+        Subscription.subscribeToPushTopic {
+          userId, groupId
+          sourceType: Subscription.TYPES.GROUP_ROLE
+          sourceId: role.name
         }
 
         GroupUser.addRoleIdByGroupUser {
@@ -87,8 +90,8 @@ class GroupUserCtrl
             }
           }
 
-        PushNotificationService.unsubscribeToTopicByPushTopic {
-          userId, groupId, sourceType: 'role', sourceId: role.name
+        Subscription.unsubscribe {
+          userId, groupId, sourceType: 'groupRole', sourceId: role.name
         }
 
         GroupUser.removeRoleIdByGroupUser {
@@ -107,32 +110,20 @@ class GroupUserCtrl
       .map EmbedService.embed {embed: userEmbed}
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
-  getMeSettingsByGroupId: ({groupId}, {user}) ->
-    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
-      GroupUser.PERMISSIONS.READ_MESSAGE
-    ]
-    .then (hasPermission) ->
-      unless hasPermission
-        router.throw status: 400, info: 'no permission'
+  # getMeSettingsByGroupId: ({groupId}, {user}) ->
+  #   GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
+  #     GroupUser.PERMISSIONS.READ_MESSAGE
+  #   ]
+  #   .then (hasPermission) ->
+  #     unless hasPermission
+  #       router.throw status: 400, info: 'no permission'
+  #
+  #     GroupUser.getSettingsByGroupIdAndUserId groupId, user.id
 
-      GroupUser.getSettingsByGroupIdAndUserId groupId, user.id
+  # _convertToChannelSubscription: ({userId, groupId, channelId})
+  #   PushTopic.getAllByUserIdAndGroupId userId, groupId
+  #   .then (topics) ->
 
-  updateMeSettingsByGroupId: ({groupId, globalNotifications}, {user}) ->
-    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
-      GroupUser.PERMISSIONS.READ_MESSAGE
-    ]
-    .then (hasPermission) ->
-      unless hasPermission
-        router.throw status: 400, info: 'no permission'
-
-      GroupUser.getSettingsByGroupIdAndUserId groupId, user.id
-      .then (settings) ->
-        GroupUser.upsertSettings {
-          groupId, userId: user.id
-          globalNotifications: _.defaults(
-            globalNotifications, settings?.globalNotifications
-          )
-        }
 
   # getOnlineCountByGroupId: ({groupId}) ->
   #   if groupId

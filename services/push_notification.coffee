@@ -1,3 +1,21 @@
+###
+TODO:
+- deploy first
+  - test
+  - then create subscriptions for existing users
+
+x login should delete all other subscriptions for that deviceId/token!
+  x need to store subscriptions by token for that to work
+
+TEST:
+x new user subscribe
+- login deletes all other subscriptions
+  - FIXME: not working
+- push notifications on my phone and rachel's (same account)
+
+  -
+###
+
 _ = require 'lodash'
 apn = require 'apn'
 gcm = require 'node-gcm'
@@ -8,11 +26,10 @@ request = require 'request-promise'
 randomSeed = require 'random-seed'
 
 config = require '../config'
-EmbedService = require './embed'
 User = require '../models/user'
 Notification = require '../models/notification'
 PushToken = require '../models/push_token'
-PushTopic = require '../models/push_topic'
+Subscription = require '../models/subscription'
 Group = require '../models/group'
 GroupUser = require '../models/group_user'
 GroupRole = require '../models/group_role'
@@ -24,16 +41,6 @@ RETRY_COUNT = 10
 CONSECUTIVE_ERRORS_UNTIL_INACTIVE = 10
 MAX_INT_32 = 2147483647
 
-TYPES =
-  CONVERSATION_MESSAGE: 'conversationMessage'
-  CHAT_MENTION: 'chatMention'
-  PRIVATE_MESSAGE: 'privateMessage'
-  GROUP: 'group'
-  CONTENT_LIKED: 'contentLiked'
-
-defaultUserEmbed = [
-  EmbedService.TYPES.USER.GROUP_USER_SETTINGS
-]
 cdnUrl = "https://#{config.CDN_HOST}/d/images/freeroam"
 
 class PushNotificationService
@@ -46,8 +53,6 @@ class PushNotificationService
       config.VAPID_PUBLIC_KEY,
       config.VAPID_PRIVATE_KEY
     )
-
-  TYPES: TYPES
 
   isGcmHealthy: ->
     Promise.resolve true # TODO
@@ -100,8 +105,9 @@ class PushNotificationService
           priority: 1
           actions: _.filter [
             if type in [
-              @TYPES.CONVERSATION_MESSAGE
-              @TYPES.PRIVATE_MESSAGE
+              Subscription.TYPES.CHANNEL_MESSAGE
+              Subscription.TYPES.CHANNEL_MENTION
+              Subscription.TYPES.PRIVATE_MESSAGE
             ]
               {
                 title: 'REPLY'
@@ -164,8 +170,8 @@ class PushNotificationService
       message =
         title: group?.name or User.getDisplayName meUser
         type: if group \
-              then @TYPES.CONVERSATION_MESSAGE
-              else @TYPES.PRIVATE_MESSAGE
+              then Subscription.TYPES.CHANNEL_MESSAGE
+              else Subscription.TYPES.PRIVATE_MESSAGE
         text: if group \
               then "#{User.getDisplayName(meUser)}: #{text}"
               else text
@@ -181,7 +187,7 @@ class PushNotificationService
           path: path
         notId: randomSeed.create(conversation.id)(MAX_INT_32)
 
-      mentionMessage = _.defaults {type: @TYPES.CHAT_MENTION}, message
+      mentionMessage = _.defaults {type: Subscription.TYPES.CHANNEL_MENTION}, message
 
       Promise.all [
         @sendToRoles mentionRoles, mentionMessage, {
@@ -194,24 +200,24 @@ class PushNotificationService
           conversation: conversation
         }
 
-        @sendToUserIds _.filter(userIds), message, {
-          skipMe, fromUserId: meUser.id, groupId: conversation.groupId
-          conversation: conversation
-        }
-
-        # TODO: have users subscribe to conversation
-        # and send to subs of conversation
-        if group?.type and group.type isnt 'public' and not group.key
-          @sendToGroupTopic group, message
+        # TODO: add group types
+        if group?.type is 'private'
+          @sendToUserIds _.filter(userIds), message, {
+            skipMe, fromUserId: meUser.id, groupId: conversation.groupId
+            conversation: conversation
+          }
         else
-          Promise.resolve null
+          Promise.all [
+            @sendToGroupTopic group, message
+            @sendToChannelTopic conversation, message
+          ]
       ]
 
   # topics are NOT secure. anyone can subscribe. for secure messaging, always
   # use the deviceToken. for private channels, use deviceToken
 
-  sendToPushTopic: (pushTopic, message, {language, forceDevSend} = {}) =>
-    topic = @getTopicStrFromPushTopic pushTopic
+  sendToSubscription: (subscription, message, {language, forceDevSend} = {}) =>
+    topic = Subscription.getTopicFromSubscription subscription
 
     # legacy
     # topic = "group-#{pushTopic.groupId}"
@@ -240,32 +246,39 @@ class PushNotificationService
 
     if (config.ENV isnt config.ENVS.PROD or config.IS_STAGING) and
         not forceDevSend
-      console.log 'send notification', pushTopic, topic, JSON.stringify message
+      console.log 'send notification', subscription, topic, JSON.stringify message
       # return Promise.resolve()
+
+    console.log 'send', topic
 
     @sendFcm topic, message
 
 
   sendToGroupTopic: (group, message) =>
-    @sendToPushTopic {groupId: group.id}, message, {language: group.language}
+    subscription = {
+      groupId: group.id, sourceType: Subscription.TYPES.GROUP_MESSAGE
+    }
+    @sendToSubscription subscription, message
+
+  sendToChannelTopic: (channel, message) =>
+    subscription = {
+      groupId: channel.groupId, sourceType: Subscription.TYPES.CHANNEL_MESSAGE
+      sourceId: channel.id
+    }
+    @sendToSubscription subscription, message
 
   sendToRoles: (roles, message, {groupId} = {}) ->
     Promise.map roles, (role) =>
-      pushTopic = {groupId, sourceType: 'role', sourceId: role}
-      @sendToPushTopic pushTopic, message
+      subscription = {
+        groupId, sourceType: Subscription.TYPES.GROUP_ROLE, sourceId: role
+      }
+      @sendToSubscription subscription, message
 
   sendToUserIds: (userIds, message, options = {}) ->
     {skipMe, fromUserId, groupId, conversation} = options
     Promise.each userIds, (userId) =>
       unless "#{userId}" is "#{fromUserId}"
-        user = User.getById userId, {preferCache: true}
-        if groupId
-          user = user.then EmbedService.embed {
-            embed: defaultUserEmbed
-            options:
-              groupId
-          }
-        user
+        User.getById userId, {preferCache: true}
         .then (user) =>
           (if conversation.type is 'pm'
             Promise.resolve true
@@ -315,67 +328,81 @@ class PushNotificationService
       data: notificationData
     }
 
-    if user.groupUserSettings
-      settings = _.defaults(
-        user.groupUserSettings.globalNotifications, config.DEFAULT_NOTIFICATIONS
-      )
-      if not settings?[message.type]
+    # TODO: bypass this if sending in bulk
+    Promise.all [
+      Subscription.getByRow {
+        userId: user.id
+        groupId: groupId or config.EMPTY_UUID
+        sourceType: message.type
+        sourceId: conversation.id
+      }
+      if message.type.indexOf('channel') is 0
+        Subscription.getByRow {
+          userId: user.id
+          groupId: groupId or config.EMPTY_UUID
+          sourceType: message.type.replace 'channel', 'group'
+        }
+    ]
+    .then ([channelSubscription, groupSubscription]) =>
+      if not channelSubscription?.isEnabled and not groupSubscription?.isEnabled
+        console.log 'no push subscription', message.type
         return Promise.resolve null
 
-    if config.ENV is config.ENVS.DEV and not message.forceDevSend
-      console.log 'send notification', user.id, message
-      return Promise.resolve()
+      if config.ENV is config.ENVS.DEV and not message.forceDevSend
+        console.log 'send notification', user.id, message
+        return Promise.resolve()
 
-    successfullyPushedToNative = false
+      successfullyPushedToNative = false
 
-    @_checkIfBlocked user, fromUserId
-    .then ->
-      PushToken.getAllByUserId user.id
-    .then (pushTokens) =>
-      pushTokens = _.filter pushTokens, (pushToken) ->
-        pushToken.isActive
+      @_checkIfBlocked user, fromUserId
+      .then ->
+        PushToken.getAllByUserId user.id
+      .then (pushTokens) =>
+        pushTokens = _.filter pushTokens, (pushToken) ->
+          pushToken.isActive
 
-      pushTokenDevices = _.groupBy pushTokens, 'deviceId'
-      pushTokens = _.map pushTokenDevices, (tokens) ->
-        return tokens[0]
+        pushTokenDevices = _.groupBy pushTokens, 'deviceId'
+        pushTokens = _.map pushTokenDevices, (tokens) ->
+          return tokens[0]
 
-      Promise.map pushTokens, (pushToken) =>
-        {sourceType, token, errorCount} = pushToken
-        fn = if sourceType is 'web' \
-             then @sendWeb
-             else if sourceType in ['android', 'ios-fcm', 'web-fcm']
-             then @sendFcm
+        Promise.map pushTokens, (pushToken) =>
+          {sourceType, userId, token, errorCount} = pushToken
+          fn = if sourceType is 'web' \
+               then @sendWeb
+               else if sourceType in ['android', 'ios-fcm', 'web-fcm']
+               then @sendFcm
 
-        unless fn
-          console.log 'no fn', sourceType
-          return
+          unless fn
+            console.log 'no fn', sourceType
+            return
 
-        fn token, message, {isiOS: sourceType is 'ios-fcm'}
-        .then ->
-          successfullyPushedToNative = true
-          if errorCount
-            PushToken.upsert _.defaults({
-              errorCount: 0
-            }, pushToken)
-        .catch (err) ->
-          newErrorCount = errorCount + 1
-          if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
-            Promise.all [
-              PushToken.deleteByPushToken pushToken
-              PushTopic.deleteByPushToken pushToken
-            ]
-          else
-            PushToken.upsert _.defaults({
-              errorCount: newErrorCount
-            }, pushToken)
+          fn token, message, {isiOS: sourceType is 'ios-fcm'}
+          .then ->
+            successfullyPushedToNative = true
+            if errorCount
+              PushToken.upsert _.defaults({
+                errorCount: 0
+              }, pushToken)
+          .catch (err) ->
+            # TODO: try other tokens we have for this user
+            newErrorCount = errorCount + 1
+            if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
+              Promise.all [
+                PushToken.deleteByPushToken pushToken
+                Subscription.removeTokenByUserId userId, token
+              ]
+            else
+              PushToken.upsert _.defaults({
+                errorCount: newErrorCount
+              }, pushToken)
 
-          # if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
-          #   PushToken.getAllByUserId user.id
-          #   .then (tokens) ->
-          #     if _.isEmpty tokens
-          #       User.updateByUser user, {
-          #         hasPushToken: false
-          #       }
+            # if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
+            #   PushToken.getAllByUserId user.id
+            #   .then (tokens) ->
+            #     if _.isEmpty tokens
+            #       User.updateByUser user, {
+            #         hasPushToken: false
+            #       }
 
   _checkIfBlocked: (user, fromUserId) ->
     if fromUserId
@@ -386,124 +413,5 @@ class PushNotificationService
           throw new Error 'user blocked'
     else
       Promise.resolve()
-
-  subscribeToAllUserTopics: ({userId, token, deviceId}) ->
-    Promise.all [
-      PushToken.getAllByUserId userId
-      PushTopic.getAllByUserId userId
-    ]
-    .then ([pushTokens, pushTopics]) =>
-      topics = pushTopics.concat [{
-        userId: userId
-        groupId: config.EMPTY_UUID
-        sourceType: 'all'
-        sourceId: 'all'
-      }]
-      uniqueTopics = _.uniqBy topics, (topic) ->
-        _.omit topic, ['token']
-
-      Promise.map uniqueTopics, (topic) =>
-        @subscribeToTopicByToken token, topic
-        .then ->
-          PushTopic.upsert _.defaults {
-            token: token
-            deviceId: deviceId
-          }, topic
-
-  # go through all pushTokens a user has and subscribe them to the topic.
-  # max 1 subscription per device,
-  subscribeToPushTopic: (topic) =>
-    {userId, groupId, sourceType, sourceId} = topic
-
-    Promise.all [
-      PushToken.getAllByUserId userId
-      PushTopic.getAllByUserId userId
-    ]
-    .then ([pushTokens, topics]) =>
-      # still store push topics if a token isn't set, that way when one does get
-      # set, the user will subscribe to correct topics
-      if _.isEmpty pushTokens
-        pushTokens = [{userId, deviceId: 'none', token: 'none'}]
-
-      Promise.all _.map pushTokens, (token) =>
-        upsertTopic = _.defaults {
-          token: token.token
-          deviceId: token.deviceId
-        }, topic
-        Promise.all _.filter [
-          PushTopic.upsert upsertTopic
-          unless token.token is 'none'
-            @subscribeToTopicByToken token.token, upsertTopic
-        ]
-
-  unsubscribeToPushTopic: (topic) =>
-    {userId, groupId, sourceType, sourceId} = topic
-
-    PushTopic.getAllByUserId userId
-    .then (topics) =>
-      unsubTopics = _.filter topics, topic
-      Promise.map unsubTopics, (pushTopic) =>
-        Promise.all [
-          PushTopic.deleteByPushTopic pushTopic
-          @unsubscribeToTopicByPushTopic topic
-        ]
-
-  subscribeToGroupTopics: ({userId, groupId}) =>
-    Promise.all [
-      @subscribeToPushTopic {
-        userId
-        groupId
-      }
-      @subscribeToPushTopic {
-        userId
-        groupId
-        sourceType: 'role'
-        sourceId: 'everyone'
-      }
-    ]
-    # 'everyone'
-
-  subscribeToTopicByToken: (token, topic) =>
-    if token is 'none'
-      return Promise.resolve null
-
-    if typeof topic is 'object'
-      topic = @getTopicStrFromPushTopic topic
-
-    # if (config.ENV isnt config.ENVS.PROD or config.IS_STAGING)
-    #   return Promise.resolve null
-
-    base = 'https://iid.googleapis.com/iid/v1'
-    request "#{base}/#{token}/rel/topics/#{topic}", {
-      json: true
-      method: 'POST'
-      headers:
-        'Authorization': "key=#{config.GOOGLE_API_KEY}"
-      body: {}
-    }
-    .catch (err) ->
-      console.log 'sub topic err', "#{base}/#{token}/rel/topics/#{topic}"
-
-  unsubscribeToTopicByPushTopic: (pushTopic) =>
-    topic = @getTopicStrFromPushTopic pushTopic
-    base = 'https://iid.googleapis.com/iid/v1'
-
-    PushToken.getAllByUserId pushTopic.userId
-    .map (pushToken) ->
-      request "#{base}/#{pushToken.token}/rel/topics/#{topic}", {
-        json: true
-        method: 'DELETE'
-        headers:
-          'Authorization': "key=#{config.GOOGLE_API_KEY}"
-        body: {}
-      }
-    .catch (err) ->
-      console.log 'unsub topic err', "#{base}/token/rel/topics/#{topic}"
-
-  getTopicStrFromPushTopic: ({groupId, sourceType, sourceId}) ->
-    sourceType ?= 'all'
-    sourceId ?= 'all'
-    # : not a valid topic character
-    "#{groupId}~#{sourceType}~#{sourceId}"
 
 module.exports = new PushNotificationService()

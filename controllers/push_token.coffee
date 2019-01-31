@@ -4,45 +4,37 @@ Promise = require 'bluebird'
 router = require 'exoid-router'
 
 PushToken = require '../models/push_token'
-PushTopic = require '../models/push_topic'
+Subscription = require '../models/subscription'
 User = require '../models/user'
-PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
 class PushTokensCtrl
+  # store a new pushToken and re-create all subscribed topics for that token
   upsert: ({token, sourceType, language, deviceId}, {user}) =>
     userId = user.id
 
-    Promise.all [
-      # User.updateByUser user, {
-      #   hasPushToken: true
-      # }
-      # get any token obj associated with this token
-      PushToken.getAllByToken token
-      .then (pushTokens) ->
-        # delete the token
-        _.map pushTokens, PushToken.deleteByPushToken
-        # delete any pushTopics
-        _.map pushTokens, (pushToken) ->
-          PushTopic.getAllByUserIdAndToken pushToken.userId, pushToken.token
-          .map (pushTopic) ->
-            Promise.all [
-              PushTopic.deleteByPushTopic pushTopic
-              PushNotificationService.unsubscribeToTopicByPushTopic pushTopic
-            ]
-
-        PushToken.upsert {
-          token, deviceId
-          userId: user.id
-          sourceType: sourceType or pushTokens?[0]?.sourceType or 'android'
-        }
-      .then ->
-        PushNotificationService.subscribeToAllUserTopics {
-          userId
-          token
-          deviceId
-        }
-    ]
+    # delete existing push tokens (tokens for other userIds). important since
+    # this is called after logging in
+    console.log 'upsert', user.id
+    PushToken.getAllByToken token
+    .then (pushTokens) ->
+      # delete the token
+      Promise.all _.filter [
+        Promise.map pushTokens, PushToken.deleteByPushToken
+        # delete any subscriptions
+        Promise.map pushTokens, (pushToken) ->
+          unless token is 'none'
+            Subscription.getAllByToken pushToken.token
+            .map Subscription.unsubscribeBySubscriptionToken
+      ]
+    .then ->
+      PushToken.upsert {
+        token, deviceId
+        userId: user.id
+        sourceType: sourceType or pushTokens?[0]?.sourceType or 'android'
+      }
+    .then ->
+      Subscription.subscribeNewTokenByUserId userId, {token, deviceId}
     .then ->
       null
 

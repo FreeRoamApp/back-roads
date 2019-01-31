@@ -7,10 +7,13 @@ geoip = require 'geoip-lite'
 jwt = require 'jsonwebtoken'
 
 Auth = require '../models/auth'
+Subscription = require '../models/subscription'
 User = require '../models/user'
+PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
 class AuthCtrl
+  # create new user account if it doesn't exist
   login: ({language}, {headers, connection}) ->
     ip = headers['x-forwarded-for'] or
           connection.remoteAddress
@@ -23,6 +26,10 @@ class AuthCtrl
 
     User.upsert {language: language?.toLowerCase?()}
     .then (user) ->
+      # subscribe to base topics
+      # (so when they use another device, it grabs all the required ones)
+      # don't need to block for this
+      Subscription.subscribeInitial user
       Auth.fromUserId user.id
 
   join: ({email, username, password}, {user}) ->
