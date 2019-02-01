@@ -26,6 +26,7 @@ request = require 'request-promise'
 randomSeed = require 'random-seed'
 
 config = require '../config'
+Conversation = require '../models/conversation'
 User = require '../models/user'
 Notification = require '../models/notification'
 PushToken = require '../models/push_token'
@@ -201,16 +202,19 @@ class PushNotificationService
         }
 
         # TODO: add group types
-        if group?.type is 'private'
+        if not group or group?.type is 'private'
           @sendToUserIds _.filter(userIds), message, {
             skipMe, fromUserId: meUser.id, groupId: conversation.groupId
             conversation: conversation
           }
         else
-          Promise.all [
-            @sendToGroupTopic group, message
-            @sendToChannelTopic conversation, message
-          ]
+          Conversation.getAllPublicByGroupId group.id
+          .then (publicChannels) ->
+            if _.find publicChannels, {id: conversation.id}
+              Promise.all [
+                @sendToGroupTopic group, message
+                @sendToChannelTopic conversation, message
+              ]
       ]
 
   # topics are NOT secure. anyone can subscribe. for secure messaging, always
@@ -328,15 +332,16 @@ class PushNotificationService
       data: notificationData
     }
 
+    isChannel = message.type.indexOf('channel') is 0
     # TODO: bypass this if sending in bulk
     Promise.all [
       Subscription.getByRow {
         userId: user.id
         groupId: groupId or config.EMPTY_UUID
         sourceType: message.type
-        sourceId: conversation.id
+        sourceId: if isChannel then conversation.id else 'all'
       }
-      if message.type.indexOf('channel') is 0
+      if isChannel
         Subscription.getByRow {
           userId: user.id
           groupId: groupId or config.EMPTY_UUID
@@ -344,6 +349,7 @@ class PushNotificationService
         }
     ]
     .then ([channelSubscription, groupSubscription]) =>
+      console.log 'attempt send', message.type, Boolean channelSubscription
       if not channelSubscription?.isEnabled and not groupSubscription?.isEnabled
         console.log 'no push subscription', message.type
         return Promise.resolve null

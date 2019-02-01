@@ -3,6 +3,8 @@ Promise = require 'bluebird'
 uuid = require 'node-uuid'
 
 Base = require './base'
+GroupRole = require './group_role'
+GroupUser = require './group_user'
 cknex = require '../services/cknex'
 CacheService = require '../services/cache'
 Group = require './group'
@@ -175,6 +177,34 @@ class ConversationModel extends Base
         type is 'pm' and _.every checkUserIds, (userId) ->
           userIds.indexOf("#{userId}") isnt -1
     .then @defaultOutput
+
+  getAllPublicByGroupId: (groupId, {preferCache} = {}) =>
+    preferCache ?= true
+
+    get = =>
+      Promise.all [
+        @getAllByGroupId groupId
+        GroupRole.getAllByGroupId groupId, {preferCache}
+      ]
+      .then ([conversations, roles]) ->
+        everyoneRole = _.find roles, {name: 'everyone'}
+
+        publicChannels = _.filter conversations, (conversation) ->
+          GroupUser.hasPermission {
+            meGroupUser: {
+              roles: [everyoneRole]
+            }
+            permissions: [GroupUser.PERMISSIONS.READ_MESSAGE]
+            channelId: conversation.id
+          }
+
+    if preferCache
+      prefix = CacheService.PREFIXES.PUBLIC_CHANNELS_BY_GROUP_ID
+      key = "#{prefix}:#{groupId}"
+      CacheService.preferCache key, get, {expireSeconds: ONE_DAY_S}
+    else
+      get()
+
 
   markRead: ({id}, userId) ->
     cknex().update 'conversations_by_userId'

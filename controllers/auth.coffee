@@ -9,7 +9,6 @@ jwt = require 'jsonwebtoken'
 Auth = require '../models/auth'
 Subscription = require '../models/subscription'
 User = require '../models/user'
-PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
 class AuthCtrl

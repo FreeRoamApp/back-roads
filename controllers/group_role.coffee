@@ -114,6 +114,10 @@ class GroupRoleCtrl
 
       GroupRole.upsert diff, if channelId then mapOptions else undefined
       .tap ->
+        prefix = CacheService.PREFIXES.PUBLIC_CHANNELS_BY_GROUP_ID
+        key = "#{prefix}:#{groupId}"
+        CacheService.deleteByKey key
+
         prefix = CacheService.PREFIXES.GROUP_ROLES
         key = "#{prefix}:#{groupId}"
         CacheService.deleteByKey key

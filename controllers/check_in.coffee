@@ -43,7 +43,7 @@ class CheckInCtrl
       unless diff.id
         diff.tripIds ?= [trip.id]
 
-      CheckIn.upsertByRow checkIn, diff
+      CheckIn.upsertByRow checkIn, diff, {skipDefaults: false}
       .tap (checkIn) ->
         unless diff.id
           Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}

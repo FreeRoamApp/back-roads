@@ -49,6 +49,26 @@ class Subscription extends Base
             'groupId', 'sourceType', 'sourceId'
           ]
       }
+      # will be used to blast to private groups where a pushTopic isn't secure
+      {
+        name: 'subscriptions_by_topic'
+        keyspace: 'free_roam'
+        fields:
+          userId: 'uuid'
+          groupId: 'uuid' # config.EMPTY_UUID for all
+          sourceType: 'text'
+          sourceId: 'text' # id or 'all'
+          isTopic: 'boolean' # whether or not this corresponds to fcm topic
+          isEnabled: 'boolean'
+          # TODO: we'll probably want to prune these to filter out dead tokens during each blast?
+          tokens: {type: 'map', subType: 'text', subType2: 'text'} # token: deviceId
+          lastUpdateTime: 'timestamp'
+        primaryKey:
+          partitionKey: ['groupId', 'sourceType', 'sourceId']
+          clusteringColumns: [
+            'userId'
+          ]
+      }
       # used to unsubscribe a device when logging in as a different user
       {
         name: 'subscriptions_by_token'
@@ -188,7 +208,7 @@ class Subscription extends Base
     .then (subscription) =>
       Promise.all _.filter [
         @upsertByRow subscription, {isEnabled: false}
-        if subscription.isTopic
+        if subscription?.isTopic
           Promise.all _.map subscription.tokens, (deviceId, token) =>
             @fcmUnsubscribeToTopicByToken token, topic
       ]
@@ -244,6 +264,7 @@ class Subscription extends Base
       body: {}
     }
     .catch (err) ->
+      console.log err
       console.log 'sub topic err', "#{base}/#{token}/rel/topics/#{topic}"
 
   fcmUnsubscribeToTopicByToken: (token, topic) =>
