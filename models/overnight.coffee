@@ -110,11 +110,18 @@ class Overnight extends PlaceBase
     .run {isSingle: true}
 
   upsertIsAllowed: (overnightIsAllowed) ->
+    overnightIsAllowed = @defaultIsAllowedInput overnightIsAllowed
     cknex().update 'overnights_isAllowed_by_userId'
     .set _.omit overnightIsAllowed, ['userId', 'overnightId']
     .where 'userId', '=', overnightIsAllowed.userId
     .andWhere 'overnightId', '=', overnightIsAllowed.overnightId
     .run()
+
+  defaultIsAllowedInput: (overnightIsAllowed) ->
+    # add data if non-existent
+    _.defaults overnightIsAllowed, {
+      id: cknex.getTimeUuid()
+    }
 
   defaultInput: (overnight) ->
     unless overnight?

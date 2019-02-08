@@ -84,7 +84,7 @@ class Trip extends Base
     .then =>
       @upsertByRow trip, {
         imagePrefix
-      }
+      }, {skipDefaults: false}
 
   getAllByUserId: (userId, {limit} = {}) =>
     limit ?= 30

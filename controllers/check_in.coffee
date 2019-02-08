@@ -17,7 +17,7 @@ class CheckInCtrl
   getById: ({id}, {user}) ->
     CheckIn.getById id
 
-  upsert: (diff, {user}) ->
+  upsert: (diff, {user}, {emit, socket, route}) ->
     diff = _.pick diff, [
       'id', 'sourceId', 'sourceType', 'name',
       'attachments', 'startTime', 'endTime', 'status', 'tripIds'
@@ -49,6 +49,10 @@ class CheckInCtrl
           Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}
       .tap ->
         Trip.updateMapByRow trip
+        .then (trip) ->
+          # tell client to reload trip image
+          console.log 'emit'
+          emit {updatedTrip: trip}
         null # don't block
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"

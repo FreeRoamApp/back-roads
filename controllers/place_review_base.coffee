@@ -161,9 +161,9 @@ module.exports = class PlaceReviewBaseCtrl
       # update maxLength and allowedTypes if we can
       if rating > 3 and userRig
         # TODO: problem with this is it's more of a maxReportedLength
-        # maxLength = parent.maxLength or 0
-        # if userRig.length > maxLength and userRig.length < 45
-        #   parentUpsert.maxLength = userRig.length
+        maxLength = parent.maxLength or 0
+        if userRig.length > maxLength and userRig.length < 60
+          parentUpsert.maxLength = userRig.length
 
         allowedTypes = parent.allowedTypes or {}
         if userRig.type and not allowedTypes[userRig.type]

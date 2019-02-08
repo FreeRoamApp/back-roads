@@ -33,10 +33,12 @@ class UserCtrl
 
   getById: ({id}) ->
     User.getById id
+    .then EmbedService.embed {embed: defaultEmbed}
     .then User.sanitizePublic(null)
 
   getByUsername: ({username}) ->
     User.getByUsername username
+    .then EmbedService.embed {embed: defaultEmbed}
     .then User.sanitizePublic(null)
 
   # problem: partner user account may not exist before partner link can.

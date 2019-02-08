@@ -19,11 +19,13 @@ TYPES =
   CHANNEL_MENTION: 'channelMention'
   CHANNEL_MESSAGE: 'channelMessage'
 
-  # global
+  # global:
   PRIVATE_MESSAGE: 'privateMessage'
   # maybe eventually people can narrow this down in the same way group <-> channels work
   # unsubscribing to one removes social 'all' and is more granular
   SOCIAL: 'social'
+  REWARD: 'reward'
+  TRADE: 'trade'
   NEWS: 'news'
 
 class Subscription extends Base
@@ -118,6 +120,14 @@ class Subscription extends Base
           tokens: [token]
       }
 
+  removeTokenByToken: (token) =>
+    @getAllByToken token
+    .map (subscription) =>
+      @upsertByRow subscription, {}, {
+        remove:
+          tokens: [token]
+      }
+
   subscribeNewTokenByUserId: (userId, {token, deviceId}) =>
     @getAllByUserId userId
     .map (subscription) =>
@@ -149,7 +159,19 @@ class Subscription extends Base
         userId: user.id
         token: 'none'
         deviceId: 'none'
+        sourceType: @TYPES.REWARD
+      }
+      @subscribe {
+        userId: user.id
+        token: 'none'
+        deviceId: 'none'
         sourceType: @TYPES.SOCIAL
+      }
+      @subscribe {
+        userId: user.id
+        token: 'none'
+        deviceId: 'none'
+        sourceType: @TYPES.TRADE
       }
       @subscribe {
         userId: user.id
@@ -201,24 +223,34 @@ class Subscription extends Base
     .andWhere 'sourceId', '=', subscription.sourceId
     .run()
 
+  unsubscribeToGroupByUserId: (userId, groupId) =>
+    @getAllByUserIdAndGroupId userId, groupId
+    .map (subscription) =>
+      @unsubscribeBySubscription subscription, {shouldDelete: true}
+
   unsubscribe: (subscription) =>
+    @getByRow subscription
+    .then @unsubscribeBySubscription
+
+  unsubscribeBySubscription: (subscription, {shouldDelete} = {}) =>
     topic = @getTopicFromSubscription subscription
 
-    @getByRow subscription
-    .then (subscription) =>
-      Promise.all _.filter [
+    Promise.all _.filter [
+      if shouldDelete
+        @deleteByRow subscription
+      else
         @upsertByRow subscription, {isEnabled: false}
-        if subscription?.isTopic
-          Promise.all _.map subscription.tokens, (deviceId, token) =>
-            @fcmUnsubscribeToTopicByToken token, topic
-      ]
+      if subscription?.isTopic
+        Promise.all _.map subscription.tokens, (deviceId, token) =>
+          @fcmUnsubscribeToTopicByToken token, topic
+    ]
 
   # row from subscriptions_by_token
   unsubscribeBySubscriptionToken: (subscriptionToken) =>
     topic = @getTopicFromSubscription subscriptionToken
 
     Promise.all _.filter [
-      @deleteByRow subscriptionToken
+      @removeTokenByToken subscriptionToken.token
       @fcmUnsubscribeToTopicByToken subscriptionToken.token, topic
     ]
 
