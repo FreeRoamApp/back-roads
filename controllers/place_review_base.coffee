@@ -95,6 +95,8 @@ module.exports = class PlaceReviewBaseCtrl
   upsert: (options, {user, headers, connection}) =>
     {id, type, title, body, rating, attachments, extras, parentId} = options
 
+    console.log 'upsert review', options
+
     # assign every attachment an id
     attachments = _.map attachments, (attachment) ->
       _.defaults attachment, {id: cknex.getTimeUuid()}

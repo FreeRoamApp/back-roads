@@ -96,7 +96,7 @@ class Overnight extends PlaceBase
 
           isAllowedCount: {type: 'integer'}
           isNotAllowedCount: {type: 'integer'}
-          isAllowedScore: {type: 'doubleeger'}
+          isAllowedScore: {type: 'double'}
       }
     ]
 
@@ -168,7 +168,7 @@ class Overnight extends PlaceBase
   defaultESOutput: (overnight) ->
     amenity = _.defaults {
       type: 'overnight'
-      icon: if overnight.subType in ['walmart', 'restArea', 'casino'] \
+      icon: if overnight.subType in ['walmart', 'restArea', 'casino', 'truckStop'] \
             then _.snakeCase overnight.subType
             else 'default'
     }, _.pick overnight, [

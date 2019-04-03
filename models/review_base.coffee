@@ -145,11 +145,20 @@ module.exports = class ReviewBase extends Base
   getAll: ({limit} = {}) =>
     limit ?= 30
 
-    cknex().select '*'
-    .from @getScyllaTables()[0].name
-    .limit limit
-    .run()
-    .map @defaultOutput
+    Promise.resolve elasticsearch.search {
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
+      size: limit
+    }
+    .then ({hits}) ->
+      _.map hits.hits, ({_id, _source}) ->
+        _.defaults _source, {id: _id}
+
+    # cknex().select '*'
+    # .from @getScyllaTables()[0].name
+    # .limit limit
+    # .run()
+    # .map @defaultOutput
 
   deleteByRow: (row) ->
     super(row).then ->

@@ -115,6 +115,8 @@ module.exports = class PlaceBaseCtrl
   upsert: (options, {user, headers, connection}) =>
     {id, name, location, subType, slug, videos} = options
 
+    console.log 'upsert place'
+
     isUpdate = Boolean id
 
     matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec location

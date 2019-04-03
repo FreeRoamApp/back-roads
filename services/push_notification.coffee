@@ -209,7 +209,7 @@ class PushNotificationService
           }
         else
           Conversation.getAllPublicByGroupId group.id
-          .then (publicChannels) ->
+          .then (publicChannels) =>
             if _.find publicChannels, {id: conversation.id}
               Promise.all [
                 @sendToGroupTopic group, message

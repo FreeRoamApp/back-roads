@@ -4,6 +4,7 @@ BaseMessage = require './base_message'
 # FIXME: work with other types. probably should extend from base_review embed
 CampgroundReview = require '../models/campground_review'
 PlacesService = require '../services/places'
+cknex = require '../services/cknex'
 
 class ReviewEmbed
   user: (review) ->

@@ -1,6 +1,7 @@
 geodist = require 'geodist'
 Promise = require 'bluebird'
 _ = require 'lodash'
+router = require 'exoid-router'
 
 Amenity = require '../models/amenity'
 Campground = require '../models/campground'

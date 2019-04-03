@@ -81,7 +81,7 @@ class CheckInCtrl
   deleteByRow: ({row}, {user}) ->
     CheckIn.getById row.id
     .then (checkIn) ->
-      unless checkIn or "#{checkIn.userId}" is "#{user.id}"
+      unless checkIn or "#{checkIn?.userId}" is "#{user.id}"
         router.throw {status: 401, info: 'Unauthorized'}
 
       Promise.all [
