@@ -147,7 +147,7 @@ class ConversationModel extends Base
     .then @defaultOutput
 
   getAllByUserId: (userId, {limit, hasMessages} = {}) =>
-    limit ?= 10
+    limit ?= 25
 
     # TODO: use a redis leaderboard for sorting by last update?
     cknex().select '*'
