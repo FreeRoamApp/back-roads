@@ -150,6 +150,8 @@ module.exports = router
 
 .on 'geocoder.autocomplete', authed GeocoderCtrl.autocomplete
 .on 'geocoder.getBoundingFromRegion', authed GeocoderCtrl.getBoundingFromRegion
+.on 'geocoder.getBoundingFromLocation',
+  authed GeocoderCtrl.getBoundingFromLocation
 
 .on 'groups.create', authed GroupCtrl.create
 .on 'groups.updateById', authed GroupCtrl.updateById

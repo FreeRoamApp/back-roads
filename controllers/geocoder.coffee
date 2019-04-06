@@ -10,18 +10,15 @@ class GeocoderCtrl
     GeocoderService.autocomplete {query}
 
   getBoundingFromRegion: ({country, state, city}, {user}) ->
-    # TODO: get closest 10 locations and have map show all
     query = "#{city.replace('+', ' ')}, #{state}"
-    console.log query
     GeocoderService.autocomplete {query}
     .then (results) ->
-      console.log results
       PlacesService.getBestBounding {
         location: results[0].location
       }
-    .then (bounding) ->
-      console.log bounding
-      bounding
+
+  getBoundingFromLocation: ({location}, {user}) ->
+    PlacesService.getBestBounding {location}
 
 
 module.exports = new GeocoderCtrl()
