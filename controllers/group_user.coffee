@@ -52,7 +52,7 @@ class GroupUserCtrl
             }
           }
 
-        Subscription.subscribeToPushTopic {
+        Subscription.subscribe {
           userId, groupId
           sourceType: Subscription.TYPES.GROUP_ROLE
           sourceId: role.name

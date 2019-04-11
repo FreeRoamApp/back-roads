@@ -172,11 +172,11 @@ class Campground extends PlaceBase
     }, campground
 
     # add data if non-existent
-    _.defaults campground, {
+    campground = _.defaults campground, {
       id: cknex.getTimeUuid()
-      ratingCount: 0
-      attachmentCount: 0
     }
+
+    campground
 
   defaultOutput: (campground) ->
     unless campground?
@@ -193,7 +193,8 @@ class Campground extends PlaceBase
       catch
         {}
 
-    _.defaults {type: 'campground'}, campground
+    campground = _.defaults {type: 'campground'}, campground
+    campground = _.defaults campground, {ratingCount: 0, attachmentCount: 0}
 
   defaultESInput: (campground) ->
     _.defaults {

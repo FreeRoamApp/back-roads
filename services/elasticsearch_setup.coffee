@@ -9,7 +9,7 @@ config = require '../config'
 
 class ElasticsearchSetupService
   setup: (indices) =>
-    CacheService.lock 'elasticsearch_setup8', =>
+    CacheService.lock 'elasticsearch_setup4', =>
       Promise.each indices, @createIndexIfNotExist
     , {expireSeconds: 300}
 
