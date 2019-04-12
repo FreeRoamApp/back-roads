@@ -26,6 +26,10 @@ scyllaFields =
     # administrative_area: 'text' # state / province / region. iso when avail
     # postal_code: 'text'
     # country: 'text' # 2 char iso
+  contact: 'text' # json
+    # phone
+    # email
+    # website
   # end common
 
   amenities: 'text' # json
