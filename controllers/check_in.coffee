@@ -4,6 +4,7 @@ router = require 'exoid-router'
 
 CheckIn = require '../models/check_in'
 Trip = require '../models/trip'
+UserLocation = require '../models/user_location'
 CacheService = require '../services/cache'
 ImageService = require '../services/image'
 PlacesService = require '../services/places'
@@ -18,6 +19,7 @@ class CheckInCtrl
     CheckIn.getById id
 
   upsert: (diff, {user}, {emit, socket, route}) ->
+    setUserLocation = diff.setUserLocation
     diff = _.pick diff, [
       'id', 'sourceId', 'sourceType', 'name',
       'attachments', 'startTime', 'endTime', 'status', 'tripIds'
@@ -33,6 +35,22 @@ class CheckInCtrl
         Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
 
       if diff.id then CheckIn.getById diff.id else Promise.resolve null
+
+      if setUserLocation
+        PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
+          userId: user.id
+        }
+        .then ({name, location}) ->
+          console.log 'got', name, location
+          UserLocation.upsert {
+            name: diff.name or name
+            userId: user.id
+            location: location
+            sourceType: diff.sourceType
+            sourceId: diff.sourceId
+          }
+      else
+        Promise.resolve null
     ]
     .then ([trip, checkIn]) ->
       if checkIn and "#{checkIn.userId}" isnt "#{user.id}"

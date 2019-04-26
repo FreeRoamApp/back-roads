@@ -1,8 +1,8 @@
 {
   "newGroupMember.title": "New group member",
   "newGroupMember.text": "{name} joined your group",
-  "newFollower.title": "New follower",
-  "newFollower.text": "{name} followed you",
+  "newConnection.friendTitle": "New friend",
+  "newConnection.friendText": "{name} is now your friend",
   "amenityReviewLiked.title": "Review liked",
   "amenityReviewLiked.text": "{name} liked your review on {place}",
   "campgroundReviewLiked.title": "Review liked",

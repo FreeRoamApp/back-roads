@@ -13,7 +13,7 @@ VALID_EXTRAS = [
 
 class OvernightReviewCtrl extends PlaceReviewBaseCtrl
   type: 'overnightReview'
-  parentType: 'campground'
+  parentType: 'overnight'
   imageFolder: 'rvov'
   defaultEmbed: [EmbedService.TYPES.REVIEW.USER, EmbedService.TYPES.REVIEW.TIME]
   Model: OvernightReview

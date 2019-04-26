@@ -10,6 +10,7 @@ EmbedClasses =
   ban: require '../embeds/ban'
   category: require '../embeds/category'
   campground: require '../embeds/campground'
+  connection: require '../embeds/connection'
   conversation: require '../embeds/conversation'
   conversationMessage: require '../embeds/conversation_message'
   group: require '../embeds/group'
@@ -24,6 +25,7 @@ EmbedClasses =
   trip: require '../embeds/trip'
   user: require '../embeds/user'
   userBlock: require '../embeds/user_block'
+  userLocation: require '../embeds/user_location'
 
 TYPES =
   # formatting of string is important. embedClassName:embedKeyAndFn
@@ -39,6 +41,9 @@ TYPES =
     FIRST_ITEM_PRODUCT_SLUG: 'category:firstItemFirstProductSlug'
   CAMPGROUND:
     ATTACHMENTS_PREVIEW: 'campground:attachmentsPreview'
+  CONNECTION:
+    USER: 'connection:user'
+    OTHER: 'connection:other'
   CONVERSATION_MESSAGE:
     USER: 'conversationMessage:user'
     MENTIONED_USERS: 'conversationMessage:mentionedUsers'
@@ -50,7 +55,8 @@ TYPES =
   GROUP:
     USER_COUNT: 'group:userCount'
     USERS: 'group:users'
-    ME_GROUP_USER: 'group:group_user'
+    CHANNELS: 'group:channels'
+    ME_GROUP_USER: 'group:meGroupUser'
   GROUP_AUDIT_LOG:
     USER: 'groupAuditLog:user'
     TIME: 'groupAuditLog:time'
@@ -83,11 +89,11 @@ TYPES =
     STATS: 'trip:stats'
   USER:
     KARMA: 'user:karma'
-  USER_FOLLOWER:
-    USER: 'userFollower:user'
-    FOLLOWED: 'userFollower:followed'
   USER_BLOCK:
     USER: 'userBlock:user'
+  USER_LOCATION:
+    PLACE: 'userLocation:place'
+    USER: 'userLocation:user'
 
 embedFn = _.curry (props, object) ->
   {embed, options} = props

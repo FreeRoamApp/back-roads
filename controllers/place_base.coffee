@@ -74,6 +74,8 @@ module.exports = class PlaceBaseCtrl
         slug
 
   deleteByRow: ({row}, {user}) =>
+    # TODO: replace with deleteById and grab the place from DB so people can't
+    # mess with incoming data (changing slug/id)
     unless user.username is 'austin'
       router.throw {status: 401, info: 'Unauthorized'}
 
@@ -113,27 +115,24 @@ module.exports = class PlaceBaseCtrl
       }
 
   upsert: (options, {user, headers, connection}) =>
-    {id, name, location, subType, slug, videos} = options
-
-    console.log 'upsert place'
+    {id, name, details, location, subType, slug} = options
 
     isUpdate = Boolean id
 
     matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec location
     unless matches?[0] and matches?[1]
       console.log 'invalid', location
-      router.throw {info: 'invalid location', status: 400}
+      router.throw {
+        status: 400
+        info:
+          langKey: 'error.invalidCoordinates'
+          step: 'initialInfo'
+          field: 'location'
+      }
     location = {
       lat: parseFloat(matches[1])
       lon: parseFloat(matches[2])
     }
-
-    videos = _.filter _.map videos, (video) ->
-      matches = video?.match(config.YOUTUBE_ID_REGEX)
-      youtubeId = matches?[2]
-      time = matches?[4]
-      if youtubeId
-        {sourceType: 'youtube', sourceId: youtubeId, timestamp: time}
 
     Promise.all [
       (if slug
@@ -159,7 +158,7 @@ module.exports = class PlaceBaseCtrl
           console.log 'cell estimation error'
     ]
     .then ([slug, address, weatherStation, cellSignal]) =>
-      diff = {slug, name, location, address, videos}
+      diff = {slug, name, details, location, address}
       if weatherStation
         diff.weather = weatherStation.weather
       if subType

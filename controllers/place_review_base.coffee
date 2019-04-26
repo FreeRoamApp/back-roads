@@ -111,7 +111,13 @@ module.exports = class PlaceReviewBaseCtrl
       router.throw status: 400, info: 'unable to post...'
 
     if not body and user.username isnt 'austin'
-      router.throw status: 400, info: 'can\'t be empty'
+      router.throw {
+        status: 400
+        info:
+          langKey: 'error.emptyReview'
+          step: 'review'
+          field: 'body'
+      }
 
     isUpdate = Boolean id
 
@@ -141,8 +147,9 @@ module.exports = class PlaceReviewBaseCtrl
       )
         router.throw status: 401, info: 'unauthorized'
 
-      totalStars = parent.rating * parent.ratingCount
+      totalStars = (parent.rating or 0) * (parent.ratingCount or 0)
       if isUpdate
+        totalStars or= existingReview.rating
         totalStars -= existingReview.rating
         totalStars += rating
         newRatingCount = parent.ratingCount

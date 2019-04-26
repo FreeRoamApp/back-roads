@@ -58,25 +58,32 @@ class GroupModel extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
-  # getAllByIds: (ids, {limit} = {}) ->
-  #   limit ?= 50
-  #
-  #   # TODO
+  getAllByIds: (ids, {limit} = {}) ->
+    limit ?= 50
 
-  # getAll: ({filter, language, limit} = {}) ->
-  #   # TODO
-  #   limit ?= 10
-  #
-  #   q = r.table GROUPS_TABLE
-  #
-  #   if filter is 'public' and language
-  #     q = q.getAll ['public', language], {index: TYPE_LANGUAGE_INDEX}
-  #   else if filter is 'public'
-  #     q = q.getAll ['public'], {index: TYPE_LANGUAGE_INDEX}
-  #
-  #   q.limit limit
-  #   .run()
-  #   .map defaultGroupOutput
+    cknex().select '*'
+    .from 'groups_by_id'
+    .where 'id', 'in', ids
+    .run()
+    .map @defaultOutput
+
+  getAll: ({filter, language, limit} = {}) ->
+    @getBySlug 'boondocking'
+    .then (group) ->
+      [group]
+    # TODO
+    # limit ?= 10
+    #
+    # q = r.table GROUPS_TABLE
+    #
+    # if filter is 'public' and language
+    #   q = q.getAll ['public', language], {index: TYPE_LANGUAGE_INDEX}
+    # else if filter is 'public'
+    #   q = q.getAll ['public'], {index: TYPE_LANGUAGE_INDEX}
+    #
+    # q.limit limit
+    # .run()
+    # .map defaultGroupOutput
 
   addUser: (groupId, userId) ->
     GroupUser.create {groupId, userId}

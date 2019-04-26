@@ -9,6 +9,10 @@ CacheService = require '../services/cache'
 ONE_DAY_SECONDS = 3600 * 24
 ONE_HOUR_SECONDS = 3600
 
+# TODO: true/false/non-existent
+# TODO: group_role priority ordering. will take value from highest priority role`
+# TODO: if permission is non-existent for a role, defer to next highest priority role
+
 class GroupRoleModel extends Base
   getScyllaTables: ->
     [

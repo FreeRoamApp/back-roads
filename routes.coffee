@@ -11,6 +11,7 @@ CampgroundReviewCtrl = require './controllers/campground_review'
 CampgroundAttachmentCtrl = require './controllers/campground_attachment'
 CellTowerCtrl = require './controllers/cell_tower'
 CheckInCtrl = require './controllers/check_in'
+ConnectionCtrl = require './controllers/connection'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
 CoordinateCtrl = require './controllers/coordinate'
@@ -35,7 +36,7 @@ ThreadCtrl = require './controllers/thread'
 TripCtrl = require './controllers/trip'
 UserCtrl = require './controllers/user'
 UserBlockCtrl = require './controllers/user_block'
-UserFollowerCtrl = require './controllers/user_follower'
+UserLocationCtrl = require './controllers/user_location'
 UserRigCtrl = require './controllers/user_rig'
 CommentCtrl = require './controllers/comment'
 VoteCtrl = require './controllers/vote'
@@ -87,6 +88,7 @@ module.exports = router
 .on 'bans.unbanByGroupIdAndUserId', authed BanCtrl.unbanByGroupIdAndUserId
 
 .on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
+.on 'campgrounds.deleteByRow', authed CampgroundCtrl.deleteByRow
 .on 'campgrounds.search', authed CampgroundCtrl.search
 .on 'campgrounds.getNearestAmenitiesById',
   authed CampgroundCtrl.getNearestAmenitiesById
@@ -194,6 +196,7 @@ module.exports = router
 
 .on 'lowClearances.search', authed LowClearanceCtrl.search
 
+.on 'overnights.deleteByRow', authed OvernightCtrl.deleteByRow
 .on 'overnights.getBySlug', authed OvernightCtrl.getBySlug
 .on 'overnights.getNearestAmenitiesById',
   authed OvernightCtrl.getNearestAmenitiesById
@@ -269,14 +272,15 @@ module.exports = router
 .on 'userBlocks.blockByUserId', authed UserBlockCtrl.blockByUserId
 .on 'userBlocks.unblockByUserId', authed UserBlockCtrl.unblockByUserId
 
-.on 'userFollowers.getAllFollowingIds',
-  authed UserFollowerCtrl.getAllFollowingIds
-.on 'userFollowers.getAllFollowerIds',
-  authed UserFollowerCtrl.getAllFollowerIds
-.on 'userFollowers.getAllFollowing', authed UserFollowerCtrl.getAllFollowing
-.on 'userFollowers.getAllFollowers', authed UserFollowerCtrl.getAllFollowers
-.on 'userFollowers.followByUserId', authed UserFollowerCtrl.followByUserId
-.on 'userFollowers.unfollowByUserId', authed UserFollowerCtrl.unfollowByUserId
+.on 'connections.getAllIdsByType', authed ConnectionCtrl.getAllIdsByType
+.on 'connections.getAllByType', authed ConnectionCtrl.getAllByType
+.on 'connections.upsertByUserIdAndType',
+  authed ConnectionCtrl.upsertByUserIdAndType
+.on 'connections.deleteByUserIdAndType',
+  authed ConnectionCtrl.deleteByUserIdAndType
+
+.on 'userLocations.getByMe', authed UserLocationCtrl.getByMe
+.on 'userLocations.search', authed UserLocationCtrl.search
 
 .on 'userRigs.getByMe', authed UserRigCtrl.getByMe
 .on 'userRigs.upsert', authed UserRigCtrl.upsert

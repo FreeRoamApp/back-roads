@@ -4,6 +4,12 @@ GroupUser = require '../models/group_user'
 User = require '../models/user'
 
 class GroupEmbed
+  channels: (group) ->
+    null
+
+  meGroupUser: (group) ->
+    null
+
   userCount: (group) ->
     if group.type isnt 'public' and group.userIds?.then
       group.userIds.then (userIds) ->

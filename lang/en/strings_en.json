@@ -439,6 +439,7 @@
 
   "error.usernameTaken": "Username is taken",
   "error.invalid": "Invalid",
+  "error.invalidCoordinates": "Invalid coordinates",
   "error.invalidUsername": "Invalid username",
   "error.invalidPassword": "Invalid password",
   "error.invalidCurrentPassword": "Invalid current password",
