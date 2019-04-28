@@ -5,6 +5,7 @@ router = require 'exoid-router'
 CheckIn = require '../models/check_in'
 Trip = require '../models/trip'
 UserLocation = require '../models/user_location'
+UserSettings = require '../models/user_settings'
 CacheService = require '../services/cache'
 ImageService = require '../services/image'
 PlacesService = require '../services/places'
@@ -37,18 +38,20 @@ class CheckInCtrl
       if diff.id then CheckIn.getById diff.id else Promise.resolve null
 
       if setUserLocation
-        PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
-          userId: user.id
-        }
-        .then ({name, location}) ->
-          console.log 'got', name, location
-          UserLocation.upsert {
-            name: diff.name or name
-            userId: user.id
-            location: location
-            sourceType: diff.sourceType
-            sourceId: diff.sourceId
-          }
+        UserSettings.getByUserId user.id
+        .then (userSettings) ->
+          if userSettings?.privacy?.location?.everyone
+            PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
+              userId: user.id
+            }
+            .then ({name, location}) ->
+              UserLocation.upsert {
+                name: diff.name or name
+                userId: user.id
+                location: location
+                sourceType: diff.sourceType
+                sourceId: diff.sourceId
+              }
       else
         Promise.resolve null
     ]

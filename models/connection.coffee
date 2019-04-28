@@ -45,7 +45,7 @@ class ConnectionModel extends Base
           otherId: 'uuid'
         primaryKey:
           partitionKey: ['userId']
-          clusteringColumns: ['type', 'id', 'otherId']
+          clusteringColumns: ['type', 'id']
         withClusteringOrderBy: [['type', 'desc'], ['id', 'desc']]
       }
       {
@@ -75,12 +75,31 @@ class ConnectionModel extends Base
     ]
 
   upsert: (connection) =>
-    super connection
-    .tap ->
-      prefix = CacheService.PREFIXES.CONNECTIONS_BY_TYPE
+    if connection.type in ['friend', 'friendRequestSent']
+      otherConnection = _.defaults {
+        userId: "#{connection.otherId}"
+        otherId: "#{connection.userId}"
+        type: if connection.type is 'friendRequestSent' \
+              then 'friendRequestReceived'
+              else connection.type
+      }, connection
+
+    Promise.all _.filter [
+      super connection
+      if otherConnection?
+        super otherConnection
+    ]
+    .tap =>
+      prefix = CacheService.PREFIXES.CONNECTIONS_BY_USER
+      typePrefix = CacheService.PREFIXES.CONNECTIONS_BY_TYPE
       Promise.all [
         @incrementCountByConnection connection, 1
         CacheService.deleteByKey "#{prefix}:#{connection.userId}"
+        CacheService.deleteByKey "#{typePrefix}:#{connection.userId}:#{connection.type}"
+        if otherConnection
+          @incrementCountByConnection otherConnection, 1
+          CacheService.deleteByKey "#{prefix}:#{otherConnection.otherId}"
+          CacheService.deleteByKey "#{typePrefix}:#{otherConnection.otherId}:#{otherConnection.otherType}"
       ]
 
   getAllByUserIdAndType: (userId, type, {preferCache} = {}) =>
@@ -95,6 +114,23 @@ class ConnectionModel extends Base
 
     if preferCache
       cacheKey = "#{CacheService.PREFIXES.CONNECTIONS_BY_TYPE}:#{userId}:#{type}"
+      CacheService.preferCache cacheKey, get, {
+        expireSeconds: ONE_HOUR_SECONDS
+      }
+    else
+      get()
+
+  getAllByUserId: (userId, {preferCache} = {}) =>
+    get = =>
+      cknex().select '*'
+      .from 'connections_by_userId_and_type'
+      .where 'userId', '=', userId
+      .limit 100
+      .run()
+      .map @defaultOutput
+
+    if preferCache
+      cacheKey = "#{CacheService.PREFIXES.CONNECTIONS_BY_USER}:#{userId}"
       CacheService.preferCache cacheKey, get, {
         expireSeconds: ONE_HOUR_SECONDS
       }
@@ -132,25 +168,36 @@ class ConnectionModel extends Base
     ]
 
   deleteByRow: (row) =>
-    super()
+    super row
     .then =>
       @incrementCountByConnection row, -1
 
   deleteByUserIdAndOtherIdAndType: (userId, otherId, type) =>
-    Promise.all [
+    otherType = null
+    Promise.all _.filter [
       @getByUserIdAndOtherIdAndType userId, otherId, type
-      if type is 'friend'
-        @getByUserIdAndOtherIdAndType otherId, userId, type
+      if type in ['friend', 'friendRequestSent', 'friendRequestReceived']
+        if type is 'friendRequestSent'
+          otherType = 'friendRequestReceived'
+        else if type is 'friendRequestReceived'
+          otherType = 'friendRequestSent'
+        else
+          otherType = type
+        @getByUserIdAndOtherIdAndType otherId, userId, otherType
     ]
-    .then (connection) =>
+    .map (connection) =>
       if connection
-        @deleteByConnection connection
+        console.log 'delete', connection
+        @deleteByRow connection
         .tap ->
-          prefix = CacheService.PREFIXES.CONNECTIONS_BY_TYPE
+          prefix = CacheService.PREFIXES.CONNECTIONS_BY_USER
+          typePrefix = CacheService.PREFIXES.CONNECTIONS_BY_TYPE
           Promise.all [
-            CacheService.deleteByKey "#{prefix}:#{userId}:#{type}"
-            if type is 'friend'
-              CacheService.deleteByKey "#{prefix}:#{otherId}:#{type}"
+            CacheService.deleteByKey "#{prefix}:#{userId}"
+            CacheService.deleteByKey "#{typePrefix}:#{userId}:#{type}"
+            if otherType
+              CacheService.deleteByKey "#{prefix}:#{otherId}"
+              CacheService.deleteByKey "#{typePrefix}:#{otherId}:#{otherType}"
           ]
 
   defaultInput: (connection) ->

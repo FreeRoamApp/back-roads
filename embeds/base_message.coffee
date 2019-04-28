@@ -2,6 +2,7 @@ _ = require 'lodash'
 Promise = require 'bluebird'
 
 GroupUserEmbed = require './group_user'
+UserEmbed = require './user'
 GroupUser = require '../models/group_user'
 User = require '../models/user'
 CacheService = require '../services/cache'
@@ -20,6 +21,11 @@ class BaseMessageEmbed
     CacheService.preferCache key, ->
       getFn userId or username, {preferCache: true}
       .then User.sanitizePublic(null)
+      .then (user) ->
+        UserEmbed.karma user
+        .then (karma) ->
+          user.karma = karma
+          user
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
   groupUser:  ({userId, groupId}) ->

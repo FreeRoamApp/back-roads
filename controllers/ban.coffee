@@ -71,7 +71,7 @@ class BanCtrl
         }
 
         if user.username in ['ponkat', 'jaimejosuee']
-          User.updateByUser otherUser, {flags: {isChatBanned: true}}
+          User.upsertByRow otherUser, {flags: {isChatBanned: true}}
 
         Ban.upsert ban, {
           ttl: if duration is '24h' then 3600 * 24 else undefined
@@ -105,7 +105,7 @@ class BanCtrl
         }
 
         if user.username in ['ponkat', 'jaimejosuee']
-          User.updateByUser otherUser, {flags: {isChatBanned: false}}
+          User.upsertByRow otherUser, {flags: {isChatBanned: false}}
 
       Ban.deleteAllByGroupIdAndUserId groupId, userId
 

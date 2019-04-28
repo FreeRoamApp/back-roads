@@ -3,6 +3,8 @@
   "newGroupMember.text": "{name} joined your group",
   "newConnection.friendTitle": "New friend",
   "newConnection.friendText": "{name} is now your friend",
+  "newConnection.friendRequestSentTitle": "New friend request",
+  "newConnection.friendRequestSentText": "{name} requested to be your friend",
   "amenityReviewLiked.title": "Review liked",
   "amenityReviewLiked.text": "{name} liked your review on {place}",
   "campgroundReviewLiked.title": "Review liked",

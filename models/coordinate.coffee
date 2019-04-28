@@ -38,7 +38,7 @@ class Coordinate extends PlaceBase
       {
         name: 'coordinates'
         mappings:
-          # commeon
+          # common
           slug: {type: 'text'}
           name: {type: 'text'}
           location: {type: 'geo_point'}

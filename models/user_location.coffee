@@ -72,6 +72,7 @@ class UserLocation extends PlaceBase
   defaultESInput: (userLocation) ->
     _.defaults {
       id: "#{userLocation.userId}"
+      time: new Date()
     }, userLocation
 
   defaultESOutput: (userLocation) ->

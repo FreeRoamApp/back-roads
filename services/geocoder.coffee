@@ -33,7 +33,7 @@ class GeocoderService
 
       Campground.search {
         query:
-          prefix:
+          match_phrase_prefix:
             name: query
         limit: 3
       }

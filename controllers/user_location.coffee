@@ -7,6 +7,8 @@ UserLocation = require '../models/user_location'
 EmbedService = require '../services/embed'
 PlaceBaseCtrl = require './place_base'
 
+TWO_WEEKS_MS = 3600 * 24 * 7 * 1000
+
 class UserLocationCtrl extends PlaceBaseCtrl
   type: 'userLocation'
   Model: UserLocation
@@ -19,11 +21,52 @@ class UserLocationCtrl extends PlaceBaseCtrl
     UserLocation.getByUserId user.id
     .then EmbedService.embed {embed: @defaultEmbed}
 
+  deleteByMe: ({}, {user}) ->
+    UserLocation.getByUserId user.id
+    .then (userLocation) ->
+      if userLocation
+        UserLocation.deleteByRow userLocation
+
+  _getQuery: (location, {distance, outputFn} = {}) =>
+    distance ?= 2.5 # TODO: maybe less than 2.5 lat/lon points
+    # 2.5 lat lon is ~ 150 mi
+    {
+      query:
+        bool:
+          filter: [
+            {
+              geo_bounding_box:
+                location:
+                  top_left:
+                    lat: location.lat + distance
+                    lon: location.lon - distance
+                  bottom_right:
+                    lat: location.lat - distance
+                    lon: location.lon + distance
+            }
+            {
+              range:
+                'time':
+                  gte: new Date(Date.now() - TWO_WEEKS_MS)
+            }
+          ]
+      sort: [
+        _geo_distance:
+          location:
+            lat: location.lat
+            lon: location.lon
+          order: 'asc'
+          unit: 'km'
+          distance_type: 'plane'
+      ]
+    }
+
   search: ({}, {user}) =>
     @getByMe {}, {user} # FIXME: don't need to embed
     .then (myUserLocation) =>
-      console.log myUserLocation.place.location
-      UserLocation.searchNearby myUserLocation.place.location
+      unless myUserLocation?.place
+        return []
+      UserLocation.search @_getQuery(myUserLocation.place.location)
       .then ({total, places}) =>
         Promise.map places, EmbedService.embed {embed: @defaultEmbed}
         .map (place) ->

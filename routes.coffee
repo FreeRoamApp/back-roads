@@ -38,6 +38,7 @@ UserCtrl = require './controllers/user'
 UserBlockCtrl = require './controllers/user_block'
 UserLocationCtrl = require './controllers/user_location'
 UserRigCtrl = require './controllers/user_rig'
+UserSettingsCtrl = require './controllers/user_settings'
 CommentCtrl = require './controllers/comment'
 VoteCtrl = require './controllers/vote'
 
@@ -126,6 +127,16 @@ module.exports = router
   authed CommentCtrl.deleteByComment
 .on 'comments.deleteAllByGroupIdAndUserId',
   authed CommentCtrl.deleteAllByGroupIdAndUserId
+
+.on 'connections.getAllIdsByType', authed ConnectionCtrl.getAllIdsByType
+.on 'connections.getAllByType', authed ConnectionCtrl.getAllByType
+.on 'connections.getAllGrouped', authed ConnectionCtrl.getAllGrouped
+.on 'connections.acceptRequestByUserIdAndType',
+  authed ConnectionCtrl.acceptRequestByUserIdAndType
+.on 'connections.upsertByUserIdAndType',
+  authed ConnectionCtrl.upsertByUserIdAndType
+.on 'connections.deleteByUserIdAndType',
+  authed ConnectionCtrl.deleteByUserIdAndType
 
 .on 'conversations.create', authed ConversationCtrl.create
 .on 'conversations.updateById', authed ConversationCtrl.updateById
@@ -262,6 +273,7 @@ module.exports = router
 .on 'users.getById', authed UserCtrl.getById
 .on 'users.getByUsername', authed UserCtrl.getByUsername
 .on 'users.getCountry', authed UserCtrl.getCountry
+.on 'users.search', authed UserCtrl.search
 .on 'users.setAvatarImage', authed UserCtrl.setAvatarImage
 .on 'users.setPartner', authed UserCtrl.setPartner
 .on 'users.getPartner', authed UserCtrl.getPartner
@@ -272,14 +284,11 @@ module.exports = router
 .on 'userBlocks.blockByUserId', authed UserBlockCtrl.blockByUserId
 .on 'userBlocks.unblockByUserId', authed UserBlockCtrl.unblockByUserId
 
-.on 'connections.getAllIdsByType', authed ConnectionCtrl.getAllIdsByType
-.on 'connections.getAllByType', authed ConnectionCtrl.getAllByType
-.on 'connections.upsertByUserIdAndType',
-  authed ConnectionCtrl.upsertByUserIdAndType
-.on 'connections.deleteByUserIdAndType',
-  authed ConnectionCtrl.deleteByUserIdAndType
+.on 'userSettings.getByMe', authed UserSettingsCtrl.getByMe
+.on 'userSettings.upsert', authed UserSettingsCtrl.upsert
 
 .on 'userLocations.getByMe', authed UserLocationCtrl.getByMe
+.on 'userLocations.deleteByMe', authed UserLocationCtrl.deleteByMe
 .on 'userLocations.search', authed UserLocationCtrl.search
 
 .on 'userRigs.getByMe', authed UserRigCtrl.getByMe

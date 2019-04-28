@@ -68,6 +68,11 @@ class UserCtrl
       }
     )
 
+  search: ({query, sort, limit}, {user}) ->
+    User.search {query, sort, limit}
+    .then ({users}) ->
+      users
+
   upsert: ({userDiff}, {user, file}) =>
     currentInsecurePassword = userDiff.currentPassword
     newInsecurePassword = userDiff.password
@@ -132,11 +137,7 @@ class UserCtrl
       if avatarImage
         userDiff.avatarImage = avatarImage
 
-      User.upsert _.defaults userDiff, {
-        id: user.id
-        username: user.username
-        email: user.email
-      }
+      User.upsertByRow user, userDiff
       .then (response) ->
         key = "#{CacheService.PREFIXES.CHAT_USER}:#{user.id}"
         CacheService.deleteByKey key

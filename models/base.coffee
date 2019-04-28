@@ -16,19 +16,45 @@ module.exports = class Base
     Promise.map rows, (row) =>
       @index row
 
+  # use this whenever possible over @upsert since it'll handle changing primary
+  # key values without creating duplicates. eg changing username will delete
+  # old row in users_by_username and create a new one w/ new username
+  # MAKE SURE to send full existingRow if doing that...so it all gets copied
+  # TODO: go through old code and make sure this is used in favor of
+  # _.defaults with the primary keys manually spec'd
   upsertByRow: (row, diff, options) =>
     keyColumns = _.filter _.uniq _.flatten _.map @getScyllaTables(), (table) ->
       table.primaryKey.partitionKey.concat(
         table.primaryKey.clusteringColumns
       )
-    requiredValues = _.pick row, keyColumns
+    primaryKeyValues = _.pick row, keyColumns
+    newPrimaryKeyValues = _.pick diff, keyColumns
+
+    # any primary keys that are being changed, so we can delete & recreate
+    changedPrimaryKeys = _.filter keyColumns, (key) ->
+      newPrimaryKeyValues[key]? and
+        newPrimaryKeyValues[key] isnt primaryKeyValues[key]
+
     @upsert(
-      _.defaults(requiredValues, diff)
+      _.defaults(diff, primaryKeyValues)
       _.defaults options, {skipDefaults: true}
     )
+    .tap =>
+      # delete any rows where the primary key changed
+      if row
+        Promise.each changedPrimaryKeys, (key) =>
+          tablesWithKey = _.filter @getScyllaTables(), (table) =>
+            table.primaryKey.partitionKey.concat(
+              table.primaryKey.clusteringColumns
+            ).indexOf(key) isnt -1
+
+          Promise.each tablesWithKey, (table) =>
+            @_deleteScyllaRowByTableAndRow table, row
 
 
-  upsert: (row, {ttl, prepareFn, isUpdate, add, remove, skipDefaults} = {}) =>
+  upsert: (row, options = {}) =>
+    {ttl, prepareFn, isUpdate, add, remove, skipDefaults} = options
+
     scyllaRow = if skipDefaults then row else @defaultInput row
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
@@ -101,20 +127,23 @@ module.exports = class Base
       q.andWhere column, '=', scyllaRow[column]
     q.run {isSingle: true}
 
+  _deleteScyllaRowByTableAndRow: (table, row) =>
+    scyllaRow = @defaultInput row
+
+    if table.ignoreUpsert
+      return
+    keyColumns = _.filter table.primaryKey.partitionKey.concat(
+      table.primaryKey.clusteringColumns
+    )
+    q = cknex().delete()
+    .from table.name
+    _.forEach keyColumns, (column) ->
+      q.andWhere column, '=', scyllaRow[column]
+    q.run()
 
   deleteByRow: (row) =>
-    scyllaRow = @defaultInput row
-    Promise.all _.filter _.map(@getScyllaTables(), (table) ->
-      if table.ignoreUpsert
-        return
-      keyColumns = _.filter table.primaryKey.partitionKey.concat(
-        table.primaryKey.clusteringColumns
-      )
-      q = cknex().delete()
-      .from table.name
-      _.forEach keyColumns, (column) ->
-        q.andWhere column, '=', scyllaRow[column]
-      q.run()
+    Promise.all _.filter _.map(@getScyllaTables(), (table) =>
+      @_deleteScyllaRowByTableAndRow table, row
     ).concat [@deleteESById row.id]
     .then =>
       if @streamChannelKey

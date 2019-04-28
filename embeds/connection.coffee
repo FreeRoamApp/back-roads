@@ -11,8 +11,8 @@ class ConnectionEmbed
 
   other: (connection) ->
     if connection.otherId
-      BaseMessage.other {
-        otherId: connection.otherId
+      BaseMessage.user {
+        userId: connection.otherId
       }
 
 module.exports = new ConnectionEmbed()

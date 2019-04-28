@@ -78,7 +78,7 @@ class AuthCtrl
 
         Promise.promisify(bcrypt.hash)(insecurePassword, bcrypt.genSaltSync(config.BCRYPT_ROUNDS), null)
         .then (password) ->
-          User.updateByUser user, {username, password, email}
+          User.upsert user, {username, password, email}
       .then ->
         Auth.fromUserId user.id
 

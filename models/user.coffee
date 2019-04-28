@@ -3,6 +3,7 @@ _ = require 'lodash'
 Base = require './base'
 CacheService = require '../services/cache'
 cknex = require '../services/cknex'
+elasticsearch = require '../services/elasticsearch'
 config = require '../config'
 
 PARTNER_TTL_S = 3600 * 24 * 31
@@ -89,6 +90,16 @@ class UserModel extends Base
       }
     ]
 
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'users'
+        mappings:
+          username: {type: 'text'}
+          name: {type: 'text'}
+      }
+    ]
+
   getById: (id) =>
     cknex().select '*'
     .from 'users_by_id'
@@ -138,34 +149,6 @@ class UserModel extends Base
     .then (partner) ->
       partner?.partnerSlug
 
-  updateByUser: (user, newUser) =>
-    newUser = _.defaults newUser, user
-    newUser = @defaultInput newUser
-
-    username = user.username or newUser.username
-    email = user.email or newUser.email
-
-    Promise.all _.filter [
-      cknex().update 'users_by_id'
-      .set _.omit newUser, ['id']
-      .where 'id', '=', user.id
-      .run()
-
-      if username
-        cknex().update 'users_by_username'
-        .set _.omit newUser, ['username']
-        .where 'username', '=', username
-        .run()
-
-      if email
-        cknex().update 'users_by_email'
-        .set _.omit newUser, ['email']
-        .where 'email', '=', email
-        .run()
-    ]
-    .then =>
-      @defaultOutput user
-
   getUniqueUsername: (baseUsername, appendedNumber = 0) =>
     username = "#{baseUsername}".toLowerCase()
     username = if appendedNumber \
@@ -182,6 +165,33 @@ class UserModel extends Base
 
   getDisplayName: (user) ->
     user?.username or user?.name or 'anonymous'
+
+  search: ({query, sort, limit}) =>
+    limit ?= 50
+
+    elasticsearch.search {
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
+      body:
+        query:
+          # random ordering so they don't clump on map
+          function_score:
+            query: query
+            boost_mode: 'replace'
+        sort: sort
+        from: 0
+        # it'd be nice to have these distributed more evently
+        # grab ~2,000 and get random 250?
+        # is this fast/efficient enough?
+        size: limit
+    }
+    .then ({hits}) =>
+      total = hits.total
+      {
+        total: total
+        users: _.map hits.hits, ({_id, _source}) =>
+          @defaultESOutput _.defaults _source, {id: _id}
+      }
 
   defaultInput: (user) ->
     unless user?
@@ -220,6 +230,8 @@ class UserModel extends Base
       username: null
       language: 'en'
     }
+
+  defaultESOutput: (user) -> user
 
   sanitizePrivate: _.curry (requesterId, user) ->
     unless user
