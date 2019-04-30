@@ -32,7 +32,7 @@ module.exports = class Base
 
     # any primary keys that are being changed, so we can delete & recreate
     changedPrimaryKeys = _.filter keyColumns, (key) ->
-      newPrimaryKeyValues[key]? and
+      newPrimaryKeyValues[key]? and primaryKeyValues[key]? and
         newPrimaryKeyValues[key] isnt primaryKeyValues[key]
 
     @upsert(

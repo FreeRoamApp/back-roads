@@ -22,10 +22,11 @@ class BaseMessageEmbed
       getFn userId or username, {preferCache: true}
       .then User.sanitizePublic(null)
       .then (user) ->
-        UserEmbed.karma user
-        .then (karma) ->
-          user.karma = karma
-          user
+        if user # not sure why, but sometimes user doesn't exist
+          UserEmbed.karma user
+          .then (karma) ->
+            user.karma = karma
+            user
     , {expireSeconds: FIVE_MINUTES_SECONDS}
 
   groupUser:  ({userId, groupId}) ->

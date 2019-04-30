@@ -97,6 +97,7 @@ class UserModel extends Base
         mappings:
           username: {type: 'text'}
           name: {type: 'text'}
+          avatarImage: {type: 'text'}
       }
     ]
 
@@ -231,7 +232,16 @@ class UserModel extends Base
       language: 'en'
     }
 
-  defaultESOutput: (user) -> user
+  defaultESOutput: (user) ->
+    if user.avatarImage
+      user.avatarImage = try
+        JSON.parse user.avatarImage
+      catch
+        {}
+    else
+      user.avatarImage = {}
+
+    user
 
   sanitizePrivate: _.curry (requesterId, user) ->
     unless user

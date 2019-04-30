@@ -11,7 +11,7 @@ if config.ENV is config.ENVS.PROD
   cpus = config.MAX_CPU or os.cpus().length
   if cluster.isMaster
     setup().then ->
-      console.log 'setup done'
+      console.log 'setup done', cpus
       _.map _.range(cpus), ->
         console.log 'forking...'
         cluster.fork()

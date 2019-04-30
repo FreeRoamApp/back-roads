@@ -35,6 +35,8 @@ class AuthCtrl
     insecurePassword = password
     username = username?.toLowerCase()
 
+    console.log 'join', email, username
+
     valid = Joi.validate {password, email, username},
       password: Joi.string().min(6).max(1000)
       email: Joi.string().email().allow('')
@@ -78,7 +80,7 @@ class AuthCtrl
 
         Promise.promisify(bcrypt.hash)(insecurePassword, bcrypt.genSaltSync(config.BCRYPT_ROUNDS), null)
         .then (password) ->
-          User.upsert user, {username, password, email}
+          User.upsertByRow user, {username, password, email}
       .then ->
         Auth.fromUserId user.id
 

@@ -231,9 +231,12 @@ module.exports = router
   authed OvernightAttachmentCtrl.deleteByRow
 
 .on 'placeAttachments.getAllByUserId', authed PlaceAttachmentCtrl.getAllByUserId
+
 .on 'placeReviews.getAllByUserId', authed PlaceReviewCtrl.getAllByUserId
+.on 'placeReviews.getCountByUserId', authed PlaceReviewCtrl.getCountByUserId
 
 .on 'notifications.getAll', authed NotificationCtrl.getAll
+.on 'notifications.getUnreadCount', authed NotificationCtrl.getUnreadCount
 
 .on 'nps.create', authed NpsCtrl.create
 

@@ -83,6 +83,9 @@ module.exports = class PlaceReviewBaseCtrl
     @Model.getAllByUserId userId
     .map EmbedService.embed {embed: @userEmbed}
 
+  getCountByUserId: ({userId}) =>
+    @Model.getCountByUserId userId
+
   upsertAttachments: (attachments, {parentId, userId}) =>
     @AttachmentModel.batchUpsert _.map attachments, (attachment) =>
       attachment.parentType = @parentType

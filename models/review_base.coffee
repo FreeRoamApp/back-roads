@@ -120,6 +120,15 @@ module.exports = class ReviewBase extends Base
         review
         # _.merge review, voteCount # messages with timeuuids
 
+  getCountByUserId: (userId) ->
+    cknex().select()
+    .count '*'
+    .from 'reviews_by_userId'
+    .where 'userId', '=', userId
+    .run()
+    .then (reviews) ->
+      reviews?[0]?.count or 0
+
   getAllByUserId: (userId) ->
     Promise.all [
       cknex().select '*'

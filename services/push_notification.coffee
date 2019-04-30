@@ -131,7 +131,7 @@ class PushNotificationService
         toObj = {topic: "/topics/#{to}"}
         # toObj = {condition: "'#{to}' in topics || '#{to}2' in topics"}
 
-      console.log 'try gcm'
+      console.log 'try gcm', toObj
       @gcmConn.send notification, toObj, RETRY_COUNT, (err, result) ->
         console.log 'gcm', err, result
         successes = result?.success or result?.message_id
@@ -273,6 +273,7 @@ class PushNotificationService
 
   sendToRoles: (roles, message, {groupId} = {}) ->
     Promise.map roles, (role) =>
+      console.log 'send role', role
       subscription = {
         groupId, sourceType: Subscription.TYPES.GROUP_ROLE, sourceId: role
       }
@@ -316,7 +317,7 @@ class PushNotificationService
         replacements: message.textObj.replacements
       }
 
-    notificationData = {path: message.data.path}
+    notificationData = {path: message.data.path, type: message.type}
     if conversation
       notificationData.conversationId = conversation.id
       if conversation.type is 'pm'
@@ -392,6 +393,7 @@ class PushNotificationService
           .catch (err) ->
             # TODO: try other tokens we have for this user
             newErrorCount = errorCount + 1
+            console.log 'caught error', newErrorCount
             if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE
               Promise.all [
                 PushToken.deleteByPushToken pushToken

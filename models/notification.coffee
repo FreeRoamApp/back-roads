@@ -82,8 +82,6 @@ class NotificationModel extends Base
     ]
 
   upsert: (notification) =>
-    notification = @defaultInput notification
-
     (if notification.uniqueId
       @getByUserIdAndUniqueId(
         notification.userId, notification.uniqueId

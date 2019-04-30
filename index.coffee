@@ -179,6 +179,7 @@ app.post '/log', (req, res) ->
   unless req.body?.event is 'client_error'
     return res.status(400).send 'must be type client_error'
 
+  console.log JSON.stringify req.body
   log.warn req.body
   res.status(204).send()
 
