@@ -87,11 +87,25 @@ module.exports = class PlaceBase extends Base
     .then @defaultOutput
 
   getById: (id) =>
-    cknex().select '*'
-    .from @getScyllaTables()[1].name
-    .where 'id', '=', id
-    .run {isSingle: true}
-    .then @defaultOutput
+    if @getScyllaTables()[1]
+      cknex().select '*'
+      .from @getScyllaTables()[1].name
+      .where 'id', '=', id
+      .run {isSingle: true}
+      .then @defaultOutput
+    else
+      elasticsearch.search {
+        index: @getElasticSearchIndices()[0].name
+        type: @getElasticSearchIndices()[0].name
+        size: 1
+        body:
+          query:
+            ids:
+              values: [id]
+      }
+      .then ({hits}) ->
+        {_id, _source} = hits.hits?[0] or {}
+        _.defaults _source, {id: _id}
 
   getAll: ({limit, allowFiltering} = {}) =>
     limit ?= 30

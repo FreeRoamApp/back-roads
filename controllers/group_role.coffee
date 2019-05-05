@@ -27,7 +27,7 @@ class GroupRoleCtrl
         userId: user.id
         actionText: Language.get 'audit.addRole', {
           replacements:
-            role: name
+            roleName: name
           language: user.language
         }
       }
@@ -107,7 +107,7 @@ class GroupRoleCtrl
           actionText: Language.get languageKey, {
             replacements:
               role: role.name
-              channel: channel?.name
+              channel: channel?.data?.name
             language: user.language
           }
         }

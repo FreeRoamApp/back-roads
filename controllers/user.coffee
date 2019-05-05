@@ -77,9 +77,11 @@ class UserCtrl
     currentInsecurePassword = userDiff.currentPassword
     newInsecurePassword = userDiff.password
     username = userDiff.username
-    userDiff = _.pick userDiff, ['username', 'links', 'bio']
+    userDiff = _.pick userDiff, ['username', 'links', 'bio', 'name']
 
     if userDiff.links?.instagram and userDiff.links.instagram.indexOf('instagram.com') is -1
+      if userDiff.links.instagram.indexOf('@') isnt -1
+        userDiff.links.instagram = userDiff.links.instagram.replace '@', ''
       userDiff.links.instagram = "https://instagram.com/#{userDiff.links.instagram}"
 
     valid = Joi.validate {username, password: newInsecurePassword}, {
@@ -135,7 +137,7 @@ class UserCtrl
         userDiff.password = password
 
       if avatarImage
-        userDiff.avatarImage = avatarImage
+        userDiff.avatarImage = JSON.stringify avatarImage
 
       User.upsertByRow user, userDiff
       .then (response) ->

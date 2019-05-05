@@ -64,6 +64,8 @@ class CheckInCtrl
       unless diff.id
         diff.tripIds ?= [trip.id]
 
+      console.log 'upsert', checkIn
+
       CheckIn.upsertByRow checkIn, diff, {skipDefaults: false}
       .tap (checkIn) ->
         unless diff.id

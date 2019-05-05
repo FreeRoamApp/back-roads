@@ -33,8 +33,8 @@ class GroupRoleModel extends Base
       }
     ]
 
-  upsert: (groupRole, {map} = {}) =>
-    super groupRole, {map}
+  upsert: (groupRole, options) =>
+    super groupRole, options
     .tap ->
       prefix = CacheService.PREFIXES.GROUP_ROLE_GROUP_ID_USER_ID
       cacheKey = "#{prefix}:#{groupRole.groupId}:#{groupRole.userId}"

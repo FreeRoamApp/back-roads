@@ -23,6 +23,8 @@ class CheckInEmbed
     Promise.map trip.checkInIds, (checkInId) ->
       CheckIn.getById checkInId
       .then (checkIn) ->
+        unless checkIn?.sourceId
+          return null
         (if checkIn.sourceType is 'amenity'
           Amenity.getById checkIn.sourceId
         else if checkIn.sourceType is 'overnight'
@@ -31,8 +33,11 @@ class CheckInEmbed
           Coordinate.getByUserIdAndId trip.userId, checkIn.sourceId
         else
           Campground.getById checkIn.sourceId
-        ).then (place) ->
+        )
+        .catch (err) -> null
+        .then (place) ->
           _.defaults checkIn, place
+    .then (checkIns) -> _.filter checkIns
 
   stats: ({checkIns}) ->
     stateCounts = _.countBy checkIns, ({address}) ->

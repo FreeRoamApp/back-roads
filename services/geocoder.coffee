@@ -36,6 +36,11 @@ class GeocoderService
           match_phrase_prefix:
             name: query
         limit: 3
+      }, {
+        outputFn: (campground) ->
+          _.defaults {type: 'campground'}, _.pick campground, [
+            'id', 'name', 'location', 'slug'
+          ]
       }
 
       request "#{config.PELIAS_API_URL}/autocomplete",
