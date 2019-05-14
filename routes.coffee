@@ -165,6 +165,8 @@ module.exports = router
 .on 'geocoder.getBoundingFromRegion', authed GeocoderCtrl.getBoundingFromRegion
 .on 'geocoder.getBoundingFromLocation',
   authed GeocoderCtrl.getBoundingFromLocation
+.on 'geocoder.getElevationFromLocation',
+  authed GeocoderCtrl.getElevationFromLocation
 
 .on 'groups.create', authed GroupCtrl.create
 .on 'groups.updateById', authed GroupCtrl.updateById

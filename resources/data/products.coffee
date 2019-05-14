@@ -297,7 +297,7 @@ The levelers can also be used as a support base for other stabilizing equipment"
 '''
     itemSlug: 'batteries'
     source: 'amazon'
-    sourceId: 'B077HHFDZV'
+    sourceId: 'B00S2MDZFK'
     data:
       countryOfOrigin: 'China'
 

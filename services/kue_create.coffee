@@ -6,8 +6,6 @@ KueService = require './kue'
 CacheService = require './cache'
 config = require '../config'
 
-return module.exports = {JOB_TYPES: {}} # TODO
-
 DEFAULT_PRIORITY = 0
 DEFAULT_TTL_MS = 60 * 1000 * 9 # 9 minutes
 IDLE_PROCESS_KILL_TIME_MS = 300 * 1000 # 5 min
@@ -17,8 +15,7 @@ STUCK_JOB_INTERVAL_MS = 5000
 
 JOB_TYPES =
   DEFAULT: 'free_roam:default'
-  BATCH_NOTIFICATION: 'free_roam:batch_notification'
-  PRODUCT_UNLOCKED: 'free_roam:product_unlocked'
+  FORECAST_PLACE: 'free_roam:forecast_place'
 
 CacheService.lock CacheService.KEYS.KUE_WATCH_STUCK, ->
   console.log 'watching stuck jobs'

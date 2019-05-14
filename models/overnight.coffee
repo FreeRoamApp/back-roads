@@ -38,6 +38,8 @@ scyllaFields =
   cellSignal: 'text' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
   maxDays: 'int'
 
+  forecast: 'text' # json [d1, d2, d3, d4, ...] d1 = {precipProbability, precipType, temperatureHigh, temperatureLow, windSpeed, windGust, windBearing, uvIndex, cloudCover, icon, summary, time}
+
   isAllowedCount: 'int'
   isNotAllowedCount: 'int'
   isAllowedScore: 'double'
@@ -80,19 +82,21 @@ class Overnight extends PlaceBase
         name: 'overnights'
         mappings:
           # common
-          slug: {type: 'text'}
+          slug: {type: 'keyword'}
           name: {type: 'text'}
           location: {type: 'geo_point'}
           rating: {type: 'double'}
           ratingCount: {type: 'integer'}
-          thumbnailPrefix: {type: 'text'}
+          thumbnailPrefix: {type: 'keyword'}
           address: {type: 'object'}
           # end common
-          subType: {type: 'text'}
+          subType: {type: 'keyword'}
           noise: {type: 'object'}
           safety: {type: 'integer'}
           cellSignal: {type: 'object'}
           maxDays: {type: 'integer'}
+
+          forecast: {type: 'object'} # {minHigh, maxHigh, minLow, maxLow, rainyDays}
 
           isAllowedCount: {type: 'integer'}
           isNotAllowedCount: {type: 'integer'}
@@ -134,6 +138,7 @@ class Overnight extends PlaceBase
       cellSignal: JSON.stringify overnight.cellSignal
       address: JSON.stringify overnight.address
       contact: JSON.stringify overnight.contact
+      forecast: JSON.stringify overnight.forecast
     }, overnight
 
     # add data if non-existent
@@ -146,7 +151,7 @@ class Overnight extends PlaceBase
       return null
 
     jsonFields = [
-      'safety', 'noise', 'cellSignal', 'address', 'contact'
+      'safety', 'noise', 'cellSignal', 'address', 'contact', 'forecast'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -163,6 +168,7 @@ class Overnight extends PlaceBase
         overnight.safety?.value
       noise: if overnight.noise
         _.mapValues overnight.noise, ({value}, time) -> value
+      forecast: _.omit overnight.forecast, ['daily']
     }, overnight
 
   defaultESOutput: (overnight) ->

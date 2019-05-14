@@ -13,6 +13,7 @@ Amenity = require '../models/amenity'
 Campground = require '../models/campground'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
+WeatherService = require '../services/weather'
 allCategories = require '../resources/data/categories'
 allGroups = require '../resources/data/groups'
 allItems = require '../resources/data/items'
@@ -46,7 +47,6 @@ class CronService
       EarnAction.batchUpsert _.cloneDeep allEarnActions
       Thread.updateScores 'time'
 
-
     @addCron 'oneHour', '0 42 * * * *', ->
       CleanupService.trimLeaderboards()
       Promise.map allGroups, (group) ->
@@ -57,6 +57,9 @@ class CronService
       Product.batchUpsert _.cloneDeep allProducts
       Category.batchUpsert _.cloneDeep allCategories
 
+    @addCron 'daily', '0 0 3 * * *', -> # 3 am PT?
+      if config.ENV is config.ENVS.PROD and not config.IS_STAGING
+        WeatherService.forecastPlaces()
 
   addCron: (key, time, fn) =>
     @crons.push new CronJob {

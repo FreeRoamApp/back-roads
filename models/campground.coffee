@@ -45,6 +45,7 @@ scyllaFields =
   cleanliness: 'text' # json {value: 3, count: 1}
 
   weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
+  forecast: 'text' # json [d1, d2, d3, d4, ...] d1 = {precipProbability, precipType, temperatureHigh, temperatureLow, windSpeed, windGust, windBearing, uvIndex, cloudCover, icon, summary, time}
 
   pets: 'text' # json {allowed: bool, dogs: bool, largeDogs: bool, multipleDogs: bool}
   padSurface: 'text' # gravel, paved, dirt
@@ -98,12 +99,12 @@ class Campground extends PlaceBase
         name: 'campgrounds'
         mappings:
           # common
-          slug: {type: 'text'}
+          slug: {type: 'keyword'}
           name: {type: 'text'}
           location: {type: 'geo_point'}
           rating: {type: 'double'}
           ratingCount: {type: 'integer'}
-          thumbnailPrefix: {type: 'text'}
+          thumbnailPrefix: {type: 'keyword'}
           address: {type: 'object'}
           # end common
           distanceTo: {type: 'object'}
@@ -116,17 +117,18 @@ class Campground extends PlaceBase
           cellSignal: {type: 'object'}
           cleanliness: {type: 'integer'}
           weather: {type: 'object'}
+          forecast: {type: 'object'}
 
           pets: {type: 'object'}
-          padSurface: {type: 'text'}
-          entryType: {type: 'text'}
+          padSurface: {type: 'keyword'}
+          entryType: {type: 'keyword'}
           allowedTypes: {type: 'object'}
           seasonOpenDayOfYear: {type: 'integer'}
           seasonCloseDayOfYear: {type: 'integer'}
           attachmentCount: {type: 'integer'}
 
-          source: {type: 'text'} # empty (user), coe, rec.gov, usfs
-          subType: {type: 'text'}
+          source: {type: 'keyword'} # empty (user), coe, rec.gov, usfs
+          subType: {type: 'keyword'}
 
           maxDays: {type: 'integer'}
           hasFreshWater: {type: 'boolean'}
@@ -168,6 +170,7 @@ class Campground extends PlaceBase
       videos: JSON.stringify campground.videos
       address: JSON.stringify campground.address
       weather: JSON.stringify campground.weather
+      forecast: JSON.stringify campground.forecast
       distanceTo: JSON.stringify campground.distanceTo
     }, campground
 
@@ -186,6 +189,7 @@ class Campground extends PlaceBase
       'prices', 'allowedTypes', 'siteCount', 'crowds', 'fullness', 'shade',
       'noise', 'cellSignal', 'pets', 'restrooms', 'videos', 'address', 'weather'
       'safety', 'roadDifficulty', 'cleanliness', 'distanceTo', 'contact'
+      'forecast'
     ]
     _.forEach jsonFields, (field) ->
       try
@@ -213,6 +217,7 @@ class Campground extends PlaceBase
         campground.roadDifficulty?.value
       noise: if campground.noise
         _.mapValues campground.noise, ({value}, time) -> value
+      forecast: _.omit campground.forecast, ['daily']
     }, campground
 
   defaultESOutput: (campground) ->

@@ -77,6 +77,8 @@ class UserCtrl
     currentInsecurePassword = userDiff.currentPassword
     newInsecurePassword = userDiff.password
     username = userDiff.username
+    if username
+      username = username.toLowerCase()
     userDiff = _.pick userDiff, ['username', 'links', 'bio', 'name']
 
     if userDiff.links?.instagram and userDiff.links.instagram.indexOf('instagram.com') is -1

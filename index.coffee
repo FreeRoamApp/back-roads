@@ -89,7 +89,7 @@ setup = ->
     cknex.enableErrors()
     CronService.start()
     console.log 'cron started'
-    # KueRunnerService.listen() # TODO: child instance too
+    KueRunnerService.listen() # TODO: child instance too
     null # don't block
 
 childSetup = ->

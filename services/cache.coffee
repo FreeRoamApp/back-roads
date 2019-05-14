@@ -15,13 +15,13 @@ PREFER_CACHE_PUB_SUB_TIMEOUT_MS = 30 * 1000
 
 class CacheService
   KEYS:
-    BROADCAST_FAILSAFE: 'broadcast:failsafe'
     KUE_WATCH_STUCK: 'kue:watch_stuck'
     STALE_THREAD_IDS: 'threads:stale_ids'
+    FORECAST_ID: 'forecast:id4'
   LOCK_PREFIXES:
     KUE_PROCESS: 'kue:process'
-    BROADCAST: 'broadcast'
-  LOCKS: {}
+  LOCKS:
+    FORECAST: 'forecast4'
   PREFIXES:
     CHAT_USER: 'chat:user3'
     CHAT_USER_BY_USERNAME: 'chat:user:byUsername3'

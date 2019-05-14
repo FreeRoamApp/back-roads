@@ -107,13 +107,34 @@ module.exports = class PlaceBase extends Base
         {_id, _source} = hits.hits?[0] or {}
         _.defaults _source, {id: _id}
 
-  getAll: ({limit, allowFiltering} = {}) =>
+  getAll: ({limit} = {}) =>
     limit ?= 30
 
     elasticsearch.search {
       index: @getElasticSearchIndices()[0].name
       type: @getElasticSearchIndices()[0].name
       size: limit
+    }
+    .then ({hits}) ->
+      _.map hits.hits, ({_id, _source}) ->
+        _.defaults _source, {id: _id}
+
+
+  getAllByMinSlug: (minSlug, {limit} = {}) =>
+    limit ?= 30
+
+    elasticsearch.search {
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
+      size: limit
+      body:
+        sort: [
+          'slug'
+        ]
+        query:
+          range:
+            slug:
+              gt: minSlug
     }
     .then ({hits}) ->
       _.map hits.hits, ({_id, _source}) ->

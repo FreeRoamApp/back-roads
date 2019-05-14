@@ -8,8 +8,10 @@ CacheService = require './cache'
 config = require '../config'
 
 METERS_PER_MILE = 1609.34
+FT_PER_METER = 3.28084
 ONE_HOUR_S = 3600
 ONE_MINUTE_S = 60
+
 
 # TODO: replace here with own service using valhalla
 ###
@@ -23,6 +25,19 @@ pbf_costing_options->set_height(kDefaultTruckHeight);
 
 class RoutingService
   constructor: -> null
+
+  # TODO: use {lat, lon} instead of [lon, lat]
+  getElevation: ({location}) ->
+    request 'https://valhalla.freeroam.app/height',
+      json: true
+      qs:
+        json:
+          JSON.stringify {
+            shape: [
+              {lat: location[1], lon: location[0]}
+            ]
+          }
+    .then ({height}) -> Math.round height[0] * FT_PER_METER
 
   getRoute: ({locations}, {preferCache} = {}) ->
     preferCache ?= true

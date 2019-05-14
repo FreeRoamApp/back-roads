@@ -7,7 +7,10 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
 # low to high
-ICON_ORDER = ['gas', 'npwater', 'propane', 'groceries', 'water', 'dump']
+ICON_ORDER = [
+  'gas', 'npwater', 'propane', 'groceries', 'water', 'dump', 'trash',
+  'recycle'
+]
 
 scyllaFields =
   # common between all places
@@ -30,6 +33,7 @@ scyllaFields =
     # phone
     # email
     # website
+  subType: 'text' # walmart, etc...
   # end common
 
   amenities: 'text' # json
@@ -60,12 +64,13 @@ class Amenity extends PlaceBase
         name: 'amenities'
         mappings:
           # common between all places
-          slug: {type: 'text'}
+          slug: {type: 'keyword'}
           name: {type: 'text'}
           location: {type: 'geo_point'}
           rating: {type: 'double'}
           ratingCount: {type: 'integer'}
-          thumbnailPrefix: {type: 'text'}
+          thumbnailPrefix: {type: 'keyword'}
+          subType: {type: 'keyword'}
           # end common
           amenities: {type: 'text'} # array
       }
@@ -78,6 +83,7 @@ class Amenity extends PlaceBase
     # transform existing data
     amenity = _.defaults {
       address: JSON.stringify amenity.address
+      contact: JSON.stringify amenity.contact
       amenities: JSON.stringify amenity.amenities
       prices: JSON.stringify amenity.prices
     }, amenity
@@ -93,7 +99,7 @@ class Amenity extends PlaceBase
       return null
 
     jsonFields = [
-      'address', 'amenities', 'prices'
+      'address', 'amenities', 'prices', 'contact'
     ]
     _.forEach jsonFields, (field) ->
       try
