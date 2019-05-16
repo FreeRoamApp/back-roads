@@ -45,6 +45,10 @@ class UserLocationCtrl extends PlaceBaseCtrl
                     lon: location.lon + distance
             }
             {
+              match:
+                privacy: 'public'
+            }
+            {
               range:
                 'time':
                   gte: new Date(Date.now() - TWO_WEEKS_MS)

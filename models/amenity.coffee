@@ -8,8 +8,7 @@ elasticsearch = require '../services/elasticsearch'
 
 # low to high
 ICON_ORDER = [
-  'gas', 'npwater', 'propane', 'groceries', 'water', 'dump', 'trash',
-  'recycle'
+  'gas', 'trash', 'recycle', 'npwater', 'propane', 'groceries', 'water', 'dump'
 ]
 
 scyllaFields =

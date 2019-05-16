@@ -31,6 +31,7 @@
   "editTrip": "/edit-trip/:id",
   "editTripByType": "/edit-trip/type/:type",
   "editProfile": "/edit-profile",
+  "editAmenityReview": "/amenity/:slug/review/:reviewId/edit",
   "editCampgroundReview": "/campground/:slug/review/:reviewId/edit",
   "editOvernightReview": "/overnight/:slug/review/:reviewId/edit",
   "item": "/item/:slug",

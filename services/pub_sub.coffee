@@ -19,7 +19,11 @@ class PubSubService
 
     @redisSub.on 'message', (channelWithPrefix, message) =>
       channel = channelWithPrefix.replace "#{config.REDIS.PUB_SUB_PREFIX}:", ''
-      message = JSON.parse message
+      message = try
+        JSON.parse message
+      catch err
+        console.log 'redis json parse error', channelWithPrefix
+        {}
       _.forEach @subscriptions[channel], ({fn}) -> fn message
 
   publish: (channels, message) =>

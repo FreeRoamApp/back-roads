@@ -16,6 +16,7 @@ class UserLocation extends PlaceBase
           userId: 'uuid'
           sourceType: 'text'
           sourceId: 'text'
+          privacy: 'text'
           location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
           time: 'timestamp'
         primaryKey:
@@ -31,6 +32,7 @@ class UserLocation extends PlaceBase
           userId: {type: 'text'}
           sourceType: {type: 'text'}
           sourceId: {type: 'text'}
+          privacy: {type: 'text'}
           location: {type: 'geo_point'}
           time: {type: 'date'}
       }

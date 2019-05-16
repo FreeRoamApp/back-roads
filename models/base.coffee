@@ -22,7 +22,7 @@ module.exports = class Base
   # MAKE SURE to send full existingRow if doing that...so it all gets copied
   # TODO: go through old code and make sure this is used in favor of
   # _.defaults with the primary keys manually spec'd
-  upsertByRow: (row, diff, options) =>
+  upsertByRow: (row, diff, options = {}) =>
     keyColumns = _.filter _.uniq _.flatten _.map @getScyllaTables(), (table) ->
       table.primaryKey.partitionKey.concat(
         table.primaryKey.clusteringColumns
@@ -37,7 +37,7 @@ module.exports = class Base
 
     @upsert(
       _.defaults(diff, primaryKeyValues)
-      _.defaults options, {skipDefaults: true}
+      _.defaults options, {skipDefaults: Boolean row}
     )
     .tap =>
       # delete any rows where the primary key changed
@@ -50,39 +50,24 @@ module.exports = class Base
 
           Promise.each tablesWithKey, (table) =>
             @_deleteScyllaRowByTableAndRow table, row
+            .then (deletedRow) =>
+              # transfer over any other info the row we're deleting had
+              if deletedRow
+                row = _.defaults(diff, deletedRow)
+                scyllaRow = @defaultInput row
+                @_upsertScyllaRowByTableAndRow table, scyllaRow
 
 
   upsert: (row, options = {}) =>
-    {ttl, prepareFn, isUpdate, add, remove, skipDefaults} = options
+    {prepareFn, isUpdate, skipDefaults} = options
 
     scyllaRow = if skipDefaults then row else @defaultInput row
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
-    Promise.all _.filter _.map(@getScyllaTables(), (table) ->
+    Promise.all _.filter _.map(@getScyllaTables(), (table) =>
       if table.ignoreUpsert
         return
-      scyllaTableRow = _.pick scyllaRow, _.keys table.fields
-
-      keyColumns = _.filter table.primaryKey.partitionKey.concat(
-        table.primaryKey.clusteringColumns
-      )
-
-      if missing = _.find(keyColumns, (column) -> not scyllaTableRow[column])
-        return console.log "missing #{missing} in #{table.name} upsert"
-
-
-      set = _.omit scyllaTableRow, keyColumns
-      q = cknex().update table.name
-      .set set
-      _.forEach keyColumns, (column) ->
-        q.andWhere column, '=', scyllaTableRow[column]
-      if ttl
-        q.usingTTL ttl
-      if add
-        q.add add
-      if remove
-        q.remove remove
-      q.run()
+      @_upsertScyllaRowByTableAndRow table, scyllaRow, options
     ).concat [@index elasticSearchRow]
     .then =>
       if @streamChannelKey
@@ -95,6 +80,32 @@ module.exports = class Base
           @defaultOutput scyllaRow
       else
         @defaultOutput scyllaRow
+
+  _upsertScyllaRowByTableAndRow: (table, scyllaRow, options = {}) ->
+    {ttl, add, remove} = options
+
+    scyllaTableRow = _.pick scyllaRow, _.keys table.fields
+
+    keyColumns = _.filter table.primaryKey.partitionKey.concat(
+      table.primaryKey.clusteringColumns
+    )
+
+    if missing = _.find(keyColumns, (column) -> not scyllaTableRow[column])
+      return console.log "missing #{missing} in #{table.name} upsert"
+
+    set = _.omit scyllaTableRow, keyColumns
+
+    q = cknex().update table.name
+    .set set
+    _.forEach keyColumns, (column) ->
+      q.andWhere column, '=', scyllaTableRow[column]
+    if ttl
+      q.usingTTL ttl
+    if add
+      q.add add
+    if remove
+      q.remove remove
+    q.run()
 
   index: (row) =>
     if _.isEmpty @getElasticSearchIndices?()
@@ -127,6 +138,7 @@ module.exports = class Base
       q.andWhere column, '=', scyllaRow[column]
     q.run {isSingle: true}
 
+  # returns row that was deleted
   _deleteScyllaRowByTableAndRow: (table, row) =>
     scyllaRow = @defaultInput row
 
@@ -135,11 +147,16 @@ module.exports = class Base
     keyColumns = _.filter table.primaryKey.partitionKey.concat(
       table.primaryKey.clusteringColumns
     )
-    q = cknex().delete()
+    q = cknex().select '*'
     .from table.name
     _.forEach keyColumns, (column) ->
       q.andWhere column, '=', scyllaRow[column]
-    q.run()
+    q.run({isSingle: true}).tap ->
+      q = cknex().delete()
+      .from table.name
+      _.forEach keyColumns, (column) ->
+        q.andWhere column, '=', scyllaRow[column]
+      q.run()
 
   deleteByRow: (row) =>
     Promise.all _.filter _.map(@getScyllaTables(), (table) =>

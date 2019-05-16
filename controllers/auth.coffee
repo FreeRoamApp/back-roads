@@ -34,8 +34,7 @@ class AuthCtrl
   join: ({email, username, password}, {user}) ->
     insecurePassword = password
     username = username?.toLowerCase()
-
-    console.log 'join', email, username
+    email = email?.toLowerCase()
 
     valid = Joi.validate {password, email, username},
       password: Joi.string().min(6).max(1000)

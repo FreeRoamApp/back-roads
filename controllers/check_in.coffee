@@ -40,18 +40,20 @@ class CheckInCtrl
       if setUserLocation
         UserSettings.getByUserId user.id
         .then (userSettings) ->
-          if userSettings?.privacy?.location?.everyone
-            PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
+          PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
+            userId: user.id
+          }
+          .then ({name, location}) ->
+            UserLocation.upsert {
+              name: diff.name or name
               userId: user.id
+              location: location
+              privacy: if userSettings?.privacy?.location?.everyone \
+                       then 'public'
+                       else 'private'
+              sourceType: diff.sourceType
+              sourceId: diff.sourceId
             }
-            .then ({name, location}) ->
-              UserLocation.upsert {
-                name: diff.name or name
-                userId: user.id
-                location: location
-                sourceType: diff.sourceType
-                sourceId: diff.sourceId
-              }
       else
         Promise.resolve null
     ]
@@ -63,8 +65,6 @@ class CheckInCtrl
 
       unless diff.id
         diff.tripIds ?= [trip.id]
-
-      console.log 'upsert', checkIn
 
       CheckIn.upsertByRow checkIn, diff, {skipDefaults: false}
       .tap (checkIn) ->

@@ -14,7 +14,7 @@ class UserRig extends Base
         fields:
           userId: 'uuid'
           name: 'text'
-          # fifthWheel, travelTrailer, van, classA, classB, classC, car, tent
+          # fifthWheel, travelTrailer, van, classA, classB, classC, car, tent, motorcycle
           type: 'text'
           length: 'int'
           is4x4: 'boolean'
