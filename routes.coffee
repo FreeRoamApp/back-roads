@@ -91,6 +91,7 @@ module.exports = router
 .on 'campgrounds.getBySlug', authed CampgroundCtrl.getBySlug
 .on 'campgrounds.deleteByRow', authed CampgroundCtrl.deleteByRow
 .on 'campgrounds.search', authed CampgroundCtrl.search
+.on 'campgrounds.searchNearby', authed CampgroundCtrl.searchNearby
 .on 'campgrounds.getNearestAmenitiesById',
   authed CampgroundCtrl.getNearestAmenitiesById
 .on 'campgrounds.upsert', authed CampgroundCtrl.upsert
@@ -101,6 +102,8 @@ module.exports = router
   authed CampgroundReviewCtrl.getAllByParentId
 .on 'campgroundReviews.search', authed CampgroundReviewCtrl.search
 .on 'campgroundReviews.upsert', authed CampgroundReviewCtrl.upsert
+.on 'campgroundReviews.upsertRatingOnly',
+  authed CampgroundReviewCtrl.upsertRatingOnly
 .on 'campgroundReviews.uploadImage', authed CampgroundReviewCtrl.uploadImage
 
 .on 'campgroundAttachments.getAllByParentId',

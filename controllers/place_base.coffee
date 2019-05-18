@@ -81,6 +81,10 @@ module.exports = class PlaceBaseCtrl
 
     @Model.deleteByRow row
 
+  searchNearby: ({location, limit}) =>
+    # FIXME FIXME: rm distance 10
+    @Model.searchNearby location, {limit, distance: 5, outputFn: (row) -> row}
+
   _setNearbyAmenities: (place) =>
     Amenity.searchNearby place.location
     .then ({places, total}) =>

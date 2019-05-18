@@ -95,6 +95,57 @@ module.exports = class PlaceReviewBaseCtrl
       ]
       _.defaults attachment, {parentId, userId}
 
+  _getParentUpsertRating: (parent, rating, {isUpdate, userRig}) ->
+    totalStars = (parent.rating or 0) * (parent.ratingCount or 0)
+    if isUpdate
+      totalStars or= existingReview.rating
+      totalStars -= existingReview.rating
+      totalStars += rating
+      newRatingCount = parent.ratingCount
+    else
+      totalStars += rating
+      newRatingCount = parent.ratingCount + 1
+    newRating = totalStars / newRatingCount
+
+    parentUpsert = {
+      id: parent.id, slug: parent.slug
+      rating: newRating, ratingCount: newRatingCount
+    }
+
+    # update maxLength and allowedTypes if we can
+    if rating > 3 and userRig
+      # TODO: problem with this is it's more of a maxReportedLength
+      maxLength = parent.maxLength or 0
+      if userRig.length > maxLength and userRig.length < 60
+        parentUpsert.maxLength = userRig.length
+
+      allowedTypes = parent.allowedTypes or {}
+      if userRig.type and not allowedTypes[userRig.type]
+        parentUpsert.allowedTypes = _.defaults {
+          "#{userRig.type}": true
+        }, allowedTypes
+
+    parentUpsert
+
+  upsertRatingOnly: ({id, parentId, rating}, {user}) =>
+    Promise.all [
+      @ParentModel.getById parentId
+      UserRig.getByUserId user.id
+    ]
+    .then ([parent, userRig]) =>
+      parentUpsert = @_getParentUpsertRating parent, rating, {userRig}
+      Promise.all [
+        @ParentModel.upsert parentUpsert
+        @Model.upsert
+          id: id
+          userId: user.id
+          parentId: parentId
+          parentType: @parentType
+          rating: rating
+          rigType: userRig?.type
+          rigLength: userRig?.length
+      ]
+
   upsert: (options, {user, headers, connection}) =>
     {id, type, title, body, rating, attachments, extras, parentId} = options
 
@@ -150,38 +201,12 @@ module.exports = class PlaceReviewBaseCtrl
       )
         router.throw status: 401, info: 'unauthorized'
 
-      totalStars = (parent.rating or 0) * (parent.ratingCount or 0)
-      if isUpdate
-        totalStars or= existingReview.rating
-        totalStars -= existingReview.rating
-        totalStars += rating
-        newRatingCount = parent.ratingCount
-      else
-        totalStars += rating
-        newRatingCount = parent.ratingCount + 1
-      newRating = totalStars / newRatingCount
-
+      parentUpsert = @_getParentUpsertRating parent, rating, {isUpdate, userRig}
       newAttachmentCount = (parent.attachmentCount or 0) +
                             (attachments?.length or 0)
 
-      parentUpsert = {
-        id: parent.id, slug: parent.slug
-        rating: newRating, ratingCount: newRatingCount
-        attachmentCount: newAttachmentCount
-      }
+      parentUpsert.attachmentCount = newAttachmentCount
 
-      # update maxLength and allowedTypes if we can
-      if rating > 3 and userRig
-        # TODO: problem with this is it's more of a maxReportedLength
-        maxLength = parent.maxLength or 0
-        if userRig.length > maxLength and userRig.length < 60
-          parentUpsert.maxLength = userRig.length
-
-        allowedTypes = parent.allowedTypes or {}
-        if userRig.type and not allowedTypes[userRig.type]
-          parentUpsert.allowedTypes = _.defaults {
-            "#{userRig.type}": true
-          }, allowedTypes
 
       # TODO: choose a good thumbnail for each campground instead of most recent
       if attachments?[0]

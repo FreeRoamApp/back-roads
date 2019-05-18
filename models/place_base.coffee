@@ -51,9 +51,10 @@ module.exports = class PlaceBase extends Base
           outputFn _.defaults _source, {id: _id}
       }
 
-  searchNearby: (location, {distance, outputFn} = {}) =>
+  searchNearby: (location, {limit, distance, outputFn} = {}) =>
     distance ?= 2.5 # TODO: maybe less than 2.5 lat/lon points
     @search {
+      limit
       query:
         bool:
           filter: [
