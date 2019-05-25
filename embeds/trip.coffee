@@ -6,6 +6,7 @@ Campground = require '../models/campground'
 CheckIn = require '../models/check_in'
 Coordinate = require '../models/coordinate'
 Overnight = require '../models/overnight'
+PlacesService = require '../services/places'
 RoutingService = require '../services/routing'
 
 pairwise = (arr) ->
@@ -20,20 +21,15 @@ class CheckInEmbed
   checkIns: (trip) ->
     # TODO: cache as a whole and maybe per checkinId
     trip.checkInIds ?= []
-    Promise.map trip.checkInIds, (checkInId) ->
+    checkInIds = _.clone(trip.checkInIds).reverse()
+    Promise.map checkInIds, (checkInId) ->
       CheckIn.getById checkInId
       .then (checkIn) ->
-        unless checkIn?.sourceId
-          return null
-        (if checkIn.sourceType is 'amenity'
-          Amenity.getById checkIn.sourceId
-        else if checkIn.sourceType is 'overnight'
-          Overnight.getById checkIn.sourceId
-        else if checkIn.sourceType is 'coordinate'
-          Coordinate.getByUserIdAndId trip.userId, checkIn.sourceId
-        else
-          Campground.getById checkIn.sourceId
-        )
+        unless checkIn
+          return
+        PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
+          userId: trip.userId
+        }
         .catch (err) -> null
         .then (place) ->
           _.defaults checkIn, place
@@ -51,7 +47,7 @@ class CheckInEmbed
 
     # break it up into legs, use cache for legs we've already fetched...
     # only need to cache for maybe an hour
-    locations = _.map checkIns, 'location'
+    locations = _.filter _.map checkIns, 'location'
     pairs = pairwise locations
 
     Promise.map pairs, (pair) ->

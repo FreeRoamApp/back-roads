@@ -83,6 +83,15 @@ module.exports = class PlaceReviewBaseCtrl
     @Model.getAllByUserId userId
     .map EmbedService.embed {embed: @userEmbed}
 
+  getByUserIdAndParentId: ({userId, parentId}) =>
+    # ideally place_reviews_by_userId would have primaryKey
+    # (userId, [parentId, id]), but it doesn't....
+    @Model.getAllByUserId userId
+    .then (placeReviews) ->
+      _.find placeReviews, (placeReview) ->
+        "#{placeReview.parentId}" is "#{parentId}"
+    .then EmbedService.embed {embed: @userEmbed}
+
   getCountByUserId: ({userId}) =>
     @Model.getCountByUserId userId
 

@@ -10,6 +10,7 @@ EmbedClasses =
   ban: require '../embeds/ban'
   category: require '../embeds/category'
   campground: require '../embeds/campground'
+  checkIn: require '../embeds/check_in'
   connection: require '../embeds/connection'
   conversation: require '../embeds/conversation'
   conversationMessage: require '../embeds/conversation_message'
@@ -41,6 +42,8 @@ TYPES =
     FIRST_ITEM_PRODUCT_SLUG: 'category:firstItemFirstProductSlug'
   CAMPGROUND:
     ATTACHMENTS_PREVIEW: 'campground:attachmentsPreview'
+  CHECK_IN:
+    PLACE: 'checkIn:place'
   CONNECTION:
     USER: 'connection:user'
     OTHER: 'connection:other'

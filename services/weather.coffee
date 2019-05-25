@@ -2,6 +2,7 @@ request = require 'request-promise'
 Promise = require 'bluebird'
 _ = require 'lodash'
 DarkSky = require 'dark-sky'
+moment = require 'moment'
 
 Campground = require '../models/campground'
 Overnight = require '../models/overnight'
@@ -39,7 +40,8 @@ class WeatherService
         dailyForecast = forecast.daily.data
         daily = _.map dailyForecast, (day) ->
           day.precipTotal = Math.round(100 * day.precipIntensity * 24) / 100
-          day = _.pick day, ['precipProbability', 'precipType', 'precipTotal', 'temperatureHigh', 'temperatureLow', 'windSpeed', 'windGust', 'windBearing', 'uvIndex', 'cloudCover', 'icon', 'summary', 'time']
+          day.day = moment.unix(day.time).format 'YYYY-MM-DD'
+          day = _.pick day, ['day', 'precipProbability', 'precipType', 'precipTotal', 'temperatureHigh', 'temperatureLow', 'windSpeed', 'windGust', 'windBearing', 'uvIndex', 'cloudCover', 'icon', 'summary', 'time']
         forecast = {daily}
         forecast = _.defaults {
           minHigh: _.minBy(dailyForecast, 'temperatureHigh').temperatureHigh

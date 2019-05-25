@@ -162,7 +162,12 @@ class ImageService
       ]
     }
 
-    precipData = _.map months, 'precip'
+    precipData = _.map months, ({precip}) ->
+      if precip < 0
+        0
+      else
+        precip
+
     barOptions = (Chartist) ->
       {
         width: 434, height: 200
@@ -227,6 +232,7 @@ class ImageService
 
       new Promise (resolve, reject) ->
         key = "images/weather/#{type}_#{place.id}.svg"
+        console.log key
         file = storage.bucket('fdn.uno').file key
 
         file.createWriteStream {

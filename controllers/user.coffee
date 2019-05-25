@@ -76,9 +76,9 @@ class UserCtrl
   upsert: ({userDiff}, {user, file}) =>
     currentInsecurePassword = userDiff.currentPassword
     newInsecurePassword = userDiff.password
+    if userDiff.username
+      userDiff.username = userDiff.username.toLowerCase()
     username = userDiff.username
-    if username
-      username = username.toLowerCase()
     userDiff = _.pick userDiff, ['username', 'links', 'bio', 'name']
 
     if userDiff.links?.instagram and userDiff.links.instagram.indexOf('instagram.com') is -1

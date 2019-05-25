@@ -238,6 +238,8 @@ module.exports = router
 .on 'placeAttachments.getAllByUserId', authed PlaceAttachmentCtrl.getAllByUserId
 
 .on 'placeReviews.getAllByUserId', authed PlaceReviewCtrl.getAllByUserId
+.on 'placeReviews.getByUserIdAndParentId',
+  authed PlaceReviewCtrl.getByUserIdAndParentId
 .on 'placeReviews.getCountByUserId', authed PlaceReviewCtrl.getCountByUserId
 
 .on 'notifications.getAll', authed NotificationCtrl.getAll

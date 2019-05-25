@@ -29,14 +29,21 @@ module.exports = class PlaceBaseCtrl
         _.defaults {@type}, place
     .then EmbedService.embed {embed: @defaultEmbed}
 
-  search: ({query, tripId, sort, limit}, {user}) =>
+  search: ({query, tripId, sort, limit, includeId}, {user}) =>
     (if tripId
       # limit = 2000 # show them all
       @_updateESQueryFromTripId tripId, query
     else
       Promise.resolve query
     ).then (query) =>
-      @Model.search {query, sort, limit}
+      @Model.search {query, sort, limit}, {
+        outputFn: if includeId
+          (place) =>
+            id = place.id
+            place = @Model.defaultESOutput place
+            place.id = id
+            place
+      }
 
   _updateESQueryFromTripId: (tripId, query) ->
     Trip.getById tripId
@@ -192,6 +199,7 @@ module.exports = class PlaceBaseCtrl
       Amenity.searchNearby place.location
       .then ({places}) ->
         amenities = places
-        _.filter _.map config.COMMON_AMENITIES, (amenityType) ->
+        commonAmenities = _.filter _.map config.COMMON_AMENITIES, (amenityType) ->
           _.find amenities, ({amenities}) ->
             amenities.indexOf(amenityType) isnt -1
+        _.uniqBy commonAmenities, 'id'

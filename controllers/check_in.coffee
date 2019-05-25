@@ -7,6 +7,7 @@ Trip = require '../models/trip'
 UserLocation = require '../models/user_location'
 UserSettings = require '../models/user_settings'
 CacheService = require '../services/cache'
+EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 PlacesService = require '../services/places'
 config = require '../config'
@@ -14,10 +15,11 @@ config = require '../config'
 ONE_DAY_SECONDS = 3600 * 24
 
 class CheckInCtrl
-  defaultEmbed: []
+  defaultEmbed: [EmbedService.TYPES.CHECK_IN.PLACE]
 
-  getById: ({id}, {user}) ->
+  getById: ({id}, {user}) =>
     CheckIn.getById id
+    .then EmbedService.embed {embed: @defaultEmbed}
 
   upsert: (diff, {user}, {emit, socket, route}) ->
     setUserLocation = diff.setUserLocation
@@ -58,6 +60,7 @@ class CheckInCtrl
         Promise.resolve null
     ]
     .then ([trip, checkIn]) ->
+      console.log 'TRIP', trip
       if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
         router.throw {status: 401, info: 'Unauthorized'}
       else if trip and "#{trip.userId}" isnt "#{user.id}"

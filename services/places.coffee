@@ -10,6 +10,8 @@ ONE_WEEK_S = 3600 * 24 * 7
 
 class PlacesService
   getByTypeAndId: (type, id, {userId} = {}) ->
+    unless id
+      return Promise.resolve null
     (if type is 'amenity'
       Amenity.getById id
     else if type is 'overnight'
