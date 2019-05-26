@@ -16,7 +16,7 @@ scyllaFields =
   rating: 'int'
   rigType: 'text'
   rigLength: 'int'
-  attachments: 'text' # json
+  attachments: 'json' # json
 
 class OvernightReview extends ReviewBase
   type: 'overnightReview'
@@ -46,9 +46,9 @@ class OvernightReview extends ReviewBase
         fields:
           id: 'timeuuid' # review id
           userId: 'uuid'
-          noise: 'text' # json {day: 3, night: 0}
+          noise: 'json' # json {day: 3, night: 0}
           safety: 'int'
-          cellSignal: 'text'
+          cellSignal: 'json'
         primaryKey:
           partitionKey: ['id']
       }

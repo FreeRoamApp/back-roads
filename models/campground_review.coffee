@@ -6,6 +6,18 @@ ReviewBase = require './review_base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
+scyllaFields =
+  # common between all reviews
+  id: 'timeuuid'
+  parentId: 'uuid'
+  userId: 'uuid'
+  title: 'text'
+  body: 'text'
+  rating: 'int'
+  rigType: 'text'
+  rigLength: 'int'
+  attachments: 'json' # json
+
 class CampgroundReview extends ReviewBase
   type: 'campgroundReview'
 
@@ -14,17 +26,7 @@ class CampgroundReview extends ReviewBase
       {
         name: 'campground_reviews_by_parentId'
         keyspace: 'free_roam'
-        fields:
-          # common between all reviews
-          id: 'timeuuid'
-          parentId: 'uuid'
-          userId: 'uuid'
-          title: 'text'
-          body: 'text'
-          rating: 'int'
-          rigType: 'text'
-          rigLength: 'int'
-          attachments: 'text' # json
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['parentId']
           clusteringColumns: ['id']
@@ -33,17 +35,7 @@ class CampgroundReview extends ReviewBase
       {
         name: 'campground_reviews_by_id'
         keyspace: 'free_roam'
-        fields:
-          # common between all reviews
-          id: 'timeuuid'
-          parentId: 'uuid'
-          userId: 'uuid'
-          title: 'text'
-          body: 'text'
-          rating: 'int'
-          rigType: 'text'
-          rigLength: 'int'
-          attachments: 'text' # json
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
       }
@@ -55,13 +47,13 @@ class CampgroundReview extends ReviewBase
           id: 'timeuuid' # review id
           userId: 'uuid'
           roadDifficulty: 'int'
-          crowds: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
-          fullness: 'text' # json {winter: 2, spring: 5, summer: 10, fall: 5}
-          noise: 'text' # json {day: 3, night: 0}
+          crowds: 'json' # json {winter: 2, spring: 5, summer: 10, fall: 5}
+          fullness: 'json' # json {winter: 2, spring: 5, summer: 10, fall: 5}
+          noise: 'json' # json {day: 3, night: 0}
           shade: 'int'
           cleanliness: 'int'
           safety: 'int'
-          cellSignal: 'text'
+          cellSignal: 'json'
           pricePaid: 'double'
         primaryKey:
           partitionKey: ['id']

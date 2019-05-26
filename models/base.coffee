@@ -214,12 +214,14 @@ module.exports = class Base
       return null
 
     _.mapValues row, (value, key) =>
-      type = @fieldsWithType[key]
-      if type is 'json'
+      {type} = @fieldsWithType[key] or {}
+      if type is 'json' and value
         try
           JSON.parse value
         catch
           {}
+      else if type is 'json'
+        {}
       else if value and type in ['uuid', 'timeuuid']
         "#{value}"
       else

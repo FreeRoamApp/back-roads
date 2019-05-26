@@ -58,6 +58,7 @@ class ConversationMessageModel extends Base
   constructor: ->
     @streamChannelKey = 'conversation_message'
     @streamChannelsBy = ['conversationId']
+    super
 
   getAllByConversationId: (conversationId, options = {}) =>
     {limit, isStreamed, emit, socket, route, initialPostFn, postFn,

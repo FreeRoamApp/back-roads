@@ -55,7 +55,7 @@ class NotificationModel extends Base
           title: 'text'
           text: 'text'
           isRead: 'boolean'
-          data: 'text' # JSON conversationId
+          data: 'json' # JSON conversationId
         primaryKey:
           partitionKey: ['roleId']
           clusteringColumns: ['id']

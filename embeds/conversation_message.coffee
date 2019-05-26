@@ -3,6 +3,7 @@ Promise = require 'bluebird'
 
 config = require '../config'
 BaseMessage = require './base_message'
+cknex = require '../services/cknex'
 
 class ConversationMessageEmbed
   user: (conversationMessage) ->
