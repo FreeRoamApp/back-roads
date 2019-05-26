@@ -8,6 +8,18 @@ config = require '../config'
 
 PARTNER_TTL_S = 3600 * 24 * 31
 
+scyllaFields =
+  id: 'timeuuid'
+  username: 'text'
+  password: 'text'
+  email: 'text'
+  name: 'text'
+  avatarImage: 'json'
+  language: {type: 'text', defaultFn: -> 'en'}
+  flags: 'json'
+  links: {type: 'map', subType: 'text', subType2: 'text'}
+  bio: 'text'
+
 class UserModel extends Base
   getScyllaTables: ->
     [
@@ -15,51 +27,21 @@ class UserModel extends Base
       {
         name: 'users_by_id'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          username: 'text'
-          password: 'text'
-          email: 'text'
-          name: 'text'
-          avatarImage: 'text'
-          language: 'text'
-          flags: 'text'
-          links: {type: 'map', subType: 'text', subType2: 'text'}
-          bio: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
       }
       {
         name: 'users_by_username'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          username: 'text'
-          password: 'text'
-          email: 'text'
-          name: 'text'
-          avatarImage: 'text'
-          language: 'text'
-          flags: 'text'
-          links: {type: 'map', subType: 'text', subType2: 'text'}
-          bio: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['username']
       }
       {
         name: 'users_by_email'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          username: 'text'
-          password: 'text'
-          email: 'text'
-          name: 'text'
-          avatarImage: 'text'
-          language: 'text'
-          flags: 'text'
-          links: {type: 'map', subType: 'text', subType2: 'text'}
-          bio: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['email']
       }
@@ -193,44 +175,6 @@ class UserModel extends Base
         users: _.map hits.hits, ({_id, _source}) =>
           @defaultESOutput _.defaults _source, {id: _id}
       }
-
-  defaultInput: (user) ->
-    unless user?
-      return null
-
-    user.flags = JSON.stringify user.flags
-    user.avatarImage = JSON.stringify user.avatarImage
-
-    _.defaults user, {
-      id: cknex.getTimeUuid()
-      language: 'en'
-    }
-
-  defaultOutput: (user) ->
-    unless user?
-      return null
-
-    if user.flags
-      user.flags = try
-        JSON.parse user.flags
-      catch
-        {}
-    else
-      user.flags = {}
-
-    if user.avatarImage
-      user.avatarImage = try
-        JSON.parse user.avatarImage
-      catch
-        {}
-    else
-      user.avatarImage = {}
-
-    user = _.defaults user, {
-      id: "#{user.id}"
-      username: null
-      language: 'en'
-    }
 
   defaultESOutput: (user) ->
     if user.avatarImage

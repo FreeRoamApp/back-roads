@@ -104,9 +104,9 @@ module.exports = class PlaceReviewBaseCtrl
       ]
       _.defaults attachment, {parentId, userId}
 
-  _getParentUpsertRating: (parent, rating, {isUpdate, userRig}) ->
+  _getParentUpsertRating: (parent, rating, {existingReview, userRig}) ->
     totalStars = (parent.rating or 0) * (parent.ratingCount or 0)
-    if isUpdate
+    if existingReview
       totalStars or= existingReview.rating
       totalStars -= existingReview.rating
       totalStars += rating
@@ -137,12 +137,20 @@ module.exports = class PlaceReviewBaseCtrl
     parentUpsert
 
   upsertRatingOnly: ({id, parentId, rating}, {user}) =>
+    isUpdate = Boolean id
     Promise.all [
+      if isUpdate
+        @Model.getById id
+        .then EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
+      else
+        Promise.resolve null
       @ParentModel.getById parentId
       UserRig.getByUserId user.id
     ]
-    .then ([parent, userRig]) =>
-      parentUpsert = @_getParentUpsertRating parent, rating, {userRig}
+    .then ([existingReview, parent, userRig]) =>
+      parentUpsert = @_getParentUpsertRating parent, rating, {
+        existingReview, userRig
+      }
       Promise.all [
         @ParentModel.upsert parentUpsert
         @Model.upsert
@@ -210,7 +218,9 @@ module.exports = class PlaceReviewBaseCtrl
       )
         router.throw status: 401, info: 'unauthorized'
 
-      parentUpsert = @_getParentUpsertRating parent, rating, {isUpdate, userRig}
+      parentUpsert = @_getParentUpsertRating parent, rating, {
+        existingReview, userRig
+      }
       newAttachmentCount = (parent.attachmentCount or 0) +
                             (attachments?.length or 0)
 

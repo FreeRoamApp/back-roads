@@ -21,31 +21,8 @@ class LowClearance extends PlaceBase
       }
     ]
 
-  defaultInput: (lowClearance) ->
-    unless lowClearance?
-      return null
-
-    # transform existing data
-    lowClearance = _.defaults {
-    }, lowClearance
-
-
-    # add data if non-existent
-    _.defaults lowClearance, {
-      id: cknex.getTimeUuid()
-    }
-
   defaultOutput: (lowClearance) ->
-    unless lowClearance?
-      return null
-
-    jsonFields = []
-    _.forEach jsonFields, (field) ->
-      try
-        lowClearance[field] = JSON.parse lowClearance[field]
-      catch
-        {}
-
+    lowClearance = super lowClearance
     _.defaults {type: 'lowClearance'}, lowClearance
 
   defaultESOutput: (lowClearance) ->

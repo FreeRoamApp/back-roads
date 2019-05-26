@@ -181,22 +181,4 @@ class BanModel extends Base
       CacheService.deleteByKey key
     .then -> null
 
-  defaultInput: (ban) ->
-    unless ban?
-      return null
-
-    _.defaults ban, {
-      ip: ''
-      id: cknex.getTimeUuid()
-    }
-
-  defaultOutput: (ban) ->
-    unless ban?
-      return null
-
-    _.defaults ban, {
-      ip: ''
-      id: cknex.getTimeUuid()
-    }
-
 module.exports = new BanModel()

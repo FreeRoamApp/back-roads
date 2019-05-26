@@ -13,7 +13,7 @@ scyllaFields =
   userId: 'uuid'
   name: 'text'
   location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
-  address: 'text' # json
+  address: 'json' # json
 
 class Coordinate extends PlaceBase
   getScyllaTables: ->
@@ -64,31 +64,8 @@ class Coordinate extends PlaceBase
     .run {isSingle: true}
     .then @defaultOutput
 
-  defaultInput: (coordinate) ->
-    unless coordinate?
-      return null
-
-    # transform existing data
-    coordinate = _.defaults {
-      address: JSON.stringify coordinate.address
-    }, coordinate
-
-    # add data if non-existent
-    _.defaults coordinate, {
-      id: cknex.getTimeUuid()
-    }
-
   defaultOutput: (coordinate) ->
-    unless coordinate?
-      return null
-
-    jsonFields = ['address']
-    _.forEach jsonFields, (field) ->
-      try
-        coordinate[field] = JSON.parse coordinate[field]
-      catch
-        {}
-
+    coordinate = super coordinate
     _.defaults {type: 'coordinate'}, coordinate
 
   defaultESInput: (coordinate) ->

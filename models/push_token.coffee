@@ -7,19 +7,21 @@ cknex = require '../services/cknex'
 
 TWO_DAYS_SECONDS = 3600 * 24 * 2
 
+scyllaFields =
+  userId: 'uuid'
+  token: 'text'
+  deviceId: 'text'
+  sourceType: 'text'
+  isActive: {type: 'boolean', defaultFn: -> true}
+  errorCount: {type: 'int', defaultFn: -> 0}
+
 class PushToken extends Base
   getScyllaTables: ->
     [
       {
         name: 'push_tokens_by_userId'
         keyspace: 'free_roam'
-        fields:
-          userId: 'uuid'
-          token: 'text'
-          deviceId: 'text'
-          sourceType: 'text'
-          isActive: 'boolean'
-          errorCount: 'int'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: ['token']
@@ -27,13 +29,7 @@ class PushToken extends Base
       {
         name: 'push_tokens_by_token'
         keyspace: 'free_roam'
-        fields:
-          userId: 'uuid'
-          token: 'text'
-          deviceId: 'text'
-          sourceType: 'text'
-          isActive: 'boolean'
-          errorCount: 'int'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['token']
           clusteringColumns: ['userId']
@@ -83,35 +79,6 @@ class PushToken extends Base
       .andWhere 'userId', '=', pushToken.userId
       .run()
     ]
-
-  defaultInput: (token) ->
-    unless token?
-      return null
-
-    _.defaults token, {
-      sourceType: null
-      token: null
-      deviceId: null
-      isActive: true
-      userId: null
-      errorCount: 0
-    }
-
-  defaultOutput: (token) ->
-    unless token?
-      return null
-
-    token.userId = "#{token.userId}"
-
-    _.defaults token, {
-      sourceType: null
-      token: null
-      deviceId: null
-      isActive: true
-      userId: null
-      errorCount: 0
-    }
-
 
   sanitizePublic: (token) ->
     _.pick token, [

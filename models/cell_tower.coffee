@@ -27,32 +27,10 @@ class CellTower extends PlaceBase
       }
     ]
 
-  defaultInput: (cellTower) ->
-    unless cellTower?
-      return null
-
-    # transform existing data
-    cellTower = _.defaults {
-    }, cellTower
-
-
-    # add data if non-existent
-    _.defaults cellTower, {
-      id: cknex.getTimeUuid()
-    }
-
   defaultOutput: (cellTower) ->
-    unless cellTower?
-      return null
+    cellTower = super cellTower
 
-    jsonFields = []
-    _.forEach jsonFields, (field) ->
-      try
-        cellTower[field] = JSON.parse cellTower[field]
-      catch
-        {}
-
-    _.defaults {type: 'cellTower'}, cellTower
+    cellTower = _.defaults {type: 'cellTower'}, cellTower
 
   defaultESOutput: (cellTower) ->
     cellTower = _.defaults {

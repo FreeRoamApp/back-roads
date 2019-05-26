@@ -13,24 +13,26 @@ SCORE_UPDATE_TIME_RANGE_S = 3600 * 24 * 10
 ONE_HOUR_SECONDS = 3600
 MAX_UNIQUE_ID_ATTEMPTS = 10
 
+scyllaFields =
+  id: 'timeuuid'
+  slug: 'text'
+  groupId: 'uuid'
+  userId: 'uuid'
+  category: {type: 'text', defaultFn: -> 'general'}
+  title: 'text'
+  body: 'text'
+  attachments: 'json'
+  lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
+  isPinned: 'boolean'
+  timeBucket: {type: 'text', defaultFn: -> 'MONTH-' + moment().format 'YYYY-MM'}
+
 class ThreadModel extends Base
   getScyllaTables: ->
     [
       {
         name: 'threads_by_groupId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          groupId: 'uuid'
-          userId: 'uuid'
-          category: 'text'
-          title: 'text'
-          body: 'text'
-          attachments: 'text'
-          lastUpdateTime: 'timestamp'
-          isPinned: 'boolean'
-          timeBucket: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['groupId', 'timeBucket']
           clusteringColumns: ['id']
@@ -39,18 +41,7 @@ class ThreadModel extends Base
       {
         name: 'threads_by_groupId_and_category'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          groupId: 'uuid'
-          userId: 'uuid'
-          category: 'text'
-          title: 'text'
-          body: 'text'
-          attachments: 'text'
-          lastUpdateTime: 'timestamp'
-          isPinned: 'boolean'
-          timeBucket: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['groupId', 'category', 'timeBucket']
           clusteringColumns: ['id']
@@ -59,18 +50,7 @@ class ThreadModel extends Base
       {
         name: 'threads_by_userId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          groupId: 'uuid'
-          userId: 'uuid'
-          category: 'text'
-          title: 'text'
-          body: 'text'
-          attachments: 'text'
-          lastUpdateTime: 'timestamp'
-          isPinned: 'boolean'
-          timeBucket: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId'] # may want to restructure with timeBucket
           clusteringColumns: ['id']
@@ -79,36 +59,14 @@ class ThreadModel extends Base
       {
         name: 'threads_by_id'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          groupId: 'uuid'
-          userId: 'uuid'
-          category: 'text'
-          title: 'text'
-          body: 'text'
-          attachments: 'text'
-          lastUpdateTime: 'timestamp'
-          isPinned: 'boolean'
-          timeBucket: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
       }
       {
         name: 'threads_by_slug'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          groupId: 'uuid'
-          userId: 'uuid'
-          category: 'text'
-          title: 'text'
-          body: 'text'
-          attachments: 'text'
-          lastUpdateTime: 'timestamp'
-          isPinned: 'boolean'
-          timeBucket: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['slug']
       }
@@ -520,37 +478,6 @@ class ThreadModel extends Base
       return false
 
     return user?.username is 'austin' or thread.userId is user.id
-
-  defaultInput: (thread) ->
-    unless thread?
-      return null
-
-    thread?.lastUpdateTime = new Date()
-    thread.attachments = JSON.stringify thread.attachments
-
-    _.defaults thread, {
-      id: cknex.getTimeUuid()
-      userId: null
-      category: 'general'
-      timeBucket: 'MONTH-' + moment().format 'YYYY-MM'
-    }
-
-  defaultOutput: (thread) ->
-    unless thread?.id
-      return null
-
-    thread.attachments = try
-      JSON.parse thread.attachments
-    catch error
-      {}
-
-    thread.userId = "#{thread.userId}"
-    id = if typeof thread.id is 'string' \
-         then cknex.getTimeUuidFromString thread.id
-         else thread.id
-    thread.time = id.getDate()
-
-    thread
 
   sanitize: _.curry (requesterId, thread) ->
     _.pick thread, [

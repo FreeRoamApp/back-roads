@@ -36,18 +36,20 @@ PERMISSIONS =
   READ_AUDIT_LOG: 'readAuditLog'
   MANAGE_INFO: 'manageInfo'
 
+scyllaFields =
+  groupId: 'uuid'
+  userId: 'uuid'
+  roleIds: {type: 'set', subType: 'uuid'}
+  data: 'json'
+  time: {type: 'timestamp', defaultFn: -> new Date()}
+
 class GroupUserModel extends Base
   getScyllaTables: ->
     [
       {
         name: 'group_users_by_groupId'
         keyspace: 'free_roam'
-        fields:
-          groupId: 'uuid'
-          userId: 'uuid'
-          roleIds: {type: 'set', subType: 'uuid'}
-          data: 'text'
-          time: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           # a little uneven since some groups will have a lot of users, but each
           # row is small...
@@ -60,12 +62,7 @@ class GroupUserModel extends Base
       {
         name: 'group_users_by_userId'
         keyspace: 'free_roam'
-        fields:
-          groupId: 'uuid'
-          userId: 'uuid'
-          roleIds: {type: 'set', subType: 'uuid'}
-          data: 'text'
-          time: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: ['groupId']
@@ -263,14 +260,6 @@ class GroupUserModel extends Base
           channelPermissions, globalPermissions, config.DEFAULT_PERMISSIONS
         )
         permissions[permission]
-
-  defaultInput: (groupUser) ->
-    unless groupUser?
-      return null
-
-    _.defaults groupUser, {
-      time: new Date()
-    }
 
   defaultGroupUserSettings: (groupUserSettings) ->
     unless groupUserSettings?

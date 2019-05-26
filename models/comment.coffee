@@ -14,6 +14,17 @@ User = require './user'
 
 ONE_MONTH_MS = 3600 * 24 * 30 * 1000
 
+scyllaFields =
+  id: 'timeuuid'
+  topId: 'uuid'
+  topType: 'text' # thread, campgroundReview, placeAttachment, ...
+  parentType: 'text' # thread, comment
+  parentId: 'uuid'
+  userId: 'uuid'
+  body: 'text'
+  timeBucket:
+    type: 'text', defaultFn: -> TimeService.getScaledTimeByTimeScale 'month'
+
 class CommentModel extends Base
   getScyllaTables: ->
     [
@@ -24,15 +35,7 @@ class CommentModel extends Base
       {
         name: 'comments_by_topId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          topId: 'uuid'
-          topType: 'text' # thread, campgroundReview, placeAttachment, ...
-          parentType: 'text' # thread, comment
-          parentId: 'uuid'
-          userId: 'uuid'
-          body: 'text'
-          timeBucket: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['topId']
           clusteringColumns: [ 'parentType', 'parentId', 'id']
@@ -55,15 +58,7 @@ class CommentModel extends Base
       {
         name: 'comments_by_userId'
         keyspace: 'free_roam'
-        fields:
-          id: 'uuid'
-          topId: 'uuid'
-          topType: 'text'
-          parentType: 'text'
-          parentId: 'uuid'
-          userId: 'uuid'
-          body: 'text'
-          timeBucket: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId', 'timeBucket']
           clusteringColumns: ['id']
@@ -166,15 +161,6 @@ class CommentModel extends Base
   #   .from 'comments_by_topId'
   #   .where 'id', '=', id
   #   .run {isSingle: true}
-
-  defaultInput: (comment) ->
-    unless comment?
-      return null
-
-    _.defaults comment, {
-      id: cknex.getTimeUuid()
-      timeBucket: TimeService.getScaledTimeByTimeScale 'month'
-    }
 
 
 module.exports = new CommentModel()

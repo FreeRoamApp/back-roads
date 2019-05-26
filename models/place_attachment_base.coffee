@@ -55,30 +55,6 @@ module.exports = class PlaceAttachment extends AttachmentBase
       }
     ].concat super
 
-  defaultInput: (place) ->
-    unless place?
-      return null
-
-    # transform existing data
-    place = _.defaults {
-    }, place
-
-
-    # add data if non-existent
-    _.defaults place, {
-      id: cknex.getTimeUuid()
-    }
-
   defaultOutput: (place) ->
-    unless place?
-      return null
-
-    jsonFields = [
-    ]
-    _.forEach jsonFields, (field) ->
-      try
-        place[field] = JSON.parse place[field]
-      catch
-        {}
-
+    place = super place
     _.defaults {@type}, place

@@ -19,7 +19,7 @@ class UserBlockModel extends Base
         fields:
           userId: 'uuid'
           blockedId: 'uuid'
-          time: 'timestamp'
+          time: {type: 'timestamp', defaultFn: -> new Date()}
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: ['blockedId']
@@ -72,20 +72,5 @@ class UserBlockModel extends Base
         .tap ->
           prefix = CacheService.PREFIXES.USER_BLOCKS
           CacheService.deleteByKey "#{prefix}:#{userId}"
-
-  defaultInput: (userBlock) ->
-    unless userBlock?
-      return null
-
-    _.defaults {time: new Date()}, userBlock
-
-  defaultOutput : (userBlock) ->
-    unless userBlock?
-      return null
-
-    userBlock.userId = "#{userBlock.userId}"
-    userBlock.blockedId = "#{userBlock.blockedId}"
-
-    userBlock
 
 module.exports = new UserBlockModel()

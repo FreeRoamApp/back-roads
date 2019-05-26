@@ -19,8 +19,8 @@ module.exports = class ReviewBase extends Base
           userId: 'uuid'
           title: 'text'
           body: 'text'
-          rating: 'int'
-          attachments: 'text' # json
+          rating: {type: 'int', defaultFn: -> 0}
+          attachments: 'json' # json
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: ['id']
@@ -197,33 +197,6 @@ module.exports = class ReviewBase extends Base
     .where 'id', '=', id
     .run()
 
-  defaultInput: (place) ->
-    unless place?
-      return null
-
-    # transform existing data
-    place = _.defaults {
-      attachments: JSON.stringify place.attachments
-    }, place
-
-
-    # add data if non-existent
-    _.defaults place, {
-      id: cknex.getTimeUuid()
-      rating: 0
-    }
-
   defaultOutput: (place) =>
-    unless place?
-      return null
-
-    jsonFields = [
-      'attachments'
-    ]
-    _.forEach jsonFields, (field) ->
-      try
-        place[field] = JSON.parse place[field]
-      catch
-        {}
-
+    place = super place
     _.defaults {type: @type}, place

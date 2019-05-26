@@ -14,10 +14,10 @@ scyllaFields =
   type: 'text' # past, future, custom
   userId: 'uuid'
   name: 'text'
-  privacy: 'text' # public, private, friends
+  privacy: {type: 'text', defaultFn: -> 'public'} # public, private, friends
   # 'set's don't appear to work with ordering
   checkInIds: {type: 'list', subType: 'uuid'}
-  lastUpdateTime: 'timestamp'
+  lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
   imagePrefix: 'text'
 
 class Trip extends Base
@@ -40,35 +40,6 @@ class Trip extends Base
       }
     ]
 
-  defaultInput: (trip) ->
-    unless trip?
-      return null
-
-    # transform existing data
-    trip = _.defaults {
-    }, trip
-
-
-    # add data if non-existent
-    _.defaults trip, {
-      id: cknex.getTimeUuid()
-      lastUpdateTime: new Date()
-      privacy: 'public'
-    }
-
-  defaultOutput: (trip) ->
-    unless trip?
-      return null
-
-    jsonFields = []
-    _.forEach jsonFields, (field) ->
-      try
-        trip[field] = JSON.parse trip[field]
-      catch
-        {}
-
-    trip
-
   updateMapByRow: (trip) =>
     imagePrefix = "trips/#{trip.id}_profile"
     Promise.resolve request "#{config.SCREENSHOTTER_HOST}/screenshot",
@@ -84,7 +55,7 @@ class Trip extends Base
     .then =>
       @upsertByRow trip, {
         imagePrefix
-      }, {skipDefaults: false}
+      }
 
   getAllByUserId: (userId, {limit} = {}) =>
     limit ?= 30

@@ -38,12 +38,4 @@ class GroupAuditLogModel extends Base
     .limit 30
     .run()
 
-  defaultInput: (groupAuditLog) ->
-    unless groupAuditLog?
-      return null
-
-    _.defaults groupAuditLog, {
-      id: cknex.getTimeUuid()
-    }
-
 module.exports = new GroupAuditLogModel()

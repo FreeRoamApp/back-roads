@@ -12,32 +12,28 @@ config = require '../config'
 ONE_DAY_SECONDS = 3600 * 24
 ONE_HOUR_SECONDS = 3600
 
+scyllaFields =
+  id: 'timeuuid'
+  slug: 'text'
+  name: 'text'
+  description: 'text'
+  userId: 'uuid'
+  data: {type: 'json', defaultFn: -> {language: 'en'}}
+
 class GroupModel extends Base
   getScyllaTables: ->
     [
       {
         name: 'groups_by_id'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          name: 'text'
-          description: 'text'
-          userId: 'uuid'
-          data: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
       }
       {
         name: 'groups_by_slug'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          name: 'text'
-          description: 'text'
-          userId: 'uuid'
-          data: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['slug']
       }
@@ -113,34 +109,5 @@ class GroupModel extends Base
       .where 'slug', '=', slug
       .run()
     ]
-
-  defaultInput: (group) ->
-    unless group?
-      return null
-
-    group = _.defaults group, {
-      id: cknex.getTimeUuid()
-      name: null
-      description: null
-      userId: null
-      data:
-        language: 'en'
-    }
-
-    group.data = JSON.stringify group.data
-
-    group
-
-  defaultOutput: (group) ->
-    unless group?
-      return null
-
-    if group.data
-      group.data = try
-        JSON.parse group.data
-      catch
-        {}
-
-    group
 
 module.exports = new GroupModel()

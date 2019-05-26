@@ -18,7 +18,7 @@ class UserLocation extends PlaceBase
           sourceId: 'text'
           privacy: 'text'
           location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
-          time: 'timestamp'
+          time: {type: 'timestamp', defaultFn: -> new Date()}
         primaryKey:
           partitionKey: ['userId']
       }
@@ -44,31 +44,8 @@ class UserLocation extends PlaceBase
     .where 'userId', '=', userId
     .run {isSingle: true}
 
-  defaultInput: (userLocation) ->
-    unless userLocation?
-      return null
-
-    # transform existing data
-    userLocation = _.defaults {
-    }, userLocation
-
-
-    # add data if non-existent
-    _.defaults userLocation, {
-      time: Date.now()
-    }
-
   defaultOutput: (userLocation) ->
-    unless userLocation?
-      return null
-
-    # jsonFields = []
-    # _.forEach jsonFields, (field) ->
-    #   try
-    #     userLocation[field] = JSON.parse userLocation[field]
-    #   catch
-    #     {}
-
+    userLocation = super userLocation
     _.defaults {type: 'userLocation'}, userLocation
 
   defaultESInput: (userLocation) ->

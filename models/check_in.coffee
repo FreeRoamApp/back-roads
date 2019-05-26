@@ -16,9 +16,9 @@ scyllaFields =
   sourceId: 'text'
   startTime: 'timestamp'
   endTime: 'timestamp'
-  attachments: 'text' # json
+  attachments: 'json' # json
   tripIds: {type: 'list', subType: 'uuid'}
-  status: 'text' # planned | visited
+  status: {type: 'text', defaultFn: -> 'planned'} # planned | visited
 
 class CheckIn extends Base
   getScyllaTables: ->
@@ -60,42 +60,6 @@ class CheckIn extends Base
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{userId}"
       CacheService.deleteByCategory category
-
-  defaultInput: (checkIn) ->
-    unless checkIn?
-      return null
-
-    # transform existing data
-    checkIn = _.defaults {
-      attachments: JSON.stringify checkIn.attachments
-    }, checkIn
-
-
-    # add data if non-existent
-    _.defaults checkIn, {
-      id: cknex.getTimeUuid()
-      status: 'planned'
-    }
-
-  defaultOutput: (checkIn) ->
-    unless checkIn?
-      return null
-
-    jsonFields = ['attachments']
-    _.forEach jsonFields, (field) ->
-      try
-        checkIn[field] = JSON.parse checkIn[field]
-      catch
-        {}
-
-    checkIn
-
-  # defaultESOutput: (checkIn) ->
-  #   checkIn = _.defaults {
-  #     icon: checkIn.icon
-  #     type: 'saved'
-  #   }, _.pick checkIn, ['id', 'name', 'location']
-
 
   search: ({query, sort, limit}, {outputFn} = {}) ->
     null

@@ -20,25 +20,25 @@ scyllaFields =
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown
   thumbnailPrefix: 'text'
-  address: 'text' # json:
+  address: 'json' # json:
     # thoroughfare: 'text' # address
     # premise: 'text' # apt, suite, etc...
     # locality: 'text' # city / town
     # administrativeArea: 'text' # state / province / region. iso when avail
     # postalCode: 'text'
     # country: 'text' # 2 char iso
-  contact: 'text' # json
+  contact: 'json' # json
     # phone
     # email
     # website
   # end common
   subType: 'text' # walmart, etc...
-  noise: 'text' # json {day: {value: 3, count: 1}, night: {value: 0, count: 1}}
-  safety: 'text' # json {value: 3, count: 1}
-  cellSignal: 'text' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
+  noise: 'json' # json {day: {value: 3, count: 1}, night: {value: 0, count: 1}}
+  safety: 'json' # json {value: 3, count: 1}
+  cellSignal: 'json' # json {verizon_lte: {signal: 7}, att: {signal: 3}} 1-5
   maxDays: 'int'
 
-  forecast: 'text' # json [d1, d2, d3, d4, ...] d1 = {precipProbability, precipType, temperatureHigh, temperatureLow, windSpeed, windGust, windBearing, uvIndex, cloudCover, icon, summary, time}
+  forecast: 'json' # json [d1, d2, d3, d4, ...] d1 = {precipProbability, precipType, temperatureHigh, temperatureLow, windSpeed, windGust, windBearing, uvIndex, cloudCover, icon, summary, time}
 
   isAllowedCount: 'int'
   isNotAllowedCount: 'int'
@@ -127,38 +127,8 @@ class Overnight extends PlaceBase
       id: cknex.getTimeUuid()
     }
 
-  defaultInput: (overnight) ->
-    unless overnight?
-      return null
-
-    # transform existing data
-    overnight = _.defaults {
-      safety: JSON.stringify overnight.safety
-      noise: JSON.stringify overnight.noise
-      cellSignal: JSON.stringify overnight.cellSignal
-      address: JSON.stringify overnight.address
-      contact: JSON.stringify overnight.contact
-      forecast: JSON.stringify overnight.forecast
-    }, overnight
-
-    # add data if non-existent
-    _.defaults overnight, {
-      id: cknex.getTimeUuid()
-    }
-
   defaultOutput: (overnight) ->
-    unless overnight?
-      return null
-
-    jsonFields = [
-      'safety', 'noise', 'cellSignal', 'address', 'contact', 'forecast'
-    ]
-    _.forEach jsonFields, (field) ->
-      try
-        overnight[field] = JSON.parse overnight[field]
-      catch
-        {}
-
+    overnight = super overnight
     _.defaults {type: 'overnight'}, overnight
 
   defaultESInput: (overnight) ->

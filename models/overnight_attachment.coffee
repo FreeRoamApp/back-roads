@@ -1,5 +1,18 @@
 PlaceAttachmentBase = require './place_attachment_base'
 
+scyllaFields =
+  # common between all attachments
+  id: 'timeuuid'
+  parentId: 'uuid'
+  userId: 'uuid'
+  caption: 'text'
+  tags: {type: 'set', subType: 'text'}
+  type: 'text'
+  prefix: 'text'
+  aspectRatio: 'double'
+
+  location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
+
 class OvernightAttachment extends PlaceAttachmentBase
   type: 'overnightAttachment'
 
@@ -8,18 +21,7 @@ class OvernightAttachment extends PlaceAttachmentBase
       {
         name: 'overnight_attachments_by_parentId'
         keyspace: 'free_roam'
-        fields:
-          # common between all attachments
-          id: 'timeuuid'
-          parentId: 'uuid'
-          userId: 'uuid'
-          caption: 'text'
-          tags: {type: 'set', subType: 'text'}
-          type: 'text'
-          prefix: 'text'
-          aspectRatio: 'double'
-
-          location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['parentId']
           clusteringColumns: ['id']
@@ -28,18 +30,7 @@ class OvernightAttachment extends PlaceAttachmentBase
       {
         name: 'overnight_attachments_by_id'
         keyspace: 'free_roam'
-        fields:
-          # common between all attachments
-          id: 'timeuuid'
-          parentId: 'uuid'
-          userId: 'uuid'
-          caption: 'text'
-          tags: {type: 'set', subType: 'text'}
-          type: 'text'
-          prefix: 'text'
-          aspectRatio: 'double'
-
-          location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
       }

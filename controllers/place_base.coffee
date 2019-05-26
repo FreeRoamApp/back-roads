@@ -146,6 +146,12 @@ module.exports = class PlaceBaseCtrl
     }
 
     Promise.all [
+      (if id
+        @Model.getById id
+      else
+        Promise.resolve null
+      )
+
       (if slug
         Promise.resolve slug
       else
@@ -168,7 +174,7 @@ module.exports = class PlaceBaseCtrl
         .catch ->
           console.log 'cell estimation error'
     ]
-    .then ([slug, address, weatherStation, cellSignal]) =>
+    .then ([existingPlace, slug, address, weatherStation, cellSignal]) =>
       diff = {slug, name, details, location, address}
       if weatherStation
         diff.weather = weatherStation.weather
@@ -179,11 +185,14 @@ module.exports = class PlaceBaseCtrl
           {signal, count: 0}
         diff.cellSignal = _.defaults diff.cellSignal, cellSignal
 
-      diff.prices ?= {all: {mode: 0}} # TODO
+      unless isUpdate
+        diff.prices ?= {all: {mode: 0}} # TODO
 
-      console.log 'upsert', diff
-
-      @Model.upsert diff
+      (if existingPlace
+        @Model.upsertByRow existingPlace, diff
+      else
+        @Model.upsert diff
+      )
       .tap (place) =>
         if @Model.getScyllaTables()[0].fields.distanceTo
           @_setNearbyAmenities place

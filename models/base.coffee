@@ -1,5 +1,6 @@
 _ = require 'lodash'
 Promise = require 'bluebird'
+uuid = require 'node-uuid'
 
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
@@ -8,6 +9,19 @@ StreamService = require '../services/stream'
 # TODO: handle item (items_by_category), conversation (1 per userId)
 
 module.exports = class Base
+  constructor: ->
+    @fieldsWithType = _.reduce @getScyllaTables(), (obj, table) ->
+      _.forEach table.fields, (value, key) ->
+        obj[key] = {
+          type: value?.type or value
+          defaultFn: value?.defaultFn
+        }
+      obj
+    , {}
+
+    @fieldsWithDefaultFn = _.pickBy @fieldsWithType, ({type, defaultFn}, key) ->
+      defaultFn or (key is 'id' and type in ['uuid', 'timeuuid'])
+
   batchUpsert: (rows) =>
     Promise.map rows, (row) =>
       @upsert row
@@ -37,7 +51,7 @@ module.exports = class Base
 
     @upsert(
       _.defaults(diff, primaryKeyValues)
-      _.defaults options, {skipDefaults: Boolean row}
+      _.defaults options, {skipAdditions: Boolean row}
     )
     .tap =>
       # delete any rows where the primary key changed
@@ -59,9 +73,9 @@ module.exports = class Base
 
 
   upsert: (row, options = {}) =>
-    {prepareFn, isUpdate, skipDefaults} = options
+    {prepareFn, isUpdate, skipAdditions} = options
 
-    scyllaRow = if skipDefaults then row else @defaultInput row
+    scyllaRow = @defaultInput row, {skipAdditions}
     elasticSearchRow = _.defaults {id: scyllaRow.id}, row
 
     Promise.all _.filter _.map(@getScyllaTables(), (table) =>
@@ -89,9 +103,6 @@ module.exports = class Base
     keyColumns = _.filter table.primaryKey.partitionKey.concat(
       table.primaryKey.clusteringColumns
     )
-
-    if missing = _.find(keyColumns, (column) -> not scyllaTableRow[column])
-      return console.log "missing #{missing} in #{table.name} upsert"
 
     set = _.omit scyllaTableRow, keyColumns
 
@@ -179,8 +190,41 @@ module.exports = class Base
       .catch (err) ->
         console.log 'elastic err', err
 
-  defaultInput: (row) -> row
-  defaultOutput: (row) -> row
+  defaultInput: (row, {skipAdditions} = {}) =>
+    unless skipAdditions
+      _.forEach @fieldsWithDefaultFn, (field, key) ->
+        value = row[key]
+        if not value and not skipAdditions and field.type is 'uuid'
+          row[key] = uuid.v4()
+        else if not value and not skipAdditions and field.type is 'timeuuid'
+          row[key] = cknex.getTimeUuid()
+        else if not value and not skipAdditions
+          row[key] = field.defaultFn()
+
+    _.mapValues row, (value, key) =>
+      {type} = @fieldsWithType[key] or {}
+
+      if type is 'json'
+        JSON.stringify value
+      else
+        value
+
+  defaultOutput: (row) =>
+    unless row?
+      return null
+
+    _.mapValues row, (value, key) =>
+      type = @fieldsWithType[key]
+      if type is 'json'
+        try
+          JSON.parse value
+        catch
+          {}
+      else if value and type in ['uuid', 'timeuuid']
+        "#{value}"
+      else
+        value
+
   defaultESInput: (row) ->
     if row.id
       row.id = "#{row.id}"

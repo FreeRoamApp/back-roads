@@ -11,23 +11,25 @@ Group = require './group'
 
 ONE_DAY_S = 3600 * 24
 
+scyllaFields =
+  id: 'timeuuid'
+  slug: 'text'
+  userId: 'uuid'
+  userIds: {type: 'set', subType: 'uuid'}
+  groupId: 'uuid'
+  type: 'text'
+  rank: 'int' # ordering
+  data: 'json' # json: name, description, slowMode, slowModeCooldown
+  isRead: 'boolean'
+  lastUpdateTime: 'timestamp'
+
 class ConversationModel extends Base
   getScyllaTables: ->
     [
       {
         name: 'conversations_by_userId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid' # not unique - 1 row per userId
-          slug: 'text'
-          userId: 'uuid'
-          userIds: {type: 'set', subType: 'uuid'}
-          groupId: 'uuid'
-          type: 'text'
-          rank: 'int' # ordering
-          data: 'text' # json: name, description, slowMode, slowModeCooldown
-          isRead: 'boolean'
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: ['id']
@@ -36,17 +38,7 @@ class ConversationModel extends Base
       {
         name: 'conversations_by_groupId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid' # not unique - 1 row per userId
-          slug: 'text'
-          userId: 'uuid'
-          userIds: {type: 'set', subType: 'uuid'}
-          groupId: 'uuid'
-          type: 'text'
-          rank: 'int' # ordering
-          data: 'text' # json: name, description, slowMode, slowModeCooldown
-          isRead: 'boolean'
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['groupId']
           clusteringColumns: ['id']
@@ -55,17 +47,7 @@ class ConversationModel extends Base
       {
         name: 'conversations_by_id'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          userId: 'uuid'
-          userIds: {type: 'set', subType: 'uuid'}
-          groupId: 'uuid'
-          type: 'text'
-          rank: 'int' # ordering
-          data: 'text' # json: name, description, slowMode, slowModeCooldown
-          isRead: 'boolean'
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
           clusteringColumns: null
@@ -73,17 +55,7 @@ class ConversationModel extends Base
       {
         name: 'conversations_by_slug'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          slug: 'text'
-          userId: 'uuid'
-          userIds: {type: 'set', subType: 'uuid'}
-          groupId: 'uuid'
-          type: 'text'
-          rank: 'int' # ordering
-          data: 'text' # json: name, description, slowMode, slowModeCooldown
-          isRead: 'boolean'
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['slug']
           clusteringColumns: null
@@ -215,33 +187,6 @@ class ConversationModel extends Base
 
   pmHasPermission: (conversation, userId) ->
     Promise.resolve userId and conversation.userIds.indexOf("#{userId}") isnt -1
-
-  defaultInput: (conversation) ->
-    unless conversation?
-      return null
-
-    conversation.id ?= cknex.getTimeUuid conversation.lastUpdateTime
-    conversation.data = JSON.stringify conversation.data
-
-    conversation
-
-  defaultOutput: (conversation) ->
-    unless conversation?
-      return null
-
-    conversation.data = try
-      JSON.parse conversation.data
-    catch err
-      {}
-
-    conversation.userIds = _.map conversation.userIds, (userId) -> "#{userId}"
-    conversation.id = "#{conversation.id}"
-    if conversation.userId
-      conversation.userId = "#{conversation.userId}"
-    if conversation.groupId
-      conversation.groupId = "#{conversation.groupId}"
-
-    conversation
 
   sanitize: _.curry (requesterId, conversation) ->
     _.pick conversation, [

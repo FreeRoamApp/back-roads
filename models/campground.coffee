@@ -20,37 +20,37 @@ scyllaFields =
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown
   thumbnailPrefix: 'text'
-  address: 'text' # json:
+  address: 'json' # json:
     # thoroughfare: 'text' # address
     # premise: 'text' # apt, suite, etc...
     # locality: 'text' # city / town
     # administrativeArea: 'text' # state / province / region. iso when avail
     # postalCode: 'text'
     # country: 'text' # 2 char iso
-  contact: 'text' # json {website, phone, email}
+  contact: 'json' # json {website, phone, email}
   # end common
 
   drivingInstructions: 'text'
 
-  siteCount: 'text' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
-  distanceTo: 'text' # json {groceries: {id: '', distance: 25, time: 22}} all in miles/min
+  siteCount: 'json' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
+  distanceTo: 'json' # json {groceries: {id: '', distance: 25, time: 22}} all in miles/min
 
-  roadDifficulty: 'text' # json {value: 3, count: 1}
-  crowds: 'text' # json {winter: {value: 2, count: 1} ... }
-  fullness: 'text' # json {winter: {value: 2, count: 1} ... }
-  noise: 'text' # json {day: {value: 3, count: 1}, night: {value: 0, count: 1}}
-  shade: 'text' # json {value: 3, count: 1}
-  safety: 'text' # json {value: 3, count: 1}
-  cellSignal: 'text' # json {verizon_lte: {signal: 3}, att: {signal: 3}} 1-5
-  cleanliness: 'text' # json {value: 3, count: 1}
+  roadDifficulty: 'json' # json {value: 3, count: 1}
+  crowds: 'json' # json {winter: {value: 2, count: 1} ... }
+  fullness: 'json' # json {winter: {value: 2, count: 1} ... }
+  noise: 'json' # json {day: {value: 3, count: 1}, night: {value: 0, count: 1}}
+  shade: 'json' # json {value: 3, count: 1}
+  safety: 'json' # json {value: 3, count: 1}
+  cellSignal: 'json' # json {verizon_lte: {signal: 3}, att: {signal: 3}} 1-5
+  cleanliness: 'json' # json {value: 3, count: 1}
 
-  weather: 'text' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
-  forecast: 'text' # json [d1, d2, d3, d4, ...] d1 = {precipProbability, precipType, temperatureHigh, temperatureLow, windSpeed, windGust, windBearing, uvIndex, cloudCover, icon, summary, time}
+  weather: 'json' # json {jan: {precip, tmin, tmax}, feb: {}, ...}
+  forecast: 'json' # json [d1, d2, d3, d4, ...] d1 = {precipProbability, precipType, temperatureHigh, temperatureLow, windSpeed, windGust, windBearing, uvIndex, cloudCover, icon, summary, time}
 
-  pets: 'text' # json {allowed: bool, dogs: bool, largeDogs: bool, multipleDogs: bool}
+  pets: 'json' # json {allowed: bool, dogs: bool, largeDogs: bool, multipleDogs: bool}
   padSurface: 'text' # gravel, paved, dirt
   entryType: 'text' # back-in, pull-thru
-  allowedTypes: 'text' # json {motorhome: true, trailer: true, tent: true}
+  allowedTypes: 'json' # json {motorhome: true, trailer: true, tent: true}
   seasonOpenDayOfYear: 'int'
   seasonCloseDayOfYear: 'int'
   attachmentCount: 'int'
@@ -69,10 +69,10 @@ scyllaFields =
   # maxPrice: 'int'
   # TODO: separate table for campground_prices_paid_by_id?
   # TODO: or use review_extras (though can't pull in govt data for that)
-  prices: 'text' # json: {all: {min, max, avg, mode}, motorhome: {}}
+  prices: 'json' # json: {all: {min, max, avg, mode}, motorhome: {}}
   maxLength: 'int'
-  restrooms: 'text'
-  videos: 'text' # json
+  restrooms: 'json'
+  videos: 'json' # json
 
 class Campground extends PlaceBase
   getScyllaTables: ->
@@ -147,55 +147,8 @@ class Campground extends PlaceBase
 
   seasonalFields: ['crowds', 'fullness']
 
-  defaultInput: (campground) ->
-    unless campground?
-      return null
-
-    # transform existing data
-    campground = _.defaults {
-      allowedTypes: JSON.stringify campground.allowedTypes
-      prices: JSON.stringify campground.prices
-      siteCount: JSON.stringify campground.siteCount
-      crowds: JSON.stringify campground.crowds
-      contact: JSON.stringify campground.contact
-      fullness: JSON.stringify campground.fullness
-      shade: JSON.stringify campground.shade
-      safety: JSON.stringify campground.safety
-      roadDifficulty: JSON.stringify campground.roadDifficulty
-      noise: JSON.stringify campground.noise
-      cellSignal: JSON.stringify campground.cellSignal
-      cleanliness: JSON.stringify campground.cleanliness
-      pets: JSON.stringify campground.pets
-      restrooms: JSON.stringify campground.restrooms
-      videos: JSON.stringify campground.videos
-      address: JSON.stringify campground.address
-      weather: JSON.stringify campground.weather
-      forecast: JSON.stringify campground.forecast
-      distanceTo: JSON.stringify campground.distanceTo
-    }, campground
-
-    # add data if non-existent
-    campground = _.defaults campground, {
-      id: cknex.getTimeUuid()
-    }
-
-    campground
-
   defaultOutput: (campground) ->
-    unless campground?
-      return null
-
-    jsonFields = [
-      'prices', 'allowedTypes', 'siteCount', 'crowds', 'fullness', 'shade',
-      'noise', 'cellSignal', 'pets', 'restrooms', 'videos', 'address', 'weather'
-      'safety', 'roadDifficulty', 'cleanliness', 'distanceTo', 'contact'
-      'forecast'
-    ]
-    _.forEach jsonFields, (field) ->
-      try
-        campground[field] = JSON.parse campground[field]
-      catch
-        {}
+    campground = super campground
 
     campground = _.defaults {type: 'campground'}, campground
     campground = _.defaults campground, {ratingCount: 0, attachmentCount: 0}

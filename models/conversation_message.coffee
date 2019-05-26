@@ -10,22 +10,26 @@ cknex = require '../services/cknex'
 Base = require './base'
 config = require '../config'
 
+scyllaFields =
+  id: 'timeuuid'
+  conversationId: 'uuid'
+  clientId: {type: 'uuid', defaultFn: -> uuid.v4()}
+  userId: 'uuid'
+  groupId: {type: 'uuid', defaultFn: -> config.EMPTY_UUID}
+  body: 'text'
+  card: 'json'
+  timeBucket:
+    type: 'text'
+    defaultFn: -> TimeService.getScaledTimeByTimeScale 'week'
+  lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
+
 class ConversationMessageModel extends Base
   getScyllaTables: ->
     [
       {
         name: 'conversation_messages_by_conversationId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          conversationId: 'uuid'
-          clientId: 'uuid'
-          userId: 'uuid'
-          groupId: 'uuid'
-          body: 'text'
-          card: 'text'
-          timeBucket: 'text'
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['conversationId', 'timeBucket']
           clusteringColumns: ['id']
@@ -35,16 +39,7 @@ class ConversationMessageModel extends Base
       {
         name: 'conversation_messages_by_groupId_and_userId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          conversationId: 'uuid'
-          clientId: 'uuid'
-          userId: 'uuid'
-          groupId: 'uuid'
-          body: 'text'
-          card: 'text'
-          timeBucket: 'text'
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['groupId', 'userId', 'timeBucket']
           clusteringColumns: ['id']
@@ -54,16 +49,7 @@ class ConversationMessageModel extends Base
       {
         name: 'conversation_messages_by_id'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          conversationId: 'uuid'
-          clientId: 'uuid'
-          userId: 'uuid'
-          groupId: 'uuid'
-          body: 'text'
-          card: 'text'
-          timeBucket: 'text'
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
       }
@@ -220,38 +206,10 @@ class ConversationMessageModel extends Base
       moment().subtract(1, 'week')
     )
 
-  defaultInput: (conversationMessage) ->
-    unless conversationMessage?
-      return null
-
-    conversationMessage = _.defaults _.pickBy(conversationMessage), {
-      id: cknex.getTimeUuid()
-      clientId: uuid.v4()
-      groupId: config.EMPTY_UUID
-      timeBucket: TimeService.getScaledTimeByTimeScale 'week'
-      lastUpdateTime: new Date()
-      body: ''
-    }
-    if conversationMessage.card
-      conversationMessage.card = try
-        JSON.stringify conversationMessage.card
-      catch err
-        ''
-    conversationMessage
-
   defaultOutput: (conversationMessage) ->
-    unless conversationMessage?
-      return null
-
+    conversationMessage = super conversationMessage
     if conversationMessage.groupId is config.EMPTY_UUID
       conversationMessage.groupId = null
-
-    if conversationMessage.card
-      conversationMessage.card = try
-        JSON.parse conversationMessage.card
-      catch err
-        null
-
     conversationMessage
 
 module.exports = new ConversationMessageModel()

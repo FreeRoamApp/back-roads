@@ -200,20 +200,9 @@ class ConnectionModel extends Base
               CacheService.deleteByKey "#{typePrefix}:#{otherId}:#{otherType}"
           ]
 
-  defaultInput: (connection) ->
-    unless connection?
-      return null
-
-    _.defaults {id: cknex.getTimeUuid()}, connection
-
   defaultOutput: (connection) ->
-    unless connection?
-      return null
-
-    connection.userId = "#{connection.userId}"
-    connection.otherId = "#{connection.otherId}"
+    connection = super connection
     connection.time = connection.id.getDate()
 
-    connection
 
 module.exports = new ConnectionModel()

@@ -15,11 +15,11 @@ class Item extends Base
         fields:
           slug: 'text' # eg: surge-protector
           id: 'timeuuid'
-          categories: 'text'
+          categories: 'json'
           name: 'text'
           why: 'text'
           what: 'text'
-          videos: 'text' # json (array of video objects)
+          videos: 'json' # json (array of video objects)
         primaryKey:
           partitionKey: ['slug']
       }
@@ -33,7 +33,7 @@ class Item extends Base
           name: 'text'
           why: 'text'
           what: 'text'
-          videos: 'text' # json (array of video objects)
+          videos: 'json' # json (array of video objects)
         primaryKey:
           partitionKey: ['category']
           clusteringColumns: ['slug']
@@ -114,27 +114,5 @@ class Item extends Base
     .limit limit
     .run()
     .map @defaultOutput
-
-  defaultInput: (item) ->
-    unless item?
-      return null
-
-    item.categories = JSON.stringify item.categories
-    item.videos = JSON.stringify item.videos
-
-    _.defaults item, {
-    }
-
-  defaultOutput: (item) ->
-    unless item?
-      return null
-
-    if item.videos
-      item.videos = try
-        JSON.parse item.videos
-      catch
-        {}
-
-    item
 
 module.exports = new Item()

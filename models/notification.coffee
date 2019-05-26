@@ -9,22 +9,25 @@ CacheService = require '../services/cache'
 UNREAD_TTL = 3600 * 24 * 365 # 1y
 READ_TTL = 3600 * 24 * 7 # 1w
 
+scyllaFields =
+  id: 'timeuuid'
+  userId: 'uuid'
+  groupId: 'uuid'
+  uniqueId: 'text' # used so there's not a bunch of dupe messages
+  fromId: 'uuid'
+  title: 'text'
+  text: 'text'
+  isRead: {type: 'boolean', defaultFn: -> false}
+  data: 'json' # JSON conversationId
+
+
 class NotificationModel extends Base
   getScyllaTables: ->
     [
       {
         name: 'notifications_by_userId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          userId: 'uuid'
-          groupId: 'uuid'
-          uniqueId: 'text' # used so there's not a bunch of dupe messages
-          fromId: 'uuid'
-          title: 'text'
-          text: 'text'
-          isRead: 'boolean'
-          data: 'text' # JSON conversationId
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: ['id']
@@ -34,16 +37,7 @@ class NotificationModel extends Base
       {
         name: 'notifications_by_userId_and_groupId'
         keyspace: 'free_roam'
-        fields:
-          id: 'timeuuid'
-          userId: 'uuid'
-          groupId: 'uuid'
-          uniqueId: 'text' # used so there's not a bunch of dupe messages
-          fromId: 'uuid'
-          title: 'text'
-          text: 'text'
-          isRead: 'boolean'
-          data: 'text' # JSON conversationId
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: ['groupId', 'id']
@@ -169,27 +163,9 @@ class NotificationModel extends Base
         .run()
     ]
 
-  defaultInput: (notification) ->
-    unless notification?
-      return null
-
-    if notification.data
-      notification.data = JSON.stringify notification.data
-
-    Object.assign {id: cknex.getTimeUuid(), isRead: false}, notification
-
   defaultOutput: (notification) ->
-    unless notification?
-      return null
-
-    if notification.data
-      notification.data = try
-        JSON.parse notification.data
-      catch err
-        {}
-
+    notification = super notification
     notification.time = notification.id.getDate()
-
     notification
 
 module.exports = new NotificationModel()

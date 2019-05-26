@@ -5,41 +5,33 @@ uuid = require 'node-uuid'
 Base = require './base'
 cknex = require '../services/cknex'
 
+scyllaFields =
+  slug: 'text' # eg: kebab-case name
+  id: 'timeuuid'
+  itemSlug: 'text'
+  source: 'text' # eg amazon
+  sourceId: 'text' # eg amazon
+  name: 'text'
+  description: 'text'
+  sellers: 'text' # [{seller: 'amazon', sellerId: 'amazon-id'}]
+  reviewersLiked: {type: 'set', subType: 'text'}
+  reviewersDisliked: {type: 'set', subType: 'text'}
+  data: 'json'
+
 class Product extends Base
   getScyllaTables: ->
     [
       {
         name: 'products_by_slug'
         keyspace: 'free_roam'
-        fields:
-          slug: 'text' # eg: kebab-case name
-          id: 'timeuuid'
-          itemSlug: 'text'
-          source: 'text' # eg amazon
-          sourceId: 'text' # eg amazon
-          name: 'text'
-          description: 'text'
-          sellers: 'text' # [{seller: 'amazon', sellerId: 'amazon-id'}]
-          reviewersLiked: {type: 'set', subType: 'text'}
-          reviewersDisliked: {type: 'set', subType: 'text'}
-          data: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['slug']
       }
       {
         name: 'products_by_itemSlug'
         keyspace: 'free_roam'
-        fields:
-          slug: 'text' # eg: az-amazonid
-          id: 'timeuuid'
-          itemSlug: 'text'
-          source: 'text' # eg amazon
-          sourceId: 'text' # eg amazon
-          name: 'text'
-          description: 'text'
-          reviewersLiked: {type: 'set', subType: 'text'}
-          reviewersDisliked: {type: 'set', subType: 'text'}
-          data: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['itemSlug']
           clusteringColumns: ['slug']
@@ -79,29 +71,6 @@ class Product extends Base
     .limit limit
     .run()
     .map @defaultOutput
-
-  defaultInput: (product) ->
-    unless product?
-      return null
-
-    product = _.cloneDeep product
-
-    product.data = JSON.stringify product.data
-
-    _.defaults product, {
-    }
-
-  defaultOutput: (product) ->
-    unless product?
-      return null
-
-    if product.data
-      product.data = try
-        JSON.parse product.data
-      catch
-        {}
-
-    product
 
 
 module.exports = new Product()

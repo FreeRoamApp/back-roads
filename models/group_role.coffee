@@ -23,7 +23,7 @@ class GroupRoleModel extends Base
           id: 'timeuuid'
           groupId: 'uuid'
           name: 'text'
-          globalPermissions: 'text' # json
+          globalPermissions: 'json' # json
           channelPermissions: {type: 'map', subType: 'uuid', subType2: 'text'}
         primaryKey:
           # a little uneven since some groups will have a lot of roles, but each
@@ -88,24 +88,8 @@ class GroupRoleModel extends Base
     .andWhere 'id', '=', id
     .run()
 
-  defaultInput: (groupRole) ->
-    unless groupRole?
-      return null
-
-    groupRole.globalPermissions = JSON.stringify groupRole.globalPermissions
-
-    _.defaults groupRole, {
-      id: cknex.getTimeUuid()
-    }
-
   defaultOutput: (groupRole) ->
-    unless groupRole?
-      return null
-
-    groupRole.globalPermissions = try
-      JSON.parse groupRole.globalPermissions
-    catch error
-      {}
+    groupRole = super groupRole
 
     channelPermissions = groupRole.channelPermissions
     groupRole.channelPermissions = _.mapValues channelPermissions, (permission) ->

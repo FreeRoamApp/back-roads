@@ -22,7 +22,7 @@ actions =
       rewards: [
         {currencyAmount: 1, currencyType: 'karma'}
       ]
-    maxCount: 20
+    maxCount: 40
     ttl: ONE_DAY_SECONDS
 
   reviewUpvoted:

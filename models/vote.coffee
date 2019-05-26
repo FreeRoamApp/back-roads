@@ -18,12 +18,12 @@ class VoteModel extends Base
         keyspace: 'free_roam'
         fields:
           userId: 'uuid'
-          topId: 'uuid' # eg threadId
+          topId: {type: 'uuid', defaultFn: -> config.EMPTY_UUID} # eg threadId
           topType: 'text' # threadId, campgroundReview, ...
           parentType: 'text' # thread, comment
           parentId: 'uuid'
-          vote: 'int'
-          time: 'timestamp'
+          vote: {type: 'int', defaultFn: -> 0}
+          time: {type: 'timestamp', defaultFn: -> new Date()}
         primaryKey:
           partitionKey: ['userId', 'topId']
           clusteringColumns: ['parentType', 'parentId']
@@ -56,15 +56,5 @@ class VoteModel extends Base
     .andWhere 'parentType', '=', parents[0].type
     .andWhere 'parentId', 'in', _.map(parents, 'id')
     .run()
-
-  defaultInput: (vote) ->
-    unless vote?
-      return null
-
-    _.defaults vote, {
-      topId: config.EMPTY_UUID
-      vote: 0 # -1 or 1
-      time: new Date()
-    }
 
 module.exports = new VoteModel()

@@ -40,6 +40,8 @@ class ScyllaSetupService
         q[type.type] key, type.subType
     else
       try
+        if type is 'json'
+          type = 'text'
         q[type] key
       catch err
         console.log key

@@ -54,7 +54,7 @@ class WeatherService
             dailyForecast, ({precipProbability}) -> precipProbability > 0.4
           ).length
         }, forecast
-        PlaceModel.upsertByRow place, {forecast}, {skipDefaults: false}
+        PlaceModel.upsertByRow place, {forecast}
 
   forecastPlaces: =>
     console.log 'update places'

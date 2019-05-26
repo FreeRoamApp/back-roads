@@ -42,11 +42,11 @@ class EarnActionModel extends Base
         name: 'earn_actions'
         keyspace: 'free_roam'
         fields:
-          bucket: 'text'
+          bucket: {type: 'text', defaultFn: -> 'all'}
           name: 'text'
           action: 'text'
           ttl: 'int'
-          data: 'text'
+          data: 'json'
           maxCount: 'int'
         primaryKey:
           partitionKey: ['bucket']
@@ -180,28 +180,6 @@ class EarnActionModel extends Base
         }
     else
       Promise.resolve {isLocked: false}
-
-
-  defaultInput: (earnAction) ->
-    unless earnAction?
-      return null
-
-    earnAction.bucket = 'all'
-    earnAction.data = JSON.stringify earnAction.data
-
-    earnAction
-
-  defaultOutput: (earnAction) ->
-    unless earnAction?
-      return null
-
-    if earnAction.data
-      earnAction.data = try
-        JSON.parse earnAction.data
-      catch err
-        {}
-
-    earnAction
 
 
 module.exports = new EarnActionModel()

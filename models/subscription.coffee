@@ -28,6 +28,16 @@ TYPES =
   TRADE: 'trade'
   NEWS: 'news'
 
+scyllaFields =
+  userId: 'uuid'
+  groupId: {type: 'uuid', defaultFn: -> config.EMPTY_UUID}
+  sourceType: {type: 'text', defaultFn: 'all'}
+  sourceId: {type: 'text', defaultFn: 'all'} # id or 'all'
+  isTopic: {type: 'boolean', defaultFn: -> false} # whether or not this corresponds to fcm topic
+  isEnabled: {type: 'boolean', defaultFn: -> true}
+  tokens: {type: 'map', subType: 'text', subType2: 'text'} # token: deviceId
+  lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
+
 class Subscription extends Base
   TYPES: TYPES
 
@@ -36,15 +46,7 @@ class Subscription extends Base
       {
         name: 'subscriptions_by_userId'
         keyspace: 'free_roam'
-        fields:
-          userId: 'uuid'
-          groupId: 'uuid' # config.EMPTY_UUID for all
-          sourceType: 'text'
-          sourceId: 'text' # id or 'all'
-          isTopic: 'boolean' # whether or not this corresponds to fcm topic
-          isEnabled: 'boolean'
-          tokens: {type: 'map', subType: 'text', subType2: 'text'} # token: deviceId
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
           clusteringColumns: [
@@ -55,16 +57,7 @@ class Subscription extends Base
       {
         name: 'subscriptions_by_topic'
         keyspace: 'free_roam'
-        fields:
-          userId: 'uuid'
-          groupId: 'uuid' # config.EMPTY_UUID for all
-          sourceType: 'text'
-          sourceId: 'text' # id or 'all'
-          isTopic: 'boolean' # whether or not this corresponds to fcm topic
-          isEnabled: 'boolean'
-          # TODO: we'll probably want to prune these to filter out dead tokens during each blast?
-          tokens: {type: 'map', subType: 'text', subType2: 'text'} # token: deviceId
-          lastUpdateTime: 'timestamp'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['groupId', 'sourceType', 'sourceId']
           clusteringColumns: [
@@ -320,25 +313,5 @@ class Subscription extends Base
     # : not a valid topic character
     "#{groupId}~#{sourceType}~#{sourceId}"
 
-  defaultInput: (subscription) ->
-    unless subscription?
-      return null
-
-    _.defaults subscription, {
-      sourceType: 'all'
-      sourceId: 'all'
-      groupId: config.EMPTY_UUID
-      isEnabled: true
-      isTopic: false
-      lastUpdateTime: new Date()
-    }
-
-  defaultOutput: (subscription) ->
-    unless subscription?
-      return null
-
-    subscription.groupId = "#{subscription.groupId}"
-    subscription.userId = "#{subscription.userId}"
-    subscription
 
 module.exports = new Subscription()

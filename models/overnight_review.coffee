@@ -6,6 +6,18 @@ ReviewBase = require './review_base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
+scyllaFields =
+  # common between all reviews
+  id: 'timeuuid'
+  parentId: 'uuid'
+  userId: 'uuid'
+  title: 'text'
+  body: 'text'
+  rating: 'int'
+  rigType: 'text'
+  rigLength: 'int'
+  attachments: 'text' # json
+
 class OvernightReview extends ReviewBase
   type: 'overnightReview'
 
@@ -14,17 +26,7 @@ class OvernightReview extends ReviewBase
       {
         name: 'overnight_reviews_by_parentId'
         keyspace: 'free_roam'
-        fields:
-          # common between all reviews
-          id: 'timeuuid'
-          parentId: 'uuid'
-          userId: 'uuid'
-          title: 'text'
-          body: 'text'
-          rating: 'int'
-          rigType: 'text'
-          rigLength: 'int'
-          attachments: 'text' # json
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['parentId']
           clusteringColumns: ['id']
@@ -33,17 +35,7 @@ class OvernightReview extends ReviewBase
       {
         name: 'overnight_reviews_by_id'
         keyspace: 'free_roam'
-        fields:
-          # common between all reviews
-          id: 'timeuuid'
-          parentId: 'uuid'
-          userId: 'uuid'
-          title: 'text'
-          body: 'text'
-          rating: 'int'
-          rigType: 'text'
-          rigLength: 'int'
-          attachments: 'text' # json
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
       }

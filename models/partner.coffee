@@ -12,28 +12,26 @@ SIXTY_DAYS_SECONDS = 60 * 3600 * 24
 
 # insert into free_roam.partners_by_slug (slug,"amazonAffiliateCode") values ('heathandalyssa', 'alyssapacom0b-20')
 
+scyllaFields =
+  userId: 'timeuuid'
+  slug: 'text'
+  name: 'text'
+  amazonAffiliateCode: 'text'
+
 class PartnerModel extends Base
   getScyllaTables: ->
     [
       {
         name: 'partners_by_userId'
         keyspace: 'free_roam'
-        fields:
-          userId: 'timeuuid'
-          slug: 'text'
-          name: 'text'
-          amazonAffiliateCode: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
       }
       {
         name: 'partners_by_slug'
         keyspace: 'free_roam'
-        fields:
-          userId: 'timeuuid'
-          slug: 'text'
-          name: 'text'
-          amazonAffiliateCode: 'text'
+        fields: scyllaFields
         primaryKey:
           partitionKey: ['slug']
       }
@@ -50,12 +48,5 @@ class PartnerModel extends Base
     .from 'partners_by_slug'
     .where 'slug', '=', slug
     .run {isSingle: true}
-
-  defaultInput: (partner) ->
-    unless partner?
-      return null
-
-    _.defaults partner, {
-    }
 
 module.exports = new PartnerModel()

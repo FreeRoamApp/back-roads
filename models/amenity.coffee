@@ -21,22 +21,22 @@ scyllaFields =
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown
   thumbnailPrefix: 'text'
-  address: 'text' # json:
+  address: 'json'
     # thoroughfare: 'text' # address
     # premise: 'text' # apt, suite, etc...
     # locality: 'text' # city / town
     # administrative_area: 'text' # state / province / region. iso when avail
     # postal_code: 'text'
     # country: 'text' # 2 char iso
-  contact: 'text' # json
+  contact: 'json'
     # phone
     # email
     # website
   subType: 'text' # walmart, etc...
   # end common
 
-  amenities: 'text' # json
-  prices: 'text' # json
+  amenities: 'json' # json
+  prices: 'json' # json
 
 class Amenity extends PlaceBase
   getScyllaTables: ->
@@ -75,37 +75,8 @@ class Amenity extends PlaceBase
       }
     ]
 
-  defaultInput: (amenity) ->
-    unless amenity?
-      return null
-
-    # transform existing data
-    amenity = _.defaults {
-      address: JSON.stringify amenity.address
-      contact: JSON.stringify amenity.contact
-      amenities: JSON.stringify amenity.amenities
-      prices: JSON.stringify amenity.prices
-    }, amenity
-
-
-    # add data if non-existent
-    _.defaults amenity, {
-      id: cknex.getTimeUuid()
-    }
-
   defaultOutput: (amenity) ->
-    unless amenity?
-      return null
-
-    jsonFields = [
-      'address', 'amenities', 'prices', 'contact'
-    ]
-    _.forEach jsonFields, (field) ->
-      try
-        amenity[field] = JSON.parse amenity[field]
-      catch
-        {}
-
+    amenity = super amenity
     _.defaults {type: 'amenity'}, amenity
 
   defaultESOutput: (amenity) ->

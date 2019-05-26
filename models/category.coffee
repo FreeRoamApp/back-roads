@@ -16,9 +16,9 @@ class Category extends Base
           id: 'timeuuid'
           name: 'text'
           description: 'text'
-          type: 'text'
+          type: {type: 'text', defaultFn: -> 'rv'}
           priority: 'int'
-          data: 'text'
+          data: 'json'
         primaryKey:
           partitionKey: ['type']
           clusteringColumns: ['slug']
@@ -35,29 +35,5 @@ class Category extends Base
     .then (categories) ->
       _.orderBy categories, 'priority'
     .map @defaultOutput
-
-  defaultInput: (category) ->
-    unless category?
-      return null
-
-    category = _.cloneDeep category
-
-    category.data = JSON.stringify category.data
-
-    _.defaults category, {
-      type: 'rv'
-    }
-
-  defaultOutput: (category) ->
-    unless category?
-      return null
-
-    if category.data
-      category.data = try
-        JSON.parse category.data
-      catch
-        {}
-
-    category
 
 module.exports = new Category()
