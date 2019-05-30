@@ -30,7 +30,7 @@ module.exports = class ReviewBase extends Base
         name: 'reviews_counter_by_userId'
         ignoreUpsert: true
         fields:
-          id: 'uuid'
+          id: 'timeuuid'
           userId: 'uuid'
           upvotes: 'counter'
           downvotes: 'counter'
@@ -42,7 +42,7 @@ module.exports = class ReviewBase extends Base
         name: 'reviews_counter_by_parentId'
         ignoreUpsert: true
         fields:
-          id: 'uuid'
+          id: 'timeuuid'
           parentId: 'uuid'
           upvotes: 'counter'
           downvotes: 'counter'
@@ -113,7 +113,8 @@ module.exports = class ReviewBase extends Base
     ]
     .then ([allReviews, voteCounts]) ->
       allReviews = _.map allReviews, (review) ->
-        voteCount = _.find voteCounts, {id: review.id}
+        voteCount = _.find voteCounts, ({id}) ->
+          "#{id}" is review.id
         voteCount ?= {upvotes: 0, downvotes: 0}
         review.upvotes = voteCount.upvotes
         review.downvotes = voteCount.downvotes

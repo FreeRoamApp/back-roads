@@ -126,7 +126,8 @@ class CommentModel extends Base
     ]
     .then ([allComments, voteCounts]) ->
       allComments = _.map allComments, (comment) ->
-        voteCount = _.find voteCounts, {id: comment.id}
+        voteCount = _.find voteCounts, ({id}) ->
+          "#{id}" is comment.id
         voteCount ?= {upvotes: 0, downvotes: 0}
         _.merge comment, voteCount
 

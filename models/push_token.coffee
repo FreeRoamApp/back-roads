@@ -13,6 +13,7 @@ scyllaFields =
   deviceId: 'text'
   sourceType: 'text'
   isActive: {type: 'boolean', defaultFn: -> true}
+  time: {type: 'timestamp', defaultFn: -> new Date()}
   errorCount: {type: 'int', defaultFn: -> 0}
 
 class PushToken extends Base

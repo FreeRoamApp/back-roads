@@ -1,5 +1,6 @@
 _ = require 'lodash'
 
+cknex = require '../services/cknex'
 BaseMessage = require './base_message'
 
 class CommentEmbed
@@ -17,10 +18,7 @@ class CommentEmbed
       }
 
   time: (comment) ->
-    id = if typeof comment.id is 'string' \
-               then cknex.getTimeUuidFromString comment.id
-               else comment.id
-    id.getDate()
+    cknex.getDateFromTimeUuid comment.id
 
 
 module.exports = new CommentEmbed()

@@ -8,7 +8,7 @@ REDIS_PORT = 6379
 DEV_USE_HTTPS = process.env.DEV_USE_HTTPS and process.env.DEV_USE_HTTPS isnt '0'
 
 config =
-  NOTIFICATION_COLOR: '#fc373e'
+  NOTIFICATION_COLOR: '#D25A00'
   EMPTY_UUID: '00000000-0000-0000-0000-000000000000'
 
   # also in free-roam

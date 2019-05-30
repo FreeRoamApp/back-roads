@@ -9,14 +9,14 @@ config = require '../config'
 
 class ScyllaSetupService
   setup: (tables) =>
-    CacheService.lock 'scylla_setup5', =>
+    CacheService.lock 'scylla_setup6', =>
       Promise.all [
         @createKeyspaceIfNotExists 'free_roam'
       ]
       .then =>
         if config.ENV is config.ENVS.DEV
           createTables = _.map _.filter(tables, ({name}) ->
-            name.indexOf('user_location') isnt -1
+            name.indexOf('push_token') isnt -1
           )
           Promise.each createTables, @createTableIfNotExist
         else
@@ -34,10 +34,13 @@ class ScyllaSetupService
 
   addColumnToQuery: (q, type, key) ->
     if typeof type is 'object'
-      if type.subType2
-        q[type.type] key, type.subType, type.subType2
-      else
-        q[type.type] key, type.subType
+      try
+        if type.subType2
+          q[type.type] key, type.subType, type.subType2
+        else
+          q[type.type] key, type.subType
+      catch err
+        console.log type.type, err
     else
       try
         if type is 'json'

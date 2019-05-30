@@ -165,7 +165,7 @@ class NotificationModel extends Base
 
   defaultOutput: (notification) ->
     notification = super notification
-    notification.time = notification.id.getDate()
+    notification.time = cknex.getDateFromTimeUuid notification.id
     notification
 
 module.exports = new NotificationModel()

@@ -28,6 +28,7 @@ OvernightCtrl = require './controllers/overnight'
 OvernightReviewCtrl = require './controllers/overnight_review'
 OvernightAttachmentCtrl = require './controllers/overnight_attachment'
 PlaceAttachmentCtrl = require './controllers/campground_attachment' # HACK: use since place_review_base isn't instantiated
+PlaceCtrl = require './controllers/campground' # HACK: use since place_review_base isn't instantiated
 PlaceReviewCtrl = require './controllers/campground_review' # HACK: use since place_review_base isn't instantiated
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
@@ -234,6 +235,8 @@ module.exports = router
   authed OvernightAttachmentCtrl.getAllByParentId
 .on 'overnightAttachments.deleteByRow',
   authed OvernightAttachmentCtrl.deleteByRow
+
+.on 'places.dedupe', authed PlaceCtrl.dedupe
 
 .on 'placeAttachments.getAllByUserId', authed PlaceAttachmentCtrl.getAllByUserId
 

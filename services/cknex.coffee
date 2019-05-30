@@ -83,8 +83,20 @@ cknex.getTimeUuid = (time) ->
   else
     cassandra.types.TimeUuid.now()
 
+cknex.getUuid = ->
+  cassandra.types.Uuid.random()
+
 cknex.getTimeUuidFromString = (timeUuidStr) ->
   cassandra.types.TimeUuid.fromString(timeUuidStr)
+
+cknex.getUuidFromString = (uuidStr) ->
+  cassandra.types.Uuid.fromString(uuidStr)
+
+cknex.getDateFromTimeUuid = (timeuuid) ->
+  timeuuid = if typeof timeuuid is 'string' \
+       then cknex.getTimeUuidFromString timeuuid
+       else timeuuid
+  timeuuid.getDate()
 
 cknex.getTime = (time) ->
   if time

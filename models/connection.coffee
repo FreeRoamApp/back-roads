@@ -201,8 +201,8 @@ class ConnectionModel extends Base
           ]
 
   defaultOutput: (connection) ->
+    connection.time = cknex.getDateFromTimeUuid connection.id
     connection = super connection
-    connection.time = connection.id.getDate()
 
 
 module.exports = new ConnectionModel()

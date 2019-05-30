@@ -1,5 +1,6 @@
 _ = require 'lodash'
 
+cknex = require '../services/cknex'
 User = require '../models/user'
 
 class GroupAuditLogEmbed
@@ -9,10 +10,7 @@ class GroupAuditLogEmbed
       .then User.sanitizePublic(null)
 
   time: (groupAuditLog) ->
-    id = if typeof groupAuditLog.id is 'string' \
-         then cknex.getTimeUuidFromString groupAuditLog.id
-         else groupAuditLog.id
-    groupAuditLog.time = id.getDate()
+    cknex.getDateFromTimeUuid groupAuditLog.id
 
 
 module.exports = new GroupAuditLogEmbed()

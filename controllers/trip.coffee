@@ -35,6 +35,10 @@ class TripCtrl
     Trip.getAllByUserId user.id
 
   getById: ({id}, {user}) ->
+    # HACK: not sure where, but this is caled with 'null' when tooltip is opened
+    # when adding new checkin
+    if id is 'null'
+      return null
     Trip.getById id
     .tap (trip) ->
       if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"

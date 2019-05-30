@@ -28,6 +28,8 @@ class CheckInCtrl
       'attachments', 'startTime', 'endTime', 'status', 'tripIds'
     ]
 
+    isUpdate = Boolean diff.id
+
     diff = _.defaults {userId: user.id}, diff
 
     Promise.all [
@@ -37,7 +39,7 @@ class CheckInCtrl
         type = if diff.status is 'planned' then 'future' else 'past'
         Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
 
-      if diff.id then CheckIn.getById diff.id else Promise.resolve null
+      if isUpdate then CheckIn.getById diff.id else Promise.resolve null
 
       if setUserLocation
         UserSettings.getByUserId user.id
@@ -60,18 +62,17 @@ class CheckInCtrl
         Promise.resolve null
     ]
     .then ([trip, checkIn]) ->
-      console.log 'TRIP', trip
       if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
         router.throw {status: 401, info: 'Unauthorized'}
       else if trip and "#{trip.userId}" isnt "#{user.id}"
         router.throw {status: 401, info: 'Unauthorized'}
 
-      unless diff.id
+      unless isUpdate
         diff.tripIds ?= [trip.id]
 
       CheckIn.upsertByRow checkIn, diff
       .tap (checkIn) ->
-        unless diff.id
+        unless isUpdate
           Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}
       .tap ->
         Trip.updateMapByRow trip

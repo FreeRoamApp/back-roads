@@ -7,6 +7,9 @@ config = require '../config'
 
 module.exports = class AttachmentBaseCtrl
   getAllByParentId: ({parentId}, {user}) =>
+    unless parentId
+      console.log 'attachments.getAllByParentId missing parentId'
+      return null
     @Model.getAllByParentId parentId
     .map EmbedService.embed {embed: @defaultEmbed}
 

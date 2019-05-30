@@ -22,6 +22,17 @@ class PlacesService
       Campground.getById id
     )
 
+  getByTypeAndSlug: (type, slug) ->
+    unless slug
+      return Promise.resolve null
+    (if type is 'amenity'
+      Amenity.getBySlug slug
+    else if type is 'overnight'
+      Overnight.getBySlug slug
+    else
+      Campground.getBySlug slug
+    )
+
   getBestBounding: ({location, type, count}) ->
     count ?= 10
     type ?= 'campground'

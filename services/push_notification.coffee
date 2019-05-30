@@ -369,8 +369,10 @@ class PushNotificationService
           pushToken.isActive
 
         pushTokenDevices = _.groupBy pushTokens, 'deviceId'
+
         pushTokens = _.map pushTokenDevices, (tokens) ->
-          return tokens[0]
+          # could also do minBy errorCount
+          _.maxBy tokens, 'time'
 
         Promise.map pushTokens, (pushToken) =>
           {sourceType, userId, token, errorCount} = pushToken
@@ -391,7 +393,6 @@ class PushNotificationService
                 errorCount: 0
               }, pushToken)
           .catch (err) ->
-            # TODO: try other tokens we have for this user
             newErrorCount = errorCount + 1
             console.log 'caught error', newErrorCount
             if newErrorCount >= CONSECUTIVE_ERRORS_UNTIL_INACTIVE

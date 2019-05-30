@@ -43,7 +43,8 @@ module.exports = class AttachmentBase extends Base
     ]
     .then ([allAttachments, voteCounts]) ->
       allAttachments = _.map allAttachments, (attachment) ->
-        voteCount = _.find voteCounts, {id: attachment.id}
+        voteCount = _.find voteCounts, ({id}) ->
+          "#{id}" is attachment.id
         voteCount ?= {upvotes: 0, downvotes: 0}
         attachment.upvotes = voteCount.upvotes
         attachment.downvotes = voteCount.downvotes

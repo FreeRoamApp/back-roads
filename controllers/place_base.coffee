@@ -15,6 +15,9 @@ RoutingService = require '../services/routing'
 Amenity = require '../models/amenity'
 Trip = require '../models/trip'
 WeatherStation = require '../models/weather_station'
+EmailService = require '../services/email'
+PlacesService = require '../services/places'
+WeatherService = require '../services/weather'
 config = require '../config'
 
 MAX_UNIQUE_ID_ATTEMPTS = 10
@@ -27,6 +30,9 @@ module.exports = class PlaceBaseCtrl
     .then (place) =>
       if place
         _.defaults {@type}, place
+      else
+        console.log 'get', slug
+        router.throw {status: 404, info: 'Place not found'}
     .then EmbedService.embed {embed: @defaultEmbed}
 
   search: ({query, tripId, sort, limit, includeId}, {user}) =>
@@ -83,14 +89,27 @@ module.exports = class PlaceBaseCtrl
   deleteByRow: ({row}, {user}) =>
     # TODO: replace with deleteById and grab the place from DB so people can't
     # mess with incoming data (changing slug/id)
-    unless user.username is 'austin'
+    unless user.username in ['austin', 'big_boxtruck', 'roadpickle']
       router.throw {status: 401, info: 'Unauthorized'}
 
-    @Model.deleteByRow row
+    @Model.getById row.id
+    .then (place) =>
+      EmailService.send {
+        to: EmailService.EMAILS.EVERYONE
+        subject: "Place deleted by #{user.username}"
+        text: JSON.stringify place
+      }
+
+      @Model.deleteByRow row
 
   searchNearby: ({location, limit}) =>
-    # FIXME FIXME: rm distance 10
-    @Model.searchNearby location, {limit, distance: 5, outputFn: (row) -> row}
+    @Model.searchNearby location, {
+      limit, distance: 15, outputFn: (place) =>
+        id = place.id
+        place = @Model.defaultOutput place
+        place.id = id
+        place
+    }
 
   _setNearbyAmenities: (place) =>
     Amenity.searchNearby place.location
@@ -124,6 +143,29 @@ module.exports = class PlaceBaseCtrl
         slug: place.slug
         distanceTo
       }
+
+  dedupe: (options, {user}) ->
+    unless user.username is 'austin'
+      router.throw {
+        status: 401
+        info: 'Unauthorized'
+      }
+    {sourceSlug, sourceType, destinationSlug, destinationType} = options
+    Promise.all [
+      PlacesService.getByTypeAndSlug(
+        sourceType, sourceSlug
+      )
+      PlacesService.getByTypeAndSlug(
+        destinationType, destinationSlug
+      )
+    ]
+    .then ([source, destination]) ->
+      console.log source
+      console.log '------------------------'
+      console.log destination
+
+      # grab all source reviews and apply them to the destination w/ scores
+
 
   upsert: (options, {user, headers, connection}) =>
     {id, name, details, location, subType, slug} = options
@@ -194,11 +236,16 @@ module.exports = class PlaceBaseCtrl
         @Model.upsert diff
       )
       .tap (place) =>
-        if @Model.getScyllaTables()[0].fields.distanceTo
-          @_setNearbyAmenities place
+        Promise.all _.filter [
+          if @Model.getScyllaTables()[0].fields.distanceTo
+            @_setNearbyAmenities place
 
-        if place.weather
-          ImageService.uploadWeatherImageByPlace place
+          if place.weather
+            ImageService.uploadWeatherImageByPlace place
+
+          if @Model.getScyllaTables()[0].fields.weather
+            WeatherService.forecastPlace place
+        ]
 
   # TODO: heavily cache this
   getNearestAmenitiesById: ({id}) =>

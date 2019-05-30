@@ -27,7 +27,7 @@ class ImageService
 
   getSizeByBuffer: (buffer) ->
     new Promise (resolve, reject) ->
-      gm(buffer)
+      gm(buffer).autoOrient()
       .size (err, size) ->
         if err
           reject err

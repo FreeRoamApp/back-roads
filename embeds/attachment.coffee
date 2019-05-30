@@ -1,5 +1,6 @@
 _ = require 'lodash'
 
+cknex = require '../services/cknex'
 BaseMessage = require './base_message'
 config = require '../config'
 
@@ -11,9 +12,6 @@ class AttachmentEmbed
       }
 
   time: (attachment) ->
-    id = if typeof attachment.id is 'string' \
-               then cknex.getTimeUuidFromString attachment.id
-               else attachment.id
-    id.getDate()
+    cknex.getDateFromTimeUuid attachment.id
 
 module.exports = new AttachmentEmbed()

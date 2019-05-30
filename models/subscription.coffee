@@ -31,8 +31,8 @@ TYPES =
 scyllaFields =
   userId: 'uuid'
   groupId: {type: 'uuid', defaultFn: -> config.EMPTY_UUID}
-  sourceType: {type: 'text', defaultFn: 'all'}
-  sourceId: {type: 'text', defaultFn: 'all'} # id or 'all'
+  sourceType: {type: 'text', defaultFn: -> 'all'}
+  sourceId: {type: 'text', defaultFn: -> 'all'} # id or 'all'
   isTopic: {type: 'boolean', defaultFn: -> false} # whether or not this corresponds to fcm topic
   isEnabled: {type: 'boolean', defaultFn: -> true}
   tokens: {type: 'map', subType: 'text', subType2: 'text'} # token: deviceId
@@ -70,10 +70,10 @@ class Subscription extends Base
         keyspace: 'free_roam'
         fields:
           userId: 'uuid'
-          groupId: 'uuid' # config.EMPTY_UUID for all
-          sourceType: 'text'
-          sourceId: 'text' # id or 'all'
-          token: 'text'
+          groupId: {type: 'uuid', defaultFn: -> config.EMPTY_UUID}
+          sourceType: {type: 'text', defaultFn: -> 'all'}
+          sourceId: {type: 'text', defaultFn: -> 'all'} # id or 'all'
+          token: {type: 'text', defaultFn: -> 'none'}
         ignoreUpsert: true
         primaryKey:
           partitionKey: ['token']
@@ -137,6 +137,7 @@ class Subscription extends Base
             }
           }
 
+          # other two tables are 'added' to above
           @upsertByToken _.defaults {token}, subscription
         ]
 
@@ -201,11 +202,14 @@ class Subscription extends Base
             Promise.all _.filter [
               if subscription.isTopic
                 @fcmSubscribeToTopicByToken token, topic
+              # other two tables are 'added' to above
               @upsertByToken _.defaults {token}, subscription
             ]
       ]
 
-  upsertByToken: (subscription) ->
+  upsertByToken: (subscription) =>
+    subscription = @defaultInput subscription
+
     cknex().update 'subscriptions_by_token'
     .set _.pick subscription, [
       'userId'

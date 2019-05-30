@@ -104,6 +104,9 @@ module.exports = class Base
       table.primaryKey.clusteringColumns
     )
 
+    if missing = _.find(keyColumns, (column) -> not scyllaTableRow[column])
+      return console.log "missing #{missing} in #{table.name} upsert"
+
     set = _.omit scyllaTableRow, keyColumns
 
     q = cknex().update table.name
@@ -194,18 +197,21 @@ module.exports = class Base
     unless skipAdditions
       _.forEach @fieldsWithDefaultFn, (field, key) ->
         value = row[key]
-        if not value and not skipAdditions and field.type is 'uuid'
-          row[key] = uuid.v4()
+        if not value and not skipAdditions and field.defaultFn
+          row[key] = field.defaultFn()
+        else if not value and not skipAdditions and field.type is 'uuid'
+          row[key] = cknex.getUuid()
         else if not value and not skipAdditions and field.type is 'timeuuid'
           row[key] = cknex.getTimeUuid()
-        else if not value and not skipAdditions
-          row[key] = field.defaultFn()
-
     _.mapValues row, (value, key) =>
       {type} = @fieldsWithType[key] or {}
 
       if type is 'json'
         JSON.stringify value
+      # else if type is 'timeuuid' and typeof value is 'string'
+      #   row[key] = cknex.getTimeUuidFromString(value)
+      # else if type is 'uuid' and typeof value is 'string'
+      #   row[key] = cknex.getUuidFromString(value)
       else
         value
 

@@ -17,10 +17,7 @@ class ReviewEmbed
     CampgroundReview.getExtrasById review.id
 
   time: (review) ->
-    id = if typeof review.id is 'string' \
-               then cknex.getTimeUuidFromString review.id
-               else review.id
-    id.getDate()
+    cknex.getDateFromTimeUuid review.id
 
   parent: (review) ->
     PlacesService.getByTypeAndId review.parentType, review.parentId

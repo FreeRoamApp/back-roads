@@ -20,10 +20,7 @@ class ConversationMessageEmbed
       }
 
   time: (conversationMessage) ->
-    id = if typeof conversationMessage.id is 'string' \
-               then cknex.getTimeUuidFromString conversationMessage.id
-               else conversationMessage.id
-    id.getDate()
+    cknex.getDateFromTimeUuid conversationMessage.id
 
   mentionedUsers: (conversationMessage) ->
     text = conversationMessage.body

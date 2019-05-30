@@ -266,10 +266,7 @@ class ThreadModel extends Base
         unless thread.id
           return
 
-        id = if typeof thread.id is 'string' \
-                   then cknex.getTimeUuidFromString thread.id
-                   else thread.id
-        addTime = id.getDate()
+        cknex.getDateFromTimeUuid thread.id
 
         # people heavily downvote, so offset it a bit...
         thread.upvotes += 1 # for the initial user vote
