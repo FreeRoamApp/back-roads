@@ -4,6 +4,7 @@ _ = require 'lodash'
 router = require 'exoid-router'
 
 Amenity = require '../models/amenity'
+AmenityReview = require '../models/amenity_review'
 Campground = require '../models/campground'
 PlaceBaseCtrl = require './place_base'
 EmbedService = require '../services/embed'
@@ -14,6 +15,7 @@ config = require '../config'
 class AmenityCtrl extends PlaceBaseCtrl
   type: 'amenity'
   Model: Amenity
+  ReviewModel: AmenityReview
   defaultEmbed: [EmbedService.TYPES.AMENITY.ATTACHMENTS_PREVIEW]
 
   _updateNearbyCampgrounds: (amenity) ->

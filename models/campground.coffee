@@ -148,6 +148,8 @@ class Campground extends PlaceBase
   seasonalFields: ['crowds', 'fullness']
 
   defaultOutput: (campground) ->
+    unless campground?
+      return null
     campground = super campground
 
     campground = _.defaults {type: 'campground'}, campground

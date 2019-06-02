@@ -128,6 +128,9 @@ class Overnight extends PlaceBase
     }
 
   defaultOutput: (overnight) ->
+    unless overnight?
+      return null
+
     overnight = super overnight
     _.defaults {type: 'overnight'}, overnight
 
@@ -144,7 +147,7 @@ class Overnight extends PlaceBase
   defaultESOutput: (overnight) ->
     amenity = _.defaults {
       type: 'overnight'
-      icon: if overnight.subType in ['walmart', 'restArea', 'casino', 'truckStop'] \
+      icon: if overnight.subType in ['walmart', 'restArea', 'casino', 'truckStop', 'crackerBarrel'] \
             then _.snakeCase overnight.subType
             else 'default'
     }, _.pick overnight, [

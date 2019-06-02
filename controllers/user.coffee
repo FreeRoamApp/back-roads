@@ -139,7 +139,7 @@ class UserCtrl
         userDiff.password = password
 
       if avatarImage
-        userDiff.avatarImage = JSON.stringify avatarImage
+        userDiff.avatarImage = avatarImage
 
       User.upsertByRow user, userDiff
       .then (response) ->

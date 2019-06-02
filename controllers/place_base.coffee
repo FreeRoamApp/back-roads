@@ -17,6 +17,7 @@ Trip = require '../models/trip'
 WeatherStation = require '../models/weather_station'
 EmailService = require '../services/email'
 PlacesService = require '../services/places'
+PlaceReviewService = require '../services/place_review'
 WeatherService = require '../services/weather'
 config = require '../config'
 
@@ -81,7 +82,7 @@ module.exports = class PlaceBaseCtrl
     .then (existingPlace) =>
       if attempts > MAX_UNIQUE_ID_ATTEMPTS
         return "#{baseSlug}-#{Date.now()}"
-      if existingPlace
+      if existingPlace?.id
         @getUniqueSlug baseSlug, (suffix or 0) + 1, attempts  + 1
       else
         slug
@@ -144,13 +145,14 @@ module.exports = class PlaceBaseCtrl
         distanceTo
       }
 
-  dedupe: (options, {user}) ->
+  dedupe: (options, {user}) =>
     unless user.username is 'austin'
       router.throw {
         status: 401
         info: 'Unauthorized'
       }
     {sourceSlug, sourceType, destinationSlug, destinationType} = options
+    console.log destinationSlug
     Promise.all [
       PlacesService.getByTypeAndSlug(
         sourceType, sourceSlug
@@ -159,12 +161,27 @@ module.exports = class PlaceBaseCtrl
         destinationType, destinationSlug
       )
     ]
-    .then ([source, destination]) ->
-      console.log source
+    .then ([source, destination]) =>
+      console.log Boolean source
       console.log '------------------------'
       console.log destination
+      unless source and destination
+        router.throw status: 404, info: 'slug not found'
 
-      # grab all source reviews and apply them to the destination w/ scores
+      @ReviewModel.getAllByParentId source.id
+      .map EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
+      .map (sourceReview) ->
+        console.log sourceReview
+        parentDiff = PlaceReviewService.getParentDiff destination, sourceReview.rating
+        parentDiffFromExtras = PlaceReviewService.getParentDiffFromExtras {
+          parent: destination, extras: sourceReview.extras, operator: 'add'
+        }
+        console.log parentDiffFromExtras
+        parentDiff = _.defaults parentDiff, parentDiffFromExtras
+        console.log parentDiff
+        # TODO: iterate over sourceReviews, upsert to change parentId
+        # PlaceReviewService.getParentDiff
+        # PlaceReviewService.getParentDiff
 
 
   upsert: (options, {user, headers, connection}) =>

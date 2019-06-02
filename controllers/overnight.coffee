@@ -3,12 +3,14 @@ _ = require 'lodash'
 router = require 'exoid-router'
 
 Overnight = require '../models/overnight'
+OvernightReview = require '../models/overnight_review'
 EmbedService = require '../services/embed'
 PlaceBaseCtrl = require './place_base'
 
 class OvernightCtrl extends PlaceBaseCtrl
   type: 'overnight'
   Model: Overnight
+  ReviewModel: OvernightReview
   defaultEmbed: [EmbedService.TYPES.OVERNIGHT.ATTACHMENTS_PREVIEW]
 
   getIsAllowedByMeAndId: ({id}, {user}) ->

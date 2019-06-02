@@ -2,6 +2,7 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 EmbedService = require '../services/embed'
+PlaceReviewService = require '../services/place_review'
 OvernightAttachment = require '../models/overnight_attachment'
 OvernightReview = require '../models/overnight_review'
 Overnight = require '../models/overnight'
@@ -19,43 +20,6 @@ class OvernightReviewCtrl extends PlaceReviewBaseCtrl
   Model: OvernightReview
   ParentModel: Overnight
   AttachmentModel: OvernightAttachment
-
-  getParentDiff: ({parent, extras, operator}) ->
-    operator ?= 'add'
-    multiplier = if operator is 'add' then 1 else -1
-    _.reduce extras, (diff, addValue, key) ->
-      valueKey = if key is 'cellSignal' then 'signal' else 'value'
-      if typeof addValue is 'object' # seasonal, cell, day/night
-        diff[key] = parent[key] or {}
-        _.forEach addValue, (subAddValue, subKey) ->
-          value = parent[key]?[subKey]?[valueKey] or 0
-          count = parent[key]?[subKey]?.count or 0
-          newCount = count + (1 * multiplier)
-          if newCount is 0
-            newValue = 0
-          else
-            newValue = (value * count + (subAddValue * multiplier)) / newCount
-            newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
-          diff[key] = _.defaults {
-            "#{subKey}":
-              "#{valueKey}": newValue
-              count: newCount
-          }, diff[key]
-      else if addValue
-        value = parent[key]?[valueKey] or 0
-        count = parent[key]?.count or 0
-        newCount = count + (1 * multiplier)
-        if newCount is 0
-          newValue = 0
-        else
-          newValue = (value * count + (addValue * multiplier)) / newCount
-          newValue = Math.round(newValue * 10000) / 10000 # x.xxxx
-        diff[key] = _.defaults {
-          "#{valueKey}": newValue
-          count: newCount
-        }
-      diff
-    , {}
 
   upsertExtras: ({id, parent, extras, existingReview}, {user}) =>
     # remove old values so we can replace with new
@@ -79,7 +43,9 @@ class OvernightReviewCtrl extends PlaceReviewBaseCtrl
         extras.noise = {day: extras.noise, night: extras.noise}
 
       # update averages
-      parentDiff = @getParentDiff {parent, extras, operator: 'add'}
+      parentDiff = PlaceReviewService.getParentDiffFromExtras {
+        parent, extras, operator: 'add'
+      }
 
       @ParentModel.upsert _.defaults {
         id: parent.id, slug: parent.slug
@@ -93,7 +59,9 @@ class OvernightReviewCtrl extends PlaceReviewBaseCtrl
       key in VALID_EXTRAS and (typeof extra is 'number' or not _.isEmpty extra)
 
     # update averages
-    parentDiff = @getParentDiff {parent, extras, operator: 'sub'}
+    parentDiff = PlaceReviewService.getParentDiffFromExtras {
+      parent, extras, operator: 'sub'
+    }
     Promise.all [
       @ParentModel.upsert _.defaults {
         id: parent.id, slug: parent.slug

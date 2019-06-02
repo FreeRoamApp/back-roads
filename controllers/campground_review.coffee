@@ -2,6 +2,7 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 EmbedService = require '../services/embed'
+PlaceReviewService = require '../services/place_review'
 CampgroundAttachment = require '../models/campground_attachment'
 CampgroundReview = require '../models/campground_review'
 Campground = require '../models/campground'
@@ -44,7 +45,9 @@ class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
         extras.noise = {day: extras.noise, night: extras.noise}
 
       # update averages
-      parentDiff = @getParentDiff {parent, extras, operator: 'add'}
+      parentDiff = PlaceReviewService.getParentDiffFromExtras {
+        parent, extras, operator: 'add'
+      }
 
       # HACK: TODO: change to calculate from all price data points
       if extras.pricePaid?
@@ -81,7 +84,9 @@ class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
       key in VALID_EXTRAS and (typeof extra is 'number' or not _.isEmpty extra)
 
     # update averages
-    parentDiff = @getParentDiff {parent, extras, operator: 'sub'}
+    parentDiff = PlaceReviewService.getParentDiffFromExtras {
+      parent, extras, operator: 'sub'
+    }
     Promise.all [
       @ParentModel.upsert _.defaults {
         id: parent.id, slug: parent.slug

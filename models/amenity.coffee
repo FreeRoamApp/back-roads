@@ -76,6 +76,9 @@ class Amenity extends PlaceBase
     ]
 
   defaultOutput: (amenity) ->
+    unless amenity?
+      return null
+
     amenity = super amenity
     _.defaults {type: 'amenity'}, amenity
 
