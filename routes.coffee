@@ -23,7 +23,6 @@ GroupRoleCtrl = require './controllers/group_role'
 ItemCtrl = require './controllers/item'
 LowClearanceCtrl = require './controllers/low_clearance'
 NotificationCtrl = require './controllers/notification'
-NpsCtrl = require './controllers/nps'
 OvernightCtrl = require './controllers/overnight'
 OvernightReviewCtrl = require './controllers/overnight_review'
 OvernightAttachmentCtrl = require './controllers/overnight_attachment'
@@ -247,8 +246,6 @@ module.exports = router
 
 .on 'notifications.getAll', authed NotificationCtrl.getAll
 .on 'notifications.getUnreadCount', authed NotificationCtrl.getUnreadCount
-
-.on 'nps.create', authed NpsCtrl.create
 
 .on 'products.getBySlug', authed ProductCtrl.getBySlug
 .on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
