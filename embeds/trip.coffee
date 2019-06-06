@@ -2,6 +2,7 @@ _ = require 'lodash'
 Promise = require 'bluebird'
 
 Amenity = require '../models/amenity'
+BaseMessage = require './base_message'
 Campground = require '../models/campground'
 CheckIn = require '../models/check_in'
 Coordinate = require '../models/coordinate'
@@ -17,7 +18,13 @@ pairwise = (arr) ->
     i += 1
   newArr
 
-class CheckInEmbed
+class TripEmbed
+  user: (trip) ->
+    if trip.userId
+      BaseMessage.user {
+        userId: trip.userId
+      }
+
   checkIns: (trip) ->
     # TODO: cache as a whole and maybe per checkinId
     trip.checkInIds ?= []
@@ -32,12 +39,13 @@ class CheckInEmbed
         }
         .catch (err) -> null
         .then (place) ->
-          _.defaults checkIn, place
+          checkIn.place = place
+          checkIn
     .then (checkIns) -> _.filter checkIns
 
   stats: ({checkIns}) ->
-    stateCounts = _.countBy checkIns, ({address}) ->
-      address?.administrativeArea
+    stateCounts = _.countBy checkIns, ({place}) ->
+      place?.address?.administrativeArea
     {stateCounts}
 
   route: ({checkIns}) ->
@@ -47,7 +55,9 @@ class CheckInEmbed
 
     # break it up into legs, use cache for legs we've already fetched...
     # only need to cache for maybe an hour
-    locations = _.filter _.map checkIns, 'location'
+    locations = _.filter _.map checkIns, ({place}) ->
+      place?.location
+    locations = _.clone(locations).reverse()
     pairs = pairwise locations
 
     Promise.map pairs, (pair) ->
@@ -61,4 +71,4 @@ class CheckInEmbed
         }
       , {}
 
-module.exports = new CheckInEmbed()
+module.exports = new TripEmbed()

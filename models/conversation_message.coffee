@@ -208,6 +208,8 @@ class ConversationMessageModel extends Base
     )
 
   defaultOutput: (conversationMessage) ->
+    unless conversationMessage
+      return null
     conversationMessage = super conversationMessage
     if conversationMessage.groupId is config.EMPTY_UUID
       conversationMessage.groupId = null

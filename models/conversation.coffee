@@ -186,7 +186,8 @@ class ConversationModel extends Base
     .run()
 
   pmHasPermission: (conversation, userId) ->
-    Promise.resolve userId and conversation.userIds.indexOf("#{userId}") isnt -1
+    Promise.resolve userId and _.some conversation.userIds, (convUserId) ->
+      "#{convUserId}" is "#{userId}"
 
   sanitize: _.curry (requesterId, conversation) ->
     _.pick conversation, [

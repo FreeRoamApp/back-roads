@@ -195,7 +195,7 @@ module.exports = class Base
 
   defaultInput: (row, {skipAdditions} = {}) =>
     unless skipAdditions
-      _.forEach @fieldsWithDefaultFn, (field, key) ->
+      _.map @fieldsWithDefaultFn, (field, key) ->
         value = row[key]
         if not value and not skipAdditions and field.defaultFn
           row[key] = field.defaultFn()

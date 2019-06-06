@@ -13,7 +13,7 @@ class UserSettings extends Base
         keyspace: 'free_roam'
         fields:
           userId: 'uuid'
-          privacy: {type: 'json'}
+          privacy: 'json'
           # location: {everyone: true}
         primaryKey:
           partitionKey: ['userId']

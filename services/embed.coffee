@@ -90,6 +90,7 @@ TYPES =
     CHECK_INS: 'trip:checkIns'
     ROUTE: 'trip:route'
     STATS: 'trip:stats'
+    USER: 'trip:user'
   USER:
     KARMA: 'user:karma'
   USER_BLOCK:

@@ -133,6 +133,21 @@ class UserCtrl
           )
       else
         Promise.resolve null
+
+
+      if username and username isnt user.username
+        User.getByUsername username
+        .then (existingUser) ->
+          if existingUser
+            router.throw {
+              status: 401
+              info:
+                langKey: 'error.usernameTaken'
+                field: 'username'
+              ignoreLog: true
+            }
+      else
+        Promise.resolve null
     ]
     .then ([avatarImage, password]) ->
       if password

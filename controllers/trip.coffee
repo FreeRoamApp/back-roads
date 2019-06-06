@@ -11,6 +11,7 @@ config = require '../config'
 
 defaultEmbed = [
   EmbedService.TYPES.TRIP.CHECK_INS
+  EmbedService.TYPES.TRIP.USER
 ]
 extrasEmbed = [
   EmbedService.TYPES.TRIP.ROUTE
