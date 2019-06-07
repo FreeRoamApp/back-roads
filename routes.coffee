@@ -133,6 +133,8 @@ module.exports = router
 
 .on 'connections.getAllIdsByType', authed ConnectionCtrl.getAllIdsByType
 .on 'connections.getAllByType', authed ConnectionCtrl.getAllByType
+.on 'connections.getAllByUserIdAndType',
+  authed ConnectionCtrl.getAllByUserIdAndType
 .on 'connections.getAllGrouped', authed ConnectionCtrl.getAllGrouped
 .on 'connections.acceptRequestByUserIdAndType',
   authed ConnectionCtrl.acceptRequestByUserIdAndType

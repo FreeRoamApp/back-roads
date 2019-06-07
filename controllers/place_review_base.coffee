@@ -3,10 +3,13 @@ _ = require 'lodash'
 router = require 'exoid-router'
 
 EarnAction = require '../models/earn_action'
+CheckIn = require '../models/check_in'
+Trip = require '../models/trip'
 UserRig = require '../models/user_rig'
 Vote = require '../models/vote'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
+CheckInService = require '../services/check_in'
 PlaceReviewService = require '../services/place_review'
 cknex = require '../services/cknex'
 config = require '../config'
@@ -196,6 +199,26 @@ module.exports = class PlaceReviewBaseCtrl
               id: review?.id, parent, extras, existingReview
             }, {user}
         ]
+      .tap ([parentUpsert, review]) ->
+        Trip.getByUserIdAndType user.id, 'past', {createIfNotExists: true}
+        .then (trip) ->
+          CheckIn.getByUserIdAndSourceId user.id, parent.id
+          .then (existingCheckIn) ->
+            if existingCheckIn
+              CheckIn.upsertByRow existingCheckIn, {
+                reviewId: review.id
+              }
+            else
+              CheckInService.upsert {
+                tripIds: [trip.id]
+                attachments: attachments
+                sourceId: parent.id
+                sourceType: parent.type
+                name: parent.name
+                reviewId: review.id
+              }, user
+
+        null # don't block
 
   uploadImage: ({}, {user, file}) =>
     ImageService.uploadImageByUserIdAndFile(

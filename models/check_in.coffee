@@ -16,6 +16,7 @@ scyllaFields =
   sourceId: 'text'
   startTime: 'timestamp'
   endTime: 'timestamp'
+  reviewId: 'uuid' # associated review
   attachments: 'json' # json
   tripIds: {type: 'list', subType: 'uuid'}
   status: {type: 'text', defaultFn: -> 'planned'} # planned | visited
@@ -80,6 +81,14 @@ class CheckIn extends Base
     .limit limit
     .run()
     .map @defaultOutput
+
+  getByUserIdAndSourceId: (userId, sourceId) =>
+    cknex().select '*'
+    .from @getScyllaTables()[0].name
+    .where 'userId', '=', userId
+    .andWhere 'sourceId', '=', sourceId
+    .run {isSingle: true}
+    .then @defaultOutput
 
 
 
