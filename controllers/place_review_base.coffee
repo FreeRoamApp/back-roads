@@ -200,23 +200,24 @@ module.exports = class PlaceReviewBaseCtrl
             }, {user}
         ]
       .tap ([parentUpsert, review]) ->
-        Trip.getByUserIdAndType user.id, 'past', {createIfNotExists: true}
-        .then (trip) ->
-          CheckIn.getByUserIdAndSourceId user.id, parent.id
-          .then (existingCheckIn) ->
-            if existingCheckIn
-              CheckIn.upsertByRow existingCheckIn, {
-                reviewId: review.id
-              }
-            else
-              CheckInService.upsert {
-                tripIds: [trip.id]
-                attachments: attachments
-                sourceId: parent.id
-                sourceType: parent.type
-                name: parent.name
-                reviewId: review.id
-              }, user
+        if parent.type in ['campground', 'overnight']
+          Trip.getByUserIdAndType user.id, 'past', {createIfNotExists: true}
+          .then (trip) ->
+            CheckIn.getByUserIdAndSourceId user.id, parent.id
+            .then (existingCheckIn) ->
+              if existingCheckIn
+                CheckIn.upsertByRow existingCheckIn, {
+                  reviewId: review.id
+                }
+              else
+                CheckInService.upsert {
+                  tripIds: [trip.id]
+                  attachments: attachments
+                  sourceId: parent.id
+                  sourceType: parent.type
+                  name: parent.name
+                  reviewId: review.id
+                }, user
 
         null # don't block
 

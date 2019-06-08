@@ -15,7 +15,6 @@ class PushTokensCtrl
 
     # delete existing push tokens (tokens for other userIds). important since
     # this is called after logging in
-    console.log 'upsert', user.id
     PushToken.getAllByToken token
     .then (pushTokens) ->
       # delete the token
@@ -27,12 +26,12 @@ class PushTokensCtrl
             Subscription.getAllByToken pushToken.token
             .map Subscription.unsubscribeBySubscriptionToken
       ]
-    .then ->
-      PushToken.upsert {
-        token, deviceId
-        userId: user.id
-        sourceType: sourceType or pushTokens?[0]?.sourceType or 'android'
-      }
+      .then ->
+        PushToken.upsert {
+          token, deviceId
+          userId: user.id
+          sourceType: sourceType or pushTokens?[0]?.sourceType or 'android'
+        }
     .then ->
       Subscription.subscribeNewTokenByUserId userId, {token, deviceId}
     .then ->

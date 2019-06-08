@@ -185,7 +185,7 @@ module.exports = class PlaceBaseCtrl
 
 
   upsert: (options, {user, headers, connection}) =>
-    {id, name, details, location, subType, slug} = options
+    {id, name, details, location, subType, slug, prices} = options
 
     isUpdate = Boolean id
 
@@ -244,8 +244,10 @@ module.exports = class PlaceBaseCtrl
           {signal, count: 0}
         diff.cellSignal = _.defaults diff.cellSignal, cellSignal
 
-      unless isUpdate
-        diff.prices ?= {all: {mode: 0}} # TODO
+      if prices
+        diff.prices = prices
+      # else if not isUpdate
+      #   diff.prices ?= {all: {mode: 0}} # TODO
 
       (if existingPlace
         @Model.upsertByRow existingPlace, diff

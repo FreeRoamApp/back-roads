@@ -4,7 +4,6 @@ bcrypt = require 'bcrypt-nodejs'
 Joi = require 'joi'
 Promise = require 'bluebird'
 geoip = require 'geoip-lite'
-jwt = require 'jsonwebtoken'
 
 Auth = require '../models/auth'
 Subscription = require '../models/subscription'
