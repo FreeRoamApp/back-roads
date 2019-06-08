@@ -6,11 +6,64 @@ Promise = require 'bluebird'
 geoip = require 'geoip-lite'
 
 Auth = require '../models/auth'
+LoginLink = require '../models/login_link'
 Subscription = require '../models/subscription'
 User = require '../models/user'
+EmailService = require '../services/email'
 config = require '../config'
 
 class AuthCtrl
+  resetPassword: ({username, email}, {user}) ->
+    User.getByUsername username
+    .then (user) ->
+      unless user
+        router.throw {
+          status: 400
+          info:
+            langKey: 'error.usernameNotFound'
+            field: 'username'
+        }
+      unless user.email is email
+        router.throw {
+          status: 400
+          info:
+            langKey: 'error.emailMismatch'
+            field: 'username'
+        }
+
+      LoginLink.create {
+        userId: user.id
+        data:
+          path: 'editProfile'
+      }
+      .then ({userId, token}) ->
+        EmailService.send {
+          to: email
+          subject: "Password reset request"
+          text: """
+  Click the link below to login to FreeRoam to change your password:
+  https://#{config.FREE_ROAM_HOST}/loginLink/#{userId}/#{token}
+
+  If you did not request this, you can ignore this email.
+  """
+        }
+
+        null # don't send anything back
+
+  loginLink: ({userId, token}) ->
+    LoginLink.getByUserIdAndToken userId, token
+    .then (loginLink) ->
+      if not loginLink or loginLink.token isnt token
+        router.throw status: 400, info: 'incorrect login info'
+      unless loginLink.expireTime.getTime() > Date.now()
+        router.throw status: 400, info: 'link expired'
+
+      LoginLink.deleteByRow loginLink
+
+      User.getById loginLink.userId
+    .then (user) ->
+      Auth.fromUserId user.id
+
   # create new user account if it doesn't exist
   login: ({language}, {headers, connection}) ->
     ip = headers['x-forwarded-for'] or

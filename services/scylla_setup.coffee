@@ -16,7 +16,7 @@ class ScyllaSetupService
       .then =>
         if config.ENV is config.ENVS.DEV
           createTables = _.map _.filter(tables, ({name}) ->
-            name.indexOf('check_in') isnt -1
+            name.indexOf('login_link') isnt -1
           )
           Promise.each createTables, @createTableIfNotExist
         else

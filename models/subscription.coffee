@@ -293,7 +293,7 @@ class Subscription extends Base
       body: {}
     }
     .catch (err) ->
-      console.log err
+      # console.log err
       console.log 'sub topic err', "#{base}/#{token}/rel/topics/#{topic}"
 
   fcmUnsubscribeToTopicByToken: (token, topic) =>

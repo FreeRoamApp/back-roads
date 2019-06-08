@@ -21,6 +21,7 @@ GroupAuditLogCtrl = require './controllers/group_audit_log'
 GroupUserCtrl = require './controllers/group_user'
 GroupRoleCtrl = require './controllers/group_role'
 ItemCtrl = require './controllers/item'
+LoginLinkCtrl = require './controllers/login_link'
 LowClearanceCtrl = require './controllers/low_clearance'
 NotificationCtrl = require './controllers/notification'
 OvernightCtrl = require './controllers/overnight'
@@ -59,6 +60,8 @@ module.exports = router
 .on 'auth.join', AuthCtrl.join
 .on 'auth.login', AuthCtrl.login
 .on 'auth.loginUsername', AuthCtrl.loginUsername
+.on 'auth.loginLink', AuthCtrl.loginLink
+.on 'auth.resetPassword', AuthCtrl.resetPassword
 
 ###################
 # Authed Routes   #
@@ -211,6 +214,8 @@ module.exports = router
 .on 'items.getAll', authed ItemCtrl.getAll
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
 .on 'items.search', authed ItemCtrl.search
+
+.on 'loginLinks.getByUserIdAndToken', authed LoginLinkCtrl.getByUserIdAndToken
 
 .on 'lowClearances.search', authed LowClearanceCtrl.search
 
