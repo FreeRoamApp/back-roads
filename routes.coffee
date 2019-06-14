@@ -20,9 +20,9 @@ GroupCtrl = require './controllers/group'
 GroupAuditLogCtrl = require './controllers/group_audit_log'
 GroupUserCtrl = require './controllers/group_user'
 GroupRoleCtrl = require './controllers/group_role'
+HazardCtrl = require './controllers/hazard'
 ItemCtrl = require './controllers/item'
 LoginLinkCtrl = require './controllers/login_link'
-LowClearanceCtrl = require './controllers/low_clearance'
 NotificationCtrl = require './controllers/notification'
 OvernightCtrl = require './controllers/overnight'
 OvernightReviewCtrl = require './controllers/overnight_review'
@@ -40,6 +40,7 @@ UserBlockCtrl = require './controllers/user_block'
 UserLocationCtrl = require './controllers/user_location'
 UserRigCtrl = require './controllers/user_rig'
 UserSettingsCtrl = require './controllers/user_settings'
+UserDataCtrl = require './controllers/user_data'
 CommentCtrl = require './controllers/comment'
 VoteCtrl = require './controllers/vote'
 
@@ -217,7 +218,7 @@ module.exports = router
 
 .on 'loginLinks.getByUserIdAndToken', authed LoginLinkCtrl.getByUserIdAndToken
 
-.on 'lowClearances.search', authed LowClearanceCtrl.search
+.on 'hazards.search', authed HazardCtrl.search
 
 .on 'overnights.deleteByRow', authed OvernightCtrl.deleteByRow
 .on 'overnights.getBySlug', authed OvernightCtrl.getBySlug
@@ -303,6 +304,10 @@ module.exports = router
 
 .on 'userSettings.getByMe', authed UserSettingsCtrl.getByMe
 .on 'userSettings.upsert', authed UserSettingsCtrl.upsert
+
+.on 'userData.getByMe', authed UserDataCtrl.getByMe
+.on 'userData.getByUserId', authed UserDataCtrl.getByUserId
+.on 'userData.upsert', authed UserDataCtrl.upsert
 
 .on 'userLocations.getByMe', authed UserLocationCtrl.getByMe
 .on 'userLocations.deleteByMe', authed UserLocationCtrl.deleteByMe

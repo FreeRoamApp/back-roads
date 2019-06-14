@@ -146,6 +146,7 @@ class ConversationModel extends Base
     @getAllByUserId checkUserIds[0], {limit: 2500}
     .then (conversations) ->
       _.find conversations, ({type, userIds}) ->
+        userIds = _.map userIds, (userId) -> "#{userId}"
         type is 'pm' and _.every checkUserIds, (userId) ->
           userIds.indexOf("#{userId}") isnt -1
     .then @defaultOutput

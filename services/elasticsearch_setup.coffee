@@ -5,11 +5,31 @@ CacheService = require './cache'
 elasticsearch = require './elasticsearch'
 config = require '../config'
 
-# TODO
+###
+to migrate tables
+post http://localhost:9200/_reindex
+{
+	"source": {"index": "campgrounds", "type": "campgrounds"}, "dest": {"index": "campgrounds_new", "type": "campgrounds_new"},
+	  "script": {
+	    "inline": "ctx._source.remove('forecast')",
+	    "lang": "painless"
+	  }
+}
+
+{
+	"dest": {"index": "campgrounds", "type": "campgrounds"}, "source": {"index": "campgrounds_new", "type": "campgrounds_new"},
+	  "script": {
+	    "inline": "ctx._source.remove('forecast')",
+	    "lang": "painless"
+	  }
+}
+
+
+###
 
 class ElasticsearchSetupService
   setup: (indices) =>
-    CacheService.lock 'elasticsearch_setup6', =>
+    CacheService.lock 'elasticsearch_setup9', =>
       Promise.each indices, @createIndexIfNotExist
     , {expireSeconds: 300}
 

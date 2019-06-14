@@ -20,8 +20,11 @@ AVATAR_LARGE_IMAGE_HEIGHT = 512
 defaultEmbed = [EmbedService.TYPES.USER.KARMA]
 
 class UserCtrl
-  getMe: ({}, {user, headers, connection}) ->
-    EmbedService.embed {embed: defaultEmbed}, user
+  getMe: ({embed} = {}, {user, headers, connection}) ->
+    userEmbed = defaultEmbed
+    if embed and embed.indexOf('data') isnt -1
+      userEmbed = userEmbed.concat EmbedService.TYPES.USER.DATA
+    EmbedService.embed {embed: userEmbed}, user
     .then User.sanitizePrivate(null)
 
   getCountry: ({}, {headers, connection}) ->
@@ -31,14 +34,22 @@ class UserCtrl
     isServerSide = ip?.indexOf('::ffff:10.') isnt -1
     if isServerSide then null else geoip.lookup(ip)?.country?.toLowerCase()
 
-  getById: ({id}) ->
+  getById: ({id, embed}) ->
+    userEmbed = defaultEmbed
+    if embed and embed.indexOf('data') isnt -1
+      userEmbed = userEmbed.concat EmbedService.TYPES.USER.DATA
+
     User.getById id
-    .then EmbedService.embed {embed: defaultEmbed}
+    .then EmbedService.embed {embed: userEmbed}
     .then User.sanitizePublic(null)
 
-  getByUsername: ({username}) ->
+  getByUsername: ({username, embed}) ->
+    userEmbed = defaultEmbed
+    if embed and embed.indexOf('data') isnt -1
+      userEmbed = userEmbed.concat EmbedService.TYPES.USER.DATA
+
     User.getByUsername username
-    .then EmbedService.embed {embed: defaultEmbed}
+    .then EmbedService.embed {embed: userEmbed}
     .then User.sanitizePublic(null)
 
   # problem: partner user account may not exist before partner link can.
@@ -85,6 +96,9 @@ class UserCtrl
       if userDiff.links.instagram.indexOf('@') isnt -1
         userDiff.links.instagram = userDiff.links.instagram.replace '@', ''
       userDiff.links.instagram = "https://instagram.com/#{userDiff.links.instagram}"
+
+    if userDiff.links?.facebook and userDiff.links.facebook.indexOf('facebook.com') is -1
+      userDiff.links.facebook = "https://facebook.com/#{userDiff.links.facebook}"
 
     valid = Joi.validate {username, password: newInsecurePassword}, {
       password: Joi.string().min(6).max(1000)

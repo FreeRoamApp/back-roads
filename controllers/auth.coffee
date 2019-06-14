@@ -44,6 +44,8 @@ class AuthCtrl
   Click the link below to login to FreeRoam to change your password:
   https://#{config.FREE_ROAM_HOST}/loginLink/#{userId}/#{token}
 
+  This link will only work once. Do NOT share it with anyone else.
+
   If you did not request this, you can ignore this email.
   """
         }

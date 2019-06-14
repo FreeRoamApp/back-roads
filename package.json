@@ -73,6 +73,7 @@
     "ioredis": "^2.5.0",
     "joi": "^6.10.0",
     "jsonwebtoken": "^5.4.1",
+    "kmz-geojson": "^0.1.0",
     "knex": "^0.13.0",
     "knex-schema": "git://github.com/claydotio/knex-schema.git",
     "kue": "^0.11.5",
@@ -87,6 +88,7 @@
     "node-gcm": "^1.0.2",
     "node-geocoder": "^3.22.0",
     "node-uuid": "^1.4.7",
+    "ogr2ogr": "^1.4.0",
     "pcg-random": "^1.0.0",
     "pg": "^6.1.5",
     "polygon-offset": "^0.3.1",
@@ -109,6 +111,7 @@
     "turndown": "^4.0.1",
     "twit": "^2.2.9",
     "universal-analytics": "^0.4.20",
+    "unzipper": "^0.10.0",
     "uuid-by-string": "^0.5.2",
     "vdom-to-html": "git://github.com/claydotio/vdom-to-html.git",
     "web-push": "^3.2.1"

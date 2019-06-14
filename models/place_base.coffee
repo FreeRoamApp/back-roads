@@ -19,12 +19,23 @@ module.exports = class PlaceBase extends Base
           function_score:
             query: query
             functions: _.filter [
+              # prioritize places w/ reviews
               if @getElasticSearchIndices()[0].mappings.ratingCount
                 {
                   filter:
                     range:
                       ratingCount:
                         gte: 1
+                  weight: 50
+                }
+              # prioritize non-low clearances (eg fires)
+              else if @getElasticSearchIndices()[0].name is 'hazards'
+                {
+                  filter:
+                    bool:
+                      must_not:
+                        match:
+                          subType: 'lowClearance'
                   weight: 50
                 }
               {
@@ -81,11 +92,24 @@ module.exports = class PlaceBase extends Base
     }, {outputFn}
 
   getBySlug: (slug) =>
-    cknex().select '*'
-    .from @getScyllaTables()[0].name
-    .where 'slug', '=', slug
-    .run {isSingle: true}
-    .then @defaultOutput
+    if @getScyllaTables()[0]
+      cknex().select '*'
+      .from @getScyllaTables()[0].name
+      .where 'slug', '=', slug
+      .run {isSingle: true}
+      .then @defaultOutput
+    else
+      elasticsearch.search {
+        index: @getElasticSearchIndices()[0].name
+        type: @getElasticSearchIndices()[0].name
+        size: 1
+        body:
+          query:
+            match: {slug}
+      }
+      .then ({hits}) ->
+        {_id, _source} = hits.hits?[0] or {}
+        _.defaults _source, {id: _id}
 
   getById: (id) =>
     if @getScyllaTables()[1]

@@ -93,6 +93,7 @@ TYPES =
     USER: 'trip:user'
   USER:
     KARMA: 'user:karma'
+    DATA: 'user:data'
   USER_BLOCK:
     USER: 'userBlock:user'
   USER_LOCATION:

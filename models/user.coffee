@@ -18,7 +18,6 @@ scyllaFields =
   language: {type: 'text', defaultFn: -> 'en'}
   flags: 'json'
   links: {type: 'map', subType: 'text', subType2: 'text'}
-  bio: 'text'
 
 class UserModel extends Base
   getScyllaTables: ->
@@ -199,7 +198,7 @@ class UserModel extends Base
       'id'
       'username'
       'name'
-      'bio'
+      'data'
       'karma'
       'avatarImage'
       'links'

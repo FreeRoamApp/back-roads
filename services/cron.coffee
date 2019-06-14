@@ -13,6 +13,7 @@ Amenity = require '../models/amenity'
 Campground = require '../models/campground'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
+FireService = require '../misc_scripts/fire'
 WeatherService = require '../services/weather'
 allCategories = require '../resources/data/categories'
 allGroups = require '../resources/data/groups'
@@ -60,6 +61,7 @@ class CronService
     @addCron 'daily', '0 0 3 * * *', -> # 3 am PT?
       if config.ENV is config.ENVS.PROD and not config.IS_STAGING
         WeatherService.forecastPlaces()
+        FireService.dailyCron()
 
   addCron: (key, time, fn) =>
     @crons.push new CronJob {
