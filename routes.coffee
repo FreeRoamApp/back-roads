@@ -211,6 +211,8 @@ module.exports = router
 .on 'groupRoles.deleteByGroupIdAndRoleId',
   authed GroupRoleCtrl.deleteByGroupIdAndRoleId
 
+.on 'hazards.search', authed HazardCtrl.search
+
 .on 'items.getBySlug', authed ItemCtrl.getBySlug
 .on 'items.getAll', authed ItemCtrl.getAll
 .on 'items.getAllByCategory', authed ItemCtrl.getAllByCategory
@@ -218,7 +220,8 @@ module.exports = router
 
 .on 'loginLinks.getByUserIdAndToken', authed LoginLinkCtrl.getByUserIdAndToken
 
-.on 'hazards.search', authed HazardCtrl.search
+# FIXME: rm after 6/20/2019
+.on 'lowClearances.search', authed -> Promise.resolve []
 
 .on 'overnights.deleteByRow', authed OvernightCtrl.deleteByRow
 .on 'overnights.getBySlug', authed OvernightCtrl.getBySlug
