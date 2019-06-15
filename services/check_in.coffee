@@ -66,8 +66,7 @@ class CheckInService
         Trip.updateMapByRow trip
         .then (trip) ->
           # tell client to reload trip image
-          console.log 'emit'
-          emit {updatedTrip: trip}
+          emit? {updatedTrip: trip}
         null # don't block
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
