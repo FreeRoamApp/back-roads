@@ -34,7 +34,6 @@ class WeatherService
     PlaceModel = PLACE_TYPES[type]
     PlaceModel.getById id
     .then (place) =>
-      console.log place.slug
       @getForecast {location: place.location}
       .then (forecast) ->
         dailyForecast = forecast.daily.data

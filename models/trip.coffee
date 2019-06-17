@@ -98,5 +98,8 @@ class Trip extends Base
     .then (trip) =>
       @upsertByRow trip, {}, {remove: {checkInIds: [checkInId]}}
 
+  defaultInput: (row) ->
+    row.lastUpdateTime = new Date()
+    super row
 
 module.exports = new Trip()
