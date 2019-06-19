@@ -72,7 +72,8 @@ class PushNotificationService
     # }
     webpush.sendNotification JSON.parse(token), JSON.stringify message
 
-  sendFcm: (to, {title, text, type, data, icon, toType, notId}, {isiOS} = {}) =>
+  sendFcm: (to, message, {isiOS} = {}) =>
+    {title, text, type, data, icon, toType, notId, style, summaryText} = message
     toType ?= 'token'
     new Promise (resolve, reject) =>
       messageOptions = {
@@ -82,6 +83,7 @@ class PushNotificationService
       # ios and android take different formats for whatever reason...
       # if you pass notification to android, it uses that and doesn't use data
       # https://github.com/phonegap/phonegap-plugin-push/issues/387
+
       if isiOS
         messageOptions.notification =
           title: title
@@ -95,7 +97,7 @@ class PushNotificationService
           message: text
           ledColor: [0, 255, 0, 0]
           image: if icon then icon else null
-          payload: data
+          payload: data # android
           data: data
           # https://github.com/phonegap/phonegap-plugin-push/issues/158
           # unfortunately causes flash as app opens and closes.
@@ -121,6 +123,8 @@ class PushNotificationService
           icon: 'notification_icon'
           color: config.NOTIFICATION_COLOR
           notId: notId or (Date.now() % 100000) # should be int, not uuid.v4()
+          style: style
+          summaryText: summaryText
           # android_channel_id: 'test'
 
       notification = new gcm.Message messageOptions
@@ -186,7 +190,13 @@ class PushNotificationService
           conversationId: conversation.id
           contextId: conversation.id
           path: path
-        notId: randomSeed.create(conversation.id)(MAX_INT_32)
+        # ideally we'd group by conversation and use something like this:
+        # https://github.com/phonegap/phonegap-plugin-push/issues/2514
+        # BUT we'd need to solve the dupe notifications if sub'd to group
+        # and channel first (don't allow sub to both)
+        # notId: randomSeed.create(conversation.id)(MAX_INT_32)
+        # summaryText: '%n% new messages'
+        notId: randomSeed.create(conversationMessage?.id)(MAX_INT_32)
 
       mentionMessage = _.defaults {type: Subscription.TYPES.CHANNEL_MENTION}, message
 
@@ -246,6 +256,9 @@ class PushNotificationService
       title: message.title
       text: message.text
       data: message.data
+      notId: message.notId
+      style: message.style
+      summaryText: message.summaryText
     }
 
     if (config.ENV isnt config.ENVS.PROD or config.IS_STAGING) and

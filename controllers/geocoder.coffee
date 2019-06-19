@@ -4,6 +4,7 @@ _ = require 'lodash'
 GeocoderService = require '../services/geocoder'
 RoutingService = require '../services/routing'
 PlacesService = require '../services/places'
+statesAbbr = require '../resources/data/states_abbr'
 config = require '../config'
 
 class GeocoderCtrl
@@ -11,10 +12,14 @@ class GeocoderCtrl
     GeocoderService.autocomplete {query}
 
   getBoundingFromRegion: ({country, state, city}, {user}) ->
-    query = "#{city.replace('+', ' ')}, #{state}"
+    if city is 'all'
+      query = statesAbbr[state.toUpperCase()] or state
+    else
+      query = "#{city.replace('+', ' ')}, #{state}"
     GeocoderService.autocomplete {query}
     .then (results) ->
       PlacesService.getBestBounding {
+        bbox: results[0].bbox
         location: results[0].location
       }
 

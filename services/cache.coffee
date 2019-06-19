@@ -47,7 +47,7 @@ class CacheService
     GROUP_USER_TOP: 'group_user:top3'
     GROUP_USERS_ONLINE: 'group_users:online2'
     HONEY_POT_BAN_IP: 'honey_pot:ban_ip'
-    PLACE_BEST_BOUNDING: 'place:best_bounding'
+    PLACE_BEST_BOUNDING: 'place:best_bounding3'
     PUBLIC_CHANNELS_BY_GROUP_ID: 'conversation:public_by_groupId'
     ROUTING_ROUTE: 'routing:route'
     THREAD: 'thread:id:embedded3'

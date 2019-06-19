@@ -129,14 +129,16 @@ class ConversationCtrl
         Notification.upsert Object.assign notification, {isRead: true}
 
   _createWelcomeConversation: ({user}) ->
-    User.getByUsername 'austin'
-    .then (austinUser) ->
-      Conversation.getByUserIds [user.id, austinUser.id]
+    # 0-7 go to austin, 89abcdef to rachel. ALSO in free-roam
+    devUsername = if user?.id.substr(-1) > '7' then 'rachel' else 'austin'
+    User.getByUsername devUsername
+    .then (devUser) ->
+      Conversation.getByUserIds [user.id, devUser.id]
       .then (existingConversation) ->
         if existingConversation
           return existingConversation
         Conversation.upsert({
-          userIds: [user.id, austinUser.id]
+          userIds: [user.id, devUser.id]
           data: {}
           type: 'pm'
           lastUpdateTime: new Date()
@@ -146,8 +148,10 @@ class ConversationCtrl
           # TODO: first message
           ConversationMessage.upsert {
             # id: conversationMessageId
-            userId: austinUser.id
-            body: Language.get 'conversations.welcome', {file: 'strings'}
+            userId: devUser.id
+            body: Language.get "conversations.welcome#{devUsername}", {
+              file: 'strings'
+            }
             # clientId: clientId
             conversationId: conversation.id
           }

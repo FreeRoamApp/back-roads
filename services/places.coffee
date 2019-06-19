@@ -33,7 +33,7 @@ class PlacesService
       Campground.getBySlug slug
     )
 
-  getBestBounding: ({location, type, count}) ->
+  getBestBounding: ({bbox, location, type, count}) ->
     count ?= 10
     type ?= 'campground'
     # TODO: other types
@@ -49,10 +49,10 @@ class PlacesService
         maxX = _.maxBy places, ({location}) -> location.lon
         maxY = _.maxBy places, ({location}) -> location.lat
         {
-          x1: minX.location.lon
-          y1: maxY.location.lat
-          x2: maxX.location.lon
-          y2: minY.location.lat
+          x1: if bbox?[0] then Math.min(bbox[0], minX.location.lon) else minX.location.lon
+          y1: if bbox?[3] then Math.max(bbox[3], maxY.location.lat) else maxY.location.lat
+          x2: if bbox?[2] then Math.max(bbox[2], maxX.location.lon) else maxX.location.lon
+          y2: if bbox?[1] then Math.min(bbox[1], minY.location.lat) else minY.location.lat
         }
     , {expireSeconds: ONE_WEEK_S}
 
