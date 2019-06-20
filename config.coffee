@@ -48,6 +48,7 @@ config =
     ^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*)(?:(\?t|\&t|&start)=(\d+))?.*
   ///i
   CELL_SIGNAL_ESTIMATE_HOST: env.CELL_SIGNAL_ESTIMATE_HOST
+  FEATURE_LOOKUP_HOST: env.FEATURE_LOOKUP_HOST
   FREE_ROAM_HOST: env.FREE_ROAM_HOST
   SCREENSHOTTER_HOST: env.SCREENSHOTTER_HOST
   # also in free-roam

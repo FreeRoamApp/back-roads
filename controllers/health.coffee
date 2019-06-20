@@ -5,6 +5,7 @@ router = require 'exoid-router'
 User = require '../models/user'
 RoutingService = require '../services/routing'
 CellSignalService = require '../services/cell_signal'
+FeatureLookupService = require '../services/feature_lookup'
 config = require '../config'
 
 HEALTHCHECK_TIMEOUT = 40000
@@ -67,6 +68,13 @@ class HealthCtrl
       .timeout timeout
       .catch (err) -> null
 
+      FeatureLookupService.getFeaturesByLocation {
+        lat: 43.6568, lon: -114.4243 # buttercup mountain
+      }
+      .timeout timeout
+      .catch (err) ->
+        null
+
       RoutingService.getDistance(
           # den -> arvada
         {lat: 39.7392, lon: -104.9903}
@@ -76,12 +84,12 @@ class HealthCtrl
       .catch (err) -> null
     ]
     .then (responses) ->
-      [user, route, cellSignal, distance] = responses
-      console.log cellSignal
+      [user, route, cellSignal, features, distance] = responses
       result =
         users: user?.username is AUSTIN_USERNAME
         getRoute: route?.time > 1000
         estimateCellSignal: cellSignal?.verizon_lte is 3
+        featureLookup: features?[0]?.Loc_Nm is 'Buttercup Mountain'
         distance: distance?.distance > 5
 
       result.healthy = _.every _.values result

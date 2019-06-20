@@ -3,6 +3,7 @@ _ = require 'lodash'
 
 GeocoderService = require '../services/geocoder'
 RoutingService = require '../services/routing'
+FeatureLookupService = require '../services/feature_lookup'
 PlacesService = require '../services/places'
 statesAbbr = require '../resources/data/states_abbr'
 config = require '../config'
@@ -28,6 +29,9 @@ class GeocoderCtrl
 
   getElevationFromLocation: ({location}, {user}) ->
     RoutingService.getElevation {location}
+
+  getFeaturesFromLocation: ({location}, {user}) ->
+    FeatureLookupService.getFeaturesByLocation location
 
 
 module.exports = new GeocoderCtrl()
