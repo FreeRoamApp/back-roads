@@ -2434,6 +2434,11 @@
         "is-regex": "^1.0.3"
       }
     },
+    "charenc": {
+      "version": "0.0.2",
+      "resolved": "https://registry.npmjs.org/charenc/-/charenc-0.0.2.tgz",
+      "integrity": "sha1-wKHS86cJLgN3S/qD8UwPxXkKhmc="
+    },
     "chartist": {
       "version": "0.11.0",
       "resolved": "https://registry.npmjs.org/chartist/-/chartist-0.11.0.tgz",
@@ -2820,6 +2825,11 @@
         "lru-cache": "^4.0.1",
         "which": "^1.2.9"
       }
+    },
+    "crypt": {
+      "version": "0.0.2",
+      "resolved": "https://registry.npmjs.org/crypt/-/crypt-0.0.2.tgz",
+      "integrity": "sha1-iNf/fsDfuG9xPch7u0LQRNPmxBs="
     },
     "cryptiles": {
       "version": "2.0.5",
@@ -6674,6 +6684,16 @@
       "version": "1.0.1",
       "resolved": "https://registry.npmjs.org/math-random/-/math-random-1.0.1.tgz",
       "integrity": "sha1-izqsWIuKZuSXXjzepn97sylgH6w="
+    },
+    "md5": {
+      "version": "2.2.1",
+      "resolved": "https://registry.npmjs.org/md5/-/md5-2.2.1.tgz",
+      "integrity": "sha1-U6s41f48iJG6RlMp6iP6wFQBJvk=",
+      "requires": {
+        "charenc": "~0.0.1",
+        "crypt": "~0.0.1",
+        "is-buffer": "~1.1.1"
+      }
     },
     "media-typer": {
       "version": "0.3.0",

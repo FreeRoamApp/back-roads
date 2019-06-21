@@ -3,6 +3,7 @@ router = require 'exoid-router'
 Joi = require 'joi'
 geoip = require 'geoip-lite'
 bcrypt = require 'bcrypt-nodejs'
+md5 = require 'md5'
 Promise = require 'bluebird'
 
 User = require '../models/user'
@@ -86,6 +87,7 @@ class UserCtrl
 
   upsert: ({userDiff}, {user, file}) =>
     currentInsecurePassword = userDiff.currentPassword
+    passwordReset = userDiff.passwordReset
     newInsecurePassword = userDiff.password
     if userDiff.username
       userDiff.username = userDiff.username.toLowerCase()
@@ -129,11 +131,16 @@ class UserCtrl
         Promise.resolve null
 
       if newInsecurePassword
-        Promise.promisify(bcrypt.compare)(
-          currentInsecurePassword
-          user.password
-        )
-        .then (success) ->
+        (if passwordReset
+          Promise.resolve(
+            passwordReset is md5 "#{config.PASSWORD_RESET_SALT}#{user.password}"
+          )
+        else
+          Promise.promisify(bcrypt.compare)(
+            currentInsecurePassword
+            user.password
+          )
+        ).then (success) ->
           unless success
             router.throw {
               status: 400

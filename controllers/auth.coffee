@@ -1,6 +1,7 @@
 _ = require 'lodash'
 router = require 'exoid-router'
 bcrypt = require 'bcrypt-nodejs'
+md5 = require 'md5'
 Joi = require 'joi'
 Promise = require 'bluebird'
 geoip = require 'geoip-lite'
@@ -34,7 +35,14 @@ class AuthCtrl
       LoginLink.create {
         userId: user.id
         data:
-          path: 'editProfile'
+          path:
+            key: 'editProfile'
+            qs:
+              # don't require user to enter current password to change password
+              # we send back this
+              # md5'd just for added security... really no 3rd parties should
+              # be seeing it anyways
+              passwordReset: md5 "#{config.PASSWORD_RESET_SALT}#{user.password}"
       }
       .then ({userId, token}) ->
         EmailService.send {
