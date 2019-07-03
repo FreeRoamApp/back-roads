@@ -62,6 +62,7 @@ class Event extends PlaceBase
           name: {type: 'text'}
           location: {type: 'geo_point'}
           thumbnailPrefix: {type: 'keyword'}
+          address: {type: 'object'}
           startTime: {type: 'date'}
           endTime: {type: 'date'}
           groupId: {type: 'text'}
@@ -69,6 +70,19 @@ class Event extends PlaceBase
           # end common
       }
     ]
+
+  getAll: ({limit} = {}) =>
+    limit ?= 30
+
+    elasticsearch.search {
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
+      size: limit
+      sort: ['startTime']
+    }
+    .then ({hits}) ->
+      _.map hits.hits, ({_id, _source}) ->
+        _.defaults _source, {id: _id}
 
   defaultOutput: (event) ->
     unless event?
