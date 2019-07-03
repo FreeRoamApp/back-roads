@@ -15,7 +15,7 @@ STUCK_JOB_INTERVAL_MS = 5000
 
 JOB_TYPES =
   DEFAULT: 'free_roam:default'
-  FORECAST_PLACE: 'free_roam:forecast_place'
+  DAILY_UPDATE_PLACE: 'free_roam:daily_update_place'
 
 CacheService.lock CacheService.KEYS.KUE_WATCH_STUCK, ->
   console.log 'watching stuck jobs'

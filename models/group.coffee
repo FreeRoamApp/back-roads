@@ -64,9 +64,10 @@ class GroupModel extends Base
     .map @defaultOutput
 
   getAll: ({filter, language, limit} = {}) ->
-    @getBySlug 'boondocking'
-    .then (group) ->
-      [group]
+    Promise.all [
+      @getBySlug 'boondocking'
+      @getBySlug 'vanlife'
+    ]
     # TODO
     # limit ?= 10
     #

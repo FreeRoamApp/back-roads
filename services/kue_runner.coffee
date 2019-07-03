@@ -3,12 +3,12 @@ kue = require 'kue'
 
 KueService = require './kue'
 KueCreateService = require './kue_create'
-WeatherService = require './weather'
+PlacesService = require './places'
 config = require '../config'
 
 TYPES =
-  "#{KueCreateService.JOB_TYPES.FORECAST_PLACE}":
-    {fn: WeatherService.forecastPlace, concurrencyPerCpu: 1}
+  "#{KueCreateService.JOB_TYPES.DAILY_UPDATE_PLACE}":
+    {fn: PlacesService.updateDailyInfo, concurrencyPerCpu: 1}
 
 class KueRunnerService
   listen: ->

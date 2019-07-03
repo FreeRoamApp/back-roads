@@ -15,6 +15,7 @@ ConnectionCtrl = require './controllers/connection'
 ConversationMessageCtrl = require './controllers/conversation_message'
 ConversationCtrl = require './controllers/conversation'
 CoordinateCtrl = require './controllers/coordinate'
+EventCtrl = require './controllers/event'
 GeocoderCtrl = require './controllers/geocoder'
 GroupCtrl = require './controllers/group'
 GroupAuditLogCtrl = require './controllers/group_audit_log'
@@ -169,6 +170,12 @@ module.exports = router
 
 # .on 'coordinates.search', authed CoordinateCtrl.search
 .on 'coordinates.upsert', authed CoordinateCtrl.upsert
+
+.on 'events.getAll', authed EventCtrl.getAll
+.on 'events.getBySlug', authed EventCtrl.getBySlug
+.on 'events.deleteByRow', authed EventCtrl.deleteByRow
+.on 'events.search', authed EventCtrl.search
+.on 'events.upsert', authed EventCtrl.upsert
 
 .on 'geocoder.autocomplete', authed GeocoderCtrl.autocomplete
 .on 'geocoder.getBoundingFromRegion', authed GeocoderCtrl.getBoundingFromRegion

@@ -90,7 +90,7 @@ module.exports = class PlaceBaseCtrl
   deleteByRow: ({row}, {user}) =>
     # TODO: replace with deleteById and grab the place from DB so people can't
     # mess with incoming data (changing slug/id)
-    unless user.username in ['austin', 'big_boxtruck', 'roadpickle']
+    unless user.username in ['austin', 'big_boxtruck', 'roadpickle', 'rachel']
       router.throw {status: 401, info: 'Unauthorized'}
 
     @Model.getById row.id
@@ -263,7 +263,9 @@ module.exports = class PlaceBaseCtrl
             ImageService.uploadWeatherImageByPlace place
 
           if @Model.getScyllaTables()[0].fields.weather
-            WeatherService.forecastPlace place
+            WeatherService.getForecastDiff place
+            .then (diff) ->
+              PlacesService.upsertByTypeAndRow place.type, place, diff
         ]
 
   # TODO: heavily cache this

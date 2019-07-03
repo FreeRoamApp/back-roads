@@ -17,11 +17,11 @@ class CacheService
   KEYS:
     KUE_WATCH_STUCK: 'kue:watch_stuck'
     STALE_THREAD_IDS: 'threads:stale_ids'
-    FORECAST_ID: 'forecast:id4'
+    DAILY_UPDATE_ID: 'dailyUpdate:id4'
   LOCK_PREFIXES:
     KUE_PROCESS: 'kue:process'
   LOCKS:
-    FORECAST: 'forecast4'
+    DAILY_UPDATE: 'dailyUpdate4'
   PREFIXES:
     CHAT_USER: 'chat:user3'
     CHAT_USER_BY_USERNAME: 'chat:user:byUsername3'

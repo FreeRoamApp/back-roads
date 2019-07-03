@@ -14,6 +14,7 @@ EmbedClasses =
   connection: require '../embeds/connection'
   conversation: require '../embeds/conversation'
   conversationMessage: require '../embeds/conversation_message'
+  event: require '../embeds/event'
   group: require '../embeds/group'
   groupAuditLog: require '../embeds/group_audit_log'
   groupUser: require '../embeds/group_user'
@@ -55,6 +56,8 @@ TYPES =
   CONVERSATION:
     USERS: 'conversation:users'
     LAST_MESSAGE: 'conversation:lastMessage'
+  EVENT:
+    ATTACHMENTS_PREVIEW: 'event:attachmentsPreview'
   GROUP:
     USER_COUNT: 'group:userCount'
     USERS: 'group:users'

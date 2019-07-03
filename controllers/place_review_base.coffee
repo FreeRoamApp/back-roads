@@ -10,6 +10,7 @@ Vote = require '../models/vote'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 CheckInService = require '../services/check_in'
+EmailService = require '../services/email'
 PlaceReviewService = require '../services/place_review'
 cknex = require '../services/cknex'
 config = require '../config'
@@ -102,6 +103,15 @@ module.exports = class PlaceReviewBaseCtrl
     {id, type, title, body, rating, attachments, extras, parentId} = options
 
     console.log 'upsert review', options
+    EmailService.send {
+      to: EmailService.EMAILS.EVERYONE
+      subject: "New review by #{user.username}"
+      text: """
+      https://freeroam.app/user/#{user.username}
+
+      #{JSON.stringify options, null, '\t'}
+      """
+    }
 
     # assign every attachment an id
     attachments = _.map attachments, (attachment) ->

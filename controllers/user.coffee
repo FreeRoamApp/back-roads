@@ -102,6 +102,15 @@ class UserCtrl
     if userDiff.links?.facebook and userDiff.links.facebook.indexOf('facebook.com') is -1
       userDiff.links.facebook = "https://facebook.com/#{userDiff.links.facebook}"
 
+    if userDiff.links?.youtube and userDiff.links.youtube.indexOf('youtube.com') is -1
+      userDiff.links.youtube = "https://youtube.com/#{userDiff.links.youtube}"
+
+    if userDiff.links
+      userDiff.links = _.mapValues userDiff.links, (link) ->
+        if link.indexOf('http') isnt 0
+          link = "https://#{link}"
+        link
+
     valid = Joi.validate {username, password: newInsecurePassword}, {
       password: Joi.string().min(6).max(1000)
       email: Joi.string().email().allow('')

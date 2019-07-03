@@ -7,6 +7,7 @@ CleanupService = require './cleanup'
 Thread = require '../models/thread'
 Category = require '../models/category'
 EarnAction = require '../models/earn_action'
+Event = require '../models/event'
 Group = require '../models/group'
 Item = require '../models/item'
 Amenity = require '../models/amenity'
@@ -14,9 +15,10 @@ Campground = require '../models/campground'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
 FireService = require '../services/fire'
-WeatherService = require '../services/weather'
+PlacesService = require '../services/places'
 allCategories = require '../resources/data/categories'
 allGroups = require '../resources/data/groups'
+allEvents = require '../resources/data/events'
 allItems = require '../resources/data/items'
 allAmenities = require '../resources/data/amenities'
 allCampgrounds = require '../resources/data/campgrounds'
@@ -39,6 +41,7 @@ class CronService
         Promise.map allGroups, (group) ->
           Group.upsert _.cloneDeep group
         Campground.batchUpsert _.cloneDeep allCampgrounds
+        Event.batchUpsert _.cloneDeep allEvents
         Item.batchUpsert _.cloneDeep allItems
         Amenity.batchUpsert _.cloneDeep allAmenities
         Product.batchUpsert _.cloneDeep allProducts
@@ -60,8 +63,11 @@ class CronService
 
     @addCron 'daily', '0 0 3 * * *', -> # 3 am PT?
       if config.ENV is config.ENVS.PROD and not config.IS_STAGING
-        WeatherService.forecastPlaces()
         FireService.dailyCron()
+        .catch (err) ->
+          console.log 'FIRE CRON FAIL', err
+        .then ->
+          PlacesService.updateAllDailyInfo()
 
   addCron: (key, time, fn) =>
     @crons.push new CronJob {
