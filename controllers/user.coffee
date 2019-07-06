@@ -107,7 +107,7 @@ class UserCtrl
 
     if userDiff.links
       userDiff.links = _.mapValues userDiff.links, (link) ->
-        if link.indexOf('http') isnt 0
+        if link and link.indexOf('http') isnt 0
           link = "https://#{link}"
         link
 
