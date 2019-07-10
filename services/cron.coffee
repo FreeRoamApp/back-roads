@@ -15,6 +15,7 @@ Campground = require '../models/campground'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
 FireService = require '../services/fire'
+console.log FireService
 PlacesService = require '../services/places'
 allCategories = require '../resources/data/categories'
 allGroups = require '../resources/data/groups'

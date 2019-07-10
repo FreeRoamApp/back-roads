@@ -1,5 +1,6 @@
 router = require 'exoid-router'
 
+AgencyCtrl = require './controllers/agency'
 AmenityCtrl = require './controllers/amenity'
 AmenityReviewCtrl = require './controllers/amenity_review'
 AmenityAttachmentCtrl = require './controllers/amenity_attachment'
@@ -25,6 +26,7 @@ HazardCtrl = require './controllers/hazard'
 ItemCtrl = require './controllers/item'
 LoginLinkCtrl = require './controllers/login_link'
 NotificationCtrl = require './controllers/notification'
+OfficeCtrl = require './controllers/office'
 OvernightCtrl = require './controllers/overnight'
 OvernightReviewCtrl = require './controllers/overnight_review'
 OvernightAttachmentCtrl = require './controllers/overnight_attachment'
@@ -33,6 +35,7 @@ PlaceCtrl = require './controllers/campground' # HACK: use since place_review_ba
 PlaceReviewCtrl = require './controllers/campground_review' # HACK: use since place_review_base isn't instantiated
 ProductCtrl = require './controllers/product'
 PushTokenCtrl = require './controllers/push_token'
+RegionCtrl = require './controllers/region'
 SubscriptionCtrl = require './controllers/subscription'
 ThreadCtrl = require './controllers/thread'
 TripCtrl = require './controllers/trip'
@@ -68,6 +71,10 @@ module.exports = router
 ###################
 # Authed Routes   #
 ###################
+
+.on 'agencies.getAll', authed AgencyCtrl.getAll
+.on 'agencies.getAgencyInfoFromLocation',
+authed AgencyCtrl.getAgencyInfoFromLocation
 
 .on 'amenities.getBySlug', authed AmenityCtrl.getBySlug
 .on 'amenities.search', authed AmenityCtrl.search
@@ -232,6 +239,9 @@ module.exports = router
 # FIXME: rm after 6/20/2019
 .on 'lowClearances.search', authed -> Promise.resolve []
 
+.on 'offices.getAllByAgencySlugAndRegionSlug',
+  authed OfficeCtrl.getAllByAgencySlugAndRegionSlug
+
 .on 'overnights.deleteByRow', authed OvernightCtrl.deleteByRow
 .on 'overnights.getBySlug', authed OvernightCtrl.getBySlug
 .on 'overnights.getNearestAmenitiesById',
@@ -271,6 +281,8 @@ module.exports = router
 .on 'products.getAllByItemSlug', authed ProductCtrl.getAllByItemSlug
 
 .on 'pushTokens.upsert', authed PushTokenCtrl.upsert
+
+.on 'regions.getAllByAgencySlug', authed RegionCtrl.getAllByAgencySlug
 
 .on 'subscriptions.subscribe', authed SubscriptionCtrl.subscribe
 .on 'subscriptions.unsubscribe', authed SubscriptionCtrl.unsubscribe

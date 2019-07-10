@@ -30,8 +30,8 @@ class GeocoderCtrl
   getElevationFromLocation: ({location}, {user}) ->
     RoutingService.getElevation {location}
 
-  getFeaturesFromLocation: ({location}, {user}) ->
-    FeatureLookupService.getFeaturesByLocation location
+  getFeaturesFromLocation: ({location, file}, {user}) ->
+    FeatureLookupService.getFeaturesByLocation _.defaults {file}, location
 
 
 module.exports = new GeocoderCtrl()

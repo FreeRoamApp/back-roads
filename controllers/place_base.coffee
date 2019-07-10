@@ -185,7 +185,8 @@ module.exports = class PlaceBaseCtrl
 
 
   upsert: (options, {user, headers, connection}) =>
-    {id, name, details, location, subType, slug, prices} = options
+    {id, name, details, location, subType, agencySlug, regionSlug,
+      officeSlug, slug, prices} = options
 
     isUpdate = Boolean id
 
@@ -239,6 +240,12 @@ module.exports = class PlaceBaseCtrl
         diff.weather = weatherStation.weather
       if subType
         diff.subType = subType
+      if agencySlug
+        diff.agencySlug = agencySlug
+      if regionSlug
+        diff.regionSlug = regionSlug
+      if officeSlug
+        diff.officeSlug = officeSlug
       if cellSignal
         cellSignal = _.mapValues cellSignal, (signal, carrier) ->
           {signal, count: 0}

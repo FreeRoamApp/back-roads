@@ -56,7 +56,7 @@ scyllaFields =
   attachmentCount: 'int'
 
   source: 'text' # empty (user), coe, rec.gov, usfs
-  subType: 'text' # rvPark, publicCampground
+  subType: 'text' # rvPark, public
   # or... isPrivate: boolean for rvParks?
   # affiliations: goodSam, passportAmerica, etc...
 
@@ -73,6 +73,11 @@ scyllaFields =
   maxLength: 'int'
   restrooms: 'json'
   videos: 'json' # json
+
+  agencySlug: 'text'
+  regionSlug: 'text'
+  officeSlug: 'text'
+
 
 class Campground extends PlaceBase
   getScyllaTables: ->
@@ -142,6 +147,9 @@ class Campground extends PlaceBase
 
           maxLength: {type: 'integer'}
           restrooms: {type: 'object'}
+
+          agencySlug: {type: 'keyword'}
+          regionSlug: {type: 'keyword'}
       }
     ]
 
