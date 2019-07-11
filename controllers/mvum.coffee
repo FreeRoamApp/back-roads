@@ -53,41 +53,42 @@ class MvumCtrl
               }
 
 
-  _urlToMbtiles: (url, mbtilesFileName) ->
+  _urlToMbtiles: (url, pdfFileName, mbtilesFileName) ->
     request url, {encoding: null}
     .then (buffer) =>
       console.log 'req done'
-      pdfFileName = "/tmp/mvum-#{Date.now()}.pdf"
       new Promise (resolve, reject) ->
         fs.writeFile pdfFileName, buffer, (err) ->
           console.log 'wrote'
           if err
             reject err
           else
-            exec "gdal_translate #{pdfFileName} #{mbtilesFileName} -of MBTILES && gdaladdo -r lanczos image.mbtiles 2 4 8 16", (error, stdout, stderr) ->
+            exec "gdal_translate #{pdfFileName} #{mbtilesFileName} -of MBTILES && gdaladdo -r lanczos #{mbtilesFileName} 2 4 8 16", (error, stdout, stderr) ->
               if error or stderr
                 reject error or stderr
               else
                 resolve()
 
+  _cleanup: (pdfFileName, mbtilesFileName) ->
+    fs.unlink pdfFileName, -> null
+    fs.unlink mbtilesFileName, -> null
+
   upsert: ({name, url}, {user}) =>
     console.log url
 
     # FIXME: throw err if url isn't usfs
+    pdfFileName = "/tmp/mvum-#{Date.now()}.pdf"
     mbtilesFileName = "/tmp/mvum-#{Date.now()}.mbtiles"
 
-
     # TODO: might be better to move this to separate service so it doesn't hog memory / crash?
-    # @_urlToMbtiles url, mbtilesFileName
-    # .then =>
-    mbtilesFileName = "/tmp/mvum-1562808170733.mbtiles"
-    @_getMbtilesInfo mbtilesFileName
-    .then ({regionSlug, center, bounds}) =>
-      Promise.all [
-        @_uploadMbtiles mbtilesFileName, 'mvums/test.mbtiles'
-
-        Mvum.upsert {
-          slug: Mvum.getSlugFromRegionSlugAndCenter regionSlug, center
+    @_urlToMbtiles url, pdfFileName, mbtilesFileName
+    .then =>
+      # mbtilesFileName = "/tmp/mvum-1562808170733.mbtiles"
+      @_getMbtilesInfo mbtilesFileName
+      .then ({regionSlug, center, bounds}) =>
+        slug = Mvum.getSlugFromRegionSlugAndCenter regionSlug, center
+        console.log {
+          slug: slug
           name: name
           url: url
           regionSlug: regionSlug
@@ -98,9 +99,25 @@ class MvumCtrl
               [bounds[2], bounds[3]] # bottom right?
             ]
         }
-    ]
+        Promise.all [
+          @_uploadMbtiles mbtilesFileName, "mvums/#{slug}.mbtiles"
+
+          Mvum.upsert {
+            id: slug # for elasticsearch
+            slug: slug
+            name: name
+            url: url
+            regionSlug: regionSlug
+            polygon:
+              type: 'envelope'
+              coordinates: [
+                [bounds[0], bounds[1]] # top left?
+                [bounds[2], bounds[3]] # bottom right?
+              ]
+          }
+      ]
     .then =>
-      @_cleanup 'fixme'
+      @_cleanup pdfFileName, mbtilesFileName
 
 
 

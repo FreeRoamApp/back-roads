@@ -1,6 +1,6 @@
-FROM node:10.11.0
+FROM node:10.16.0
 
-RUN printf "deb http://archive.debian.org/debian/ jessie main\ndeb-src http://archive.debian.org/debian/ jessie main\ndeb http://security.debian.org jessie/updates main\ndeb-src http://security.debian.org jessie/updates main" > /etc/apt/sources.list
+# RUN printf "deb http://archive.debian.org/debian/ stretch main\ndeb-src http://archive.debian.org/debian/ stretch main" > /etc/apt/sources.list
 RUN apt-get update && apt-get install -y gdal-bin python libcairo2-dev libjpeg-dev libpango1.0-dev libgif-dev build-essential
 
 # Cache dependencies
