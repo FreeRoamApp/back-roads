@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^2.3.4",
+    "@mapbox/mbtiles": "^0.11.0",
     "@mapbox/polyline": "^1.0.0",
     "@turf/buffer": "^5.1.5",
     "@turf/turf": "^5.1.6",

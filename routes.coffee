@@ -25,6 +25,7 @@ GroupRoleCtrl = require './controllers/group_role'
 HazardCtrl = require './controllers/hazard'
 ItemCtrl = require './controllers/item'
 LoginLinkCtrl = require './controllers/login_link'
+MvumCtrl = require './controllers/mvum'
 NotificationCtrl = require './controllers/notification'
 OfficeCtrl = require './controllers/office'
 OvernightCtrl = require './controllers/overnight'
@@ -236,8 +237,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 
 .on 'loginLinks.getByUserIdAndToken', authed LoginLinkCtrl.getByUserIdAndToken
 
-# FIXME: rm after 6/20/2019
-.on 'lowClearances.search', authed -> Promise.resolve []
+.on 'mvums.upsert', authed MvumCtrl.upsert
 
 .on 'offices.getAllByAgencySlugAndRegionSlug',
   authed OfficeCtrl.getAllByAgencySlugAndRegionSlug
