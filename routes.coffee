@@ -237,6 +237,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 
 .on 'loginLinks.getByUserIdAndToken', authed LoginLinkCtrl.getByUserIdAndToken
 
+.on 'mvums.getAllByRegionSlug', authed MvumCtrl.getAllByRegionSlug
 .on 'mvums.upsert', authed MvumCtrl.upsert
 
 .on 'offices.getAllByAgencySlugAndRegionSlug',

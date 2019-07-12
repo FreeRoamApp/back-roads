@@ -65,6 +65,13 @@ class Mvum extends Base
     lon = Math.round(1000 * center[0]) / 1000
     "#{regionSlug}-#{lat}-#{lon}"
 
+  getAllByRegionSlug: (regionSlug) =>
+    cknex().select '*'
+    .from 'mvums_by_region'
+    .where 'regionSlug', '=', regionSlug
+    .run()
+    .map @defaultOutput
+
   search: ({query}) ->
     elasticsearch.search {
       index: @getElasticSearchIndices()[0].name

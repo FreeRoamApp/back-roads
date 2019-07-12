@@ -18,8 +18,9 @@ storage = new Storage {
 }
 
 class MvumCtrl
-  getAll: ({}, {user}) ->
-    Mvum.getAll()
+  getAllByRegionSlug: ({regionSlug, location}, {user}) ->
+    # TODO: get by location as well, and highlight that one
+    Mvum.getAllByRegionSlug regionSlug
 
   _uploadMbtiles: (mbtilesFileName, uploadFileName) ->
     new Promise (resolve, reject) ->
@@ -63,7 +64,7 @@ class MvumCtrl
           if err
             reject err
           else
-            exec "gdal_translate #{pdfFileName} #{mbtilesFileName} -of MBTILES && gdaladdo -r lanczos #{mbtilesFileName} 2 4 8 16", (error, stdout, stderr) ->
+            exec "gdal_translate #{pdfFileName} -co TILE_FORMAT=png8 #{mbtilesFileName} -of MBTILES && gdaladdo -r lanczos #{mbtilesFileName} 2 4 8 16", (error, stdout, stderr) ->
               if error or stderr
                 reject error or stderr
               else
