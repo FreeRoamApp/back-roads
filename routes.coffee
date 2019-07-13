@@ -25,7 +25,7 @@ GroupRoleCtrl = require './controllers/group_role'
 HazardCtrl = require './controllers/hazard'
 ItemCtrl = require './controllers/item'
 LoginLinkCtrl = require './controllers/login_link'
-MvumCtrl = require './controllers/mvum'
+LocalMapCtrl = require './controllers/local_map'
 NotificationCtrl = require './controllers/notification'
 OfficeCtrl = require './controllers/office'
 OvernightCtrl = require './controllers/overnight'
@@ -237,8 +237,8 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 
 .on 'loginLinks.getByUserIdAndToken', authed LoginLinkCtrl.getByUserIdAndToken
 
-.on 'mvums.getAllByRegionSlug', authed MvumCtrl.getAllByRegionSlug
-.on 'mvums.upsert', authed MvumCtrl.upsert
+.on 'localMaps.getAllByRegionSlug', authed LocalMapCtrl.getAllByRegionSlug
+.on 'localMaps.upsert', authed LocalMapCtrl.upsert
 
 .on 'offices.getAllByAgencySlugAndRegionSlug',
   authed OfficeCtrl.getAllByAgencySlugAndRegionSlug

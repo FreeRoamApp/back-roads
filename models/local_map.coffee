@@ -5,46 +5,66 @@ Base = require './base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
-class Mvum extends Base
+class LocalMap extends Base
   getScyllaTables: ->
     [
       {
-        name: 'mvums_by_slug'
+        name: 'local_maps_by_slug'
         keyspace: 'free_roam'
         fields:
           slug: 'text'
+          type: {type: 'text', defaultFn: -> 'mvum'}
           name: 'text'
           url: 'text'
           polygon: 'json'
           regionSlug: 'text'
           officeSlug: 'text'
-          lastUpdateTime: 'timestamp'
+          lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
         primaryKey:
           partitionKey: ['slug']
       }
       {
-        name: 'mvums_by_region'
+        name: 'local_maps_by_type'
         keyspace: 'free_roam'
         fields:
           slug: 'text'
+          type: {type: 'text', defaultFn: -> 'mvum'}
           name: 'text'
           url: 'text'
           polygon: 'json'
           regionSlug: 'text'
           officeSlug: 'text'
-          lastUpdateTime: 'timestamp'
+          lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
+        primaryKey:
+          partitionKey: ['type']
+          clusteringColumns: ['slug']
+      }
+      {
+        name: 'local_maps_by_region'
+        keyspace: 'free_roam'
+        fields:
+          slug: 'text'
+          type: {type: 'text', defaultFn: -> 'mvum'}
+          name: 'text'
+          url: 'text'
+          polygon: 'json'
+          regionSlug: 'text'
+          officeSlug: 'text'
+          lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
         primaryKey:
           partitionKey: ['regionSlug']
-          clusteringColumns: ['slug']
+          clusteringColumns: ['type', 'slug']
       }
     ]
 
   getElasticSearchIndices: ->
     [
       {
-        name: 'mvums'
+        name: 'local_maps'
         mappings:
           name: {type: 'text'}
+          slug: {type: 'keyword'}
+          type: {type: 'keyword'}
           url: {type: 'text'}
           polygon: {type: 'geo_shape'}
           regionSlug: {type: 'text'}
@@ -55,7 +75,7 @@ class Mvum extends Base
 
   getBySlug: (slug) =>
     cknex().select '*'
-    .from 'mvums_by_slug'
+    .from 'local_maps_by_slug'
     .where 'slug', '=', slug
     .run {isSingle: true}
     .then @defaultOutput
@@ -67,7 +87,7 @@ class Mvum extends Base
 
   getAllByRegionSlug: (regionSlug) =>
     cknex().select '*'
-    .from 'mvums_by_region'
+    .from 'local_maps_by_region'
     .where 'regionSlug', '=', regionSlug
     .run()
     .map @defaultOutput
@@ -83,7 +103,7 @@ class Mvum extends Base
       _.map hits.hits, ({_id, _source}) ->
         _.defaults _source, {id: _id}
 
-module.exports = new Mvum()
+module.exports = new LocalMap()
 
 # module.exports.search {
 #   query:
