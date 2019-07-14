@@ -17,13 +17,8 @@ storage = new Storage {
   credentials: config.GOOGLE_PRIVATE_KEY_JSON
 }
 
-# translate with smaller output sizes
-# should figure out px size instead of %
-# modify mb-util patch script
-# patch
-# update minzoom
-#
-# seems blurrier than overview :(... should probably just use to get some lower zoom levels (7, 6, 5, 4, 3, 2, 1)
+# missing georeferenced:
+# angeles
 
 class LocalMapCtrl
   getAllByRegionSlug: ({regionSlug, location}, {user}) ->
@@ -66,7 +61,7 @@ class LocalMapCtrl
   _urlToMbtiles: (url, pdfFileName, mbtilesFileName) ->
     request url, {encoding: null}
     .catch ->
-      router.throw {
+      throw {
         status: 400
         info:
           message: "Error fetching PDF"
@@ -78,7 +73,7 @@ class LocalMapCtrl
         fs.writeFile pdfFileName, buffer, (err) ->
           console.log 'wrote', err
           if err
-            router.throw {
+            reject {
               status: 400
               info:
                 message: "Error saving PDF"
@@ -88,7 +83,7 @@ class LocalMapCtrl
             exec "gdal_translate #{pdfFileName} -co TILE_FORMAT=png8 -co BLOCKSIZE=512 #{mbtilesFileName} -of MBTILES && gdaladdo -r lanczos #{mbtilesFileName} 2 4 8 16 32 64", (error, stdout, stderr) ->
               if error or stderr
                 console.log error or stderr
-                router.throw {
+                reject {
                   status: 400
                   info:
                     message: "This doesn't appear to be a valid georeferenced PDF, we can't accept this at this time - post the URL in chat and we'll try to find one"
@@ -117,6 +112,8 @@ class LocalMapCtrl
 
     # TODO: might be better to move this to separate service so it doesn't hog memory / crash?
     @_urlToMbtiles url, pdfFileName, mbtilesFileName
+    .catch (err) ->
+      router.throw err
     .then =>
       # mbtilesFileName = "/tmp/localmap-1562808170733.mbtiles"
       console.log 'get tiles info'
