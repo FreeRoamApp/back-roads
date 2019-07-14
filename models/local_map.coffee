@@ -103,18 +103,20 @@ class LocalMap extends Base
       _.map hits.hits, ({_id, _source}) ->
         _.defaults _source, {id: _id}
 
-module.exports = new LocalMap()
+  getAllByLocationInPolygon: (location) =>
+    @search {
+      query:
+        bool:
+          filter:
+            geo_shape:
+              polygon:
+                relation: 'intersects'
+                shape:
+                  type: 'point'
+                  coordinates: location
+    }
+    .then (res) ->
+      console.log res
+      res
 
-# module.exports.search {
-#   query:
-#     bool:
-#       filter:
-#         geo_shape:
-#           polygon:
-#             relation: 'intersects'
-#             shape:
-#               type: 'point'
-#               coordinates: [-121.68206161929695, 44.54955990120351]
-# }
-# .then (res) ->
-#   console.log res
+module.exports = new LocalMap()
