@@ -31,8 +31,18 @@ class LocalMapCtrl
       readStream = fs.createReadStream mbtilesFileName
       file = storage.bucket('free-roam-tile-server').file uploadFileName
       readStream.pipe file.createWriteStream {
-        # gzip: true
         metadata: {contentType: 'application/x-sqlite3'}
+      }
+      .on 'finish', ->
+        resolve uploadFileName
+      .on 'error', reject
+
+  _uploadPdf: (pdfFileName, uploadFileName) ->
+    new Promise (resolve, reject) ->
+      readStream = fs.createReadStream pdfFileName
+      file = storage.bucket('fdn.uno').file uploadFileName
+      readStream.pipe file.createWriteStream {
+        metadata: {contentType: 'application/pdf'}
       }
       .on 'finish', ->
         resolve uploadFileName
@@ -58,7 +68,7 @@ class LocalMapCtrl
           }
 
 
-  _urlToMbtiles: (url, pdfFileName, mbtilesFileName) ->
+  _urlToPdfBuffer: (url) =>
     request url, {encoding: null}
     .catch ->
       throw {
@@ -67,30 +77,30 @@ class LocalMapCtrl
           message: "Error fetching PDF"
           field: 'url'
       }
-    .then (buffer) =>
-      console.log 'req done'
-      new Promise (resolve, reject) ->
-        fs.writeFile pdfFileName, buffer, (err) ->
-          console.log 'wrote', err
-          if err
-            reject {
-              status: 400
-              info:
-                message: "Error saving PDF"
-                field: 'url'
-            }
-          else
-            exec "gdal_translate #{pdfFileName} -co TILE_FORMAT=png8 -co BLOCKSIZE=512 #{mbtilesFileName} -of MBTILES && gdaladdo -r lanczos #{mbtilesFileName} 2 4 8 16 32 64", (error, stdout, stderr) ->
-              if error or stderr
-                console.log error or stderr
-                reject {
-                  status: 400
-                  info:
-                    message: "This doesn't appear to be a valid georeferenced PDF, we can't accept this at this time - post the URL in chat and we'll try to find one"
-                    field: 'url'
-                }
-              else
-                resolve()
+
+  _pdfToMbtiles: (buffer, pdfFileName, mbtilesFileName) ->
+    new Promise (resolve, reject) ->
+      fs.writeFile pdfFileName, buffer, (err) ->
+        console.log 'wrote', err
+        if err
+          reject {
+            status: 400
+            info:
+              message: "Error saving PDF"
+              field: 'url'
+          }
+        else
+          exec "gdal_translate #{pdfFileName} -co TILE_FORMAT=png8 -co BLOCKSIZE=512 #{mbtilesFileName} -of MBTILES && gdaladdo -r lanczos #{mbtilesFileName} 2 4 8 16 32 64", (error, stdout, stderr) ->
+            if error or stderr
+              console.log error or stderr
+              reject {
+                status: 400
+                info:
+                  message: "This doesn't appear to be a valid georeferenced PDF, we can't accept this at this time - post the URL in chat and we'll try to find one"
+                  field: 'url'
+              }
+            else
+              resolve()
 
   _cleanup: (pdfFileName, mbtilesFileName) ->
     fs.unlink pdfFileName, -> null
@@ -111,61 +121,67 @@ class LocalMapCtrl
     mbtilesFileName = "/tmp/localmap-#{Date.now()}.mbtiles"
 
     # TODO: might be better to move this to separate service so it doesn't hog memory / crash?
-    @_urlToMbtiles url, pdfFileName, mbtilesFileName
+    @_urlToPdfBuffer url
     .catch (err) ->
       router.throw err
-    .then =>
-      # mbtilesFileName = "/tmp/localmap-1562808170733.mbtiles"
-      console.log 'get tiles info'
-      @_getMbtilesInfo mbtilesFileName
-      .catch (err) ->
-        console.log err
-        router.throw err
-      .then ({center, bounds}) =>
-        console.log 'got', center, bounds
-        (if regionSlug
-          Promise.resolve regionSlug
-        else
-          FeatureLookupService.getOfficeSlugByLocation {
-            lat: center[1]
-            lon: center[0]
-          }
-          .then (officeSlug) ->
-            unless officeSlug
-              return
-            Office.getBySlug officeSlug
-            .then (office) ->
-              unless office?.regionSlug
-                throwLocationError
-              office.regionSlug
-        ).then (regionSlug) =>
-          unless regionSlug
-            router.throw {
-              status: 400
-              info:
-                message: "Couldn't automatically determine the national forest, you'll have to select it manually"
-                requestRegion: true
-                field: 'url'
+    .then (buffer) =>
+      @_pdfToMbtiles buffer, pdfFileName, mbtilesFileName
+      .then =>
+        # mbtilesFileName = "/tmp/localmap-1562808170733.mbtiles"
+        console.log 'get tiles info'
+        @_getMbtilesInfo mbtilesFileName
+        .catch (err) ->
+          console.log err
+          router.throw err
+        .then ({center, bounds}) =>
+          console.log 'got', center, bounds
+          (if regionSlug
+            Promise.resolve regionSlug
+          else
+            FeatureLookupService.getOfficeSlugByLocation {
+              lat: center[1]
+              lon: center[0]
             }
-          slug = LocalMap.getSlugFromRegionSlugAndCenter regionSlug, center
-          Promise.all [
-            @_uploadMbtiles mbtilesFileName, "local_maps/#{slug}.mbtiles"
+            .then (officeSlug) ->
+              unless officeSlug
+                return
+              Office.getBySlug officeSlug
+              .then (office) ->
+                unless office?.regionSlug
+                  throwLocationError
+                office.regionSlug
+          ).then (regionSlug) =>
+            unless regionSlug
+              router.throw {
+                status: 400
+                info:
+                  message: "Couldn't automatically determine the national forest, you'll have to select it manually"
+                  requestRegion: true
+                  field: 'url'
+              }
+            slug = LocalMap.getSlugFromRegionSlugAndCenter regionSlug, center
+            console.log "#{config.CDN_HOST}/local_maps/#{slug}.pdf"
+            Promise.all [
+              @_uploadMbtiles mbtilesFileName, "local_maps/#{slug}.mbtiles"
 
-            LocalMap.upsert {
-              id: slug # for elasticsearch
-              slug: slug
-              name: name
-              type: type
-              url: url
-              regionSlug: regionSlug
-              polygon:
-                type: 'envelope'
-                coordinates: [
-                  [bounds[0], bounds[1]] # top left?
-                  [bounds[2], bounds[3]] # bottom right?
-                ]
-            }
-          ]
+              @_uploadPdf pdfFileName, "local_maps/#{slug}.pdf"
+
+              LocalMap.upsert {
+                id: slug # for elasticsearch
+                slug: slug
+                name: name
+                type: type
+                url: url
+                downloadUrl: "https://#{config.CDN_HOST}/local_maps/#{slug}.pdf"
+                regionSlug: regionSlug
+                polygon:
+                  type: 'envelope'
+                  coordinates: [
+                    [bounds[0], bounds[1]] # top left?
+                    [bounds[2], bounds[3]] # bottom right?
+                  ]
+              }
+            ]
     .then =>
       @_cleanup pdfFileName, mbtilesFileName
 

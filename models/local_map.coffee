@@ -16,6 +16,7 @@ class LocalMap extends Base
           type: {type: 'text', defaultFn: -> 'mvum'}
           name: 'text'
           url: 'text'
+          downloadUrl: 'text'
           polygon: 'json'
           regionSlug: 'text'
           officeSlug: 'text'
@@ -31,6 +32,7 @@ class LocalMap extends Base
           type: {type: 'text', defaultFn: -> 'mvum'}
           name: 'text'
           url: 'text'
+          downloadUrl: 'text'
           polygon: 'json'
           regionSlug: 'text'
           officeSlug: 'text'
@@ -47,6 +49,7 @@ class LocalMap extends Base
           type: {type: 'text', defaultFn: -> 'mvum'}
           name: 'text'
           url: 'text'
+          downloadUrl: 'text'
           polygon: 'json'
           regionSlug: 'text'
           officeSlug: 'text'
@@ -66,6 +69,7 @@ class LocalMap extends Base
           slug: {type: 'keyword'}
           type: {type: 'keyword'}
           url: {type: 'text'}
+          downloadUrl: {type: 'text'}
           polygon: {type: 'geo_shape'}
           regionSlug: {type: 'text'}
           officeSlug: {type: 'text'}
