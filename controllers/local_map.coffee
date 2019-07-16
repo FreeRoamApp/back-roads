@@ -19,6 +19,10 @@ storage = new Storage {
 
 # missing georeferenced:
 # angeles
+# bighorn
+# mt. baker
+# olympic
+# george washington
 
 class LocalMapCtrl
   getAllByRegionSlug: ({regionSlug, location}, {user}) ->
