@@ -18,6 +18,7 @@ scyllaFields =
   groupId: {type: 'uuid', defaultFn: -> config.EMPTY_UUID}
   body: 'text'
   card: 'json'
+  type: {type: 'text', defaultFn: -> 'text'} # text | action
   timeBucket:
     type: 'text'
     defaultFn: -> TimeService.getScaledTimeByTimeScale 'week'
@@ -54,6 +55,19 @@ class ConversationMessageModel extends Base
           partitionKey: ['id']
       }
     ]
+
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'conversation_messages'
+        mappings:
+          conversationId: 'text'
+          userId: 'text'
+          groupId: 'text'
+          body: 'text'
+      }
+    ]
+
 
   constructor: ->
     @streamChannelKey = 'conversation_message'

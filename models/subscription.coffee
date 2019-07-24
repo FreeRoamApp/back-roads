@@ -24,8 +24,6 @@ TYPES =
   # maybe eventually people can narrow this down in the same way group <-> channels work
   # unsubscribing to one removes social 'all' and is more granular
   SOCIAL: 'social'
-  REWARD: 'reward'
-  TRADE: 'trade'
   NEWS: 'news'
 
 scyllaFields =
@@ -153,19 +151,7 @@ class Subscription extends Base
         userId: user.id
         token: 'none'
         deviceId: 'none'
-        sourceType: @TYPES.REWARD
-      }
-      @subscribe {
-        userId: user.id
-        token: 'none'
-        deviceId: 'none'
         sourceType: @TYPES.SOCIAL
-      }
-      @subscribe {
-        userId: user.id
-        token: 'none'
-        deviceId: 'none'
-        sourceType: @TYPES.TRADE
       }
       @subscribe {
         userId: user.id

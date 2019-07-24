@@ -18,7 +18,7 @@ FireService = require '../services/fire'
 console.log FireService
 PlacesService = require '../services/places'
 allCategories = require '../resources/data/categories'
-allGroups = require '../resources/data/groups'
+# allGroups = require '../resources/data/groups'
 allEvents = require '../resources/data/events'
 allItems = require '../resources/data/items'
 allAmenities = require '../resources/data/amenities'
@@ -39,8 +39,8 @@ class CronService
       CleanupService.clean()
       Thread.updateScores 'stale'
       if config.ENV is config.ENVS.DEV and config.SCYLLA.CONTACT_POINTS[0] is 'localhost' and config.ELASTICSEARCH.HOST is 'localhost'
-        Promise.map allGroups, (group) ->
-          Group.upsert _.cloneDeep group
+        # Promise.map allGroups, (group) ->
+        #   Group.upsert _.cloneDeep group
         Campground.batchUpsert _.cloneDeep allCampgrounds
         Event.batchUpsert _.cloneDeep allEvents
         Item.batchUpsert _.cloneDeep allItems
@@ -54,8 +54,8 @@ class CronService
 
     @addCron 'oneHour', '0 2 * * * *', ->
       CleanupService.trimLeaderboards()
-      Promise.map allGroups, (group) ->
-        Group.upsert _.cloneDeep group
+      # Promise.map allGroups, (group) ->
+      #   Group.upsert _.cloneDeep group
       Item.batchUpsert _.cloneDeep allItems
       Amenity.batchUpsert _.cloneDeep allAmenities
       Event.batchUpsert _.cloneDeep allEvents

@@ -238,6 +238,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'loginLinks.getByUserIdAndToken', authed LoginLinkCtrl.getByUserIdAndToken
 
 .on 'localMaps.getAllByRegionSlug', authed LocalMapCtrl.getAllByRegionSlug
+.on 'localMaps.deleteByRow', authed LocalMapCtrl.deleteByRow
 .on 'localMaps.upsert', authed LocalMapCtrl.upsert
 
 .on 'offices.getAllByAgencySlugAndRegionSlug',

@@ -19,7 +19,7 @@ scyllaFields =
   groupId: 'uuid'
   type: 'text'
   rank: 'int' # ordering
-  data: 'json' # json: name, description, slowMode, slowModeCooldown
+  data: 'json' # json: name, description, slowMode, slowModeCooldown, isDefault
   isRead: 'boolean'
   lastUpdateTime: 'timestamp'
 
@@ -121,11 +121,11 @@ class ConversationModel extends Base
   getAllByUserId: (userId, {limit, hasMessages} = {}) =>
     limit ?= 25
 
-    # TODO: use a redis leaderboard for sorting by last update?
+    # FIXME FIXME: use a redis leaderboard for sorting by last update?
     cknex().select '*'
     .from 'conversations_by_userId'
     .where 'userId', '=', userId
-    .limit 1000
+    .limit 2000
     .run()
     .then (conversations) ->
       if hasMessages
@@ -141,6 +141,12 @@ class ConversationModel extends Base
     .where 'groupId', '=', groupId
     .run()
     .map @defaultOutput
+
+  getDefaultByGroup: (group) =>
+    if group.data?.welcomeChannelId
+      @getById group.data?.welcomeChannelId
+    else
+      Promise.resolve null
 
   getByUserIds: (checkUserIds, {limit} = {}) =>
     @getAllByUserId checkUserIds[0], {limit: 2500}

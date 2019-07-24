@@ -273,7 +273,7 @@ class ThreadModel extends Base
         rawScore = Math.abs(thread.upvotes * 1.5 - thread.downvotes)
         order = Math.log10(Math.max(Math.abs(rawScore), 1))
         sign = if rawScore > 0 then 1 else if rawScore < 0 then -1 else 0
-        postAgeHours = (Date.now() - addTime.getTime()) / (3600 * 1000)
+        postAgeHours = (Date.now() - thread.addTime.getTime()) / (3600 * 1000)
         if "#{thread.id}" in pinnedThreadIds
           postAgeHours = 1
           sign = 1

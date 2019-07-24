@@ -172,6 +172,7 @@
   "conversations.jumpNew": "You're viewing old messages. Jump to new messages.",
   "conversations.welcomeaustin": "Welcome to FreeRoam! I'm Austin, the guy who is programming the app. Let me know if you have any questions or suggestions for how Rachel and I can improve it!",
   "conversations.welcomerachel": "Welcome to FreeRoam! I'm Rachel, the designer for the app. Let me know if you have any questions or suggestions for how Austin and I can improve it!",
+  "conversations.newUser": "joined the chat",
   "coordinatePicker.title": "Select a location",
   "coordinatePicker.showSatellite": "Show satellite",
   "coordinatePicker.hideSatellite": "Hide satellite",

@@ -29,7 +29,7 @@ class ConversationCtrl
 
     if groupId
       conversation = Conversation.getByGroupIdAndName groupId, name
-      hasPermission = GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
+      GroupUser.hasPermissionByGroupIdAndUser groupId, user, [
         GroupUser.PERMISSIONS.MANAGE_INFO
       ]
       .then (hasPermission) ->
@@ -59,7 +59,7 @@ class ConversationCtrl
         type: if groupId then 'channel' else 'pm'
       }, {userId: user.id})
 
-  updateById: ({id, name, description}, {user}) ->
+  updateById: ({id, name, description, isWelcomeChannel}, {user}) ->
     name = name and _.kebabCase(name.toLowerCase()).replace(/[^0-9a-z-]/gi, '')
 
     Conversation.getById id
@@ -81,14 +81,24 @@ class ConversationCtrl
             language: user.language
           }
         }
-        Conversation.upsert {
-          id: conversation.id
-          userId: conversation.userId
-          groupId: conversation.groupId
-          data: _.defaults {
-            name, description
-          }, conversation.data
-        }
+        Promise.all _.filter [
+          if isWelcomeChannel
+            Group.getById groupId
+            .then (group) ->
+              Group.upsertByRow group, {
+                data: _.defaults {
+                  welcomeChannelId: id
+                }, group.data
+              }
+          Conversation.upsert {
+            id: conversation.id
+            userId: conversation.userId
+            groupId: conversation.groupId
+            data: _.defaults {
+              name, description
+            }, conversation.data
+          }
+        ]
 
   getAll: ({}, {user}) ->
     Conversation.getAllByUserId user.id, {hasMessages: true}

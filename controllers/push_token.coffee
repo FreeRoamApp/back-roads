@@ -8,6 +8,8 @@ Subscription = require '../models/subscription'
 User = require '../models/user'
 config = require '../config'
 
+# pushToken flow is documented in controllers/subscription
+
 class PushTokensCtrl
   # store a new pushToken and re-create all subscribed topics for that token
   upsert: ({token, sourceType, language, deviceId}, {user}) =>

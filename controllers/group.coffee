@@ -7,9 +7,12 @@ Group = require '../models/group'
 GroupUser = require '../models/group_user'
 GroupRole = require '../models/group_role'
 Conversation = require '../models/conversation'
+ConversationMessage = require '../models/conversation_message'
+Language = require '../models/language'
 Subscription = require '../models/subscription'
 EmbedService = require '../services/embed'
 CacheService = require '../services/cache'
+ConversationMessageService = require '../services/conversation_message'
 PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
@@ -29,7 +32,8 @@ class GroupCtrl
     Group.create {
       name, description, badgeId, background, mode
     }
-    .tap ({id}) ->
+    .tap (group) ->
+      {id} = group
       Promise.all [
         Group.addUser id, user.id
         GroupRole.upsert {
@@ -43,15 +47,27 @@ class GroupCtrl
             name: 'general'
           type: 'channel'
         }
+        .then (conversation) ->
+          Group.upsertByRow group, {
+            data:
+              _.defaults {
+                welcomeChannelId: conversation.id
+              }, group.data
+          }
       ]
 
-  updateById: ({id, name, description, badgeId, background, mode}, {user}) ->
-    Group.hasPermissionByIdAndUserId id, user.id, {level: 'admin'}
-    .then (hasPermission) ->
+  updateById: ({id, name, description}, {user}) ->
+    Promise.all [
+      GroupUser.hasPermissionByGroupIdAndUser id, user, [
+        GroupUser.PERMISSIONS.MANAGE_INFO
+      ]
+      Group.getById id
+    ]
+    .then ([hasPermission, group]) ->
       unless hasPermission
         router.throw {status: 400, info: 'You don\'t have permission'}
 
-      Group.updateById id, {name, description, badgeId, background, mode}
+      Group.upsertByRow group, {name, description}
 
   leaveById: ({id}, {user}) ->
     groupId = id
@@ -108,6 +124,23 @@ class GroupCtrl
         Subscription.subscribeToGroup {
           userId, groupId: group.id
         }
+
+        Conversation.getDefaultByGroup group
+        .then (conversation) ->
+          if conversation
+            ConversationMessage.upsert {
+              # id: conversationMessageId
+              userId: userId
+              body: Language.get "conversations.newUser", {
+                file: 'strings'
+              }
+              # clientId: clientId
+              conversationId: conversation.id
+              groupId: group.id
+              type: 'action'
+            }, {
+              prepareFn: ConversationMessageService.prepare
+            }
 
         prefix = CacheService.PREFIXES.GROUP_GET_ALL_CATEGORY
         category = "#{prefix}:#{userId}"
@@ -208,7 +241,7 @@ class GroupCtrl
       .then (groupUser) =>
         if groupUser.userId
           groupUser
-        else
+        else if autoJoin
           @joinById {id: group.id}, {user}
           .then getGroupUser
       .then (groupUser) ->

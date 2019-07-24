@@ -15,18 +15,12 @@ GroupRole = require '../models/group_role'
 GroupUser = require '../models/group_user'
 Language = require '../models/language'
 CacheService = require '../services/cache'
+ConversationMessageService = require '../services/conversation_message'
 PushNotificationService = require '../services/push_notification'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 cknex = require '../services/cknex'
 config = require '../config'
-
-defaultEmbed = [
-  EmbedService.TYPES.CONVERSATION_MESSAGE.USER
-  EmbedService.TYPES.CONVERSATION_MESSAGE.MENTIONED_USERS
-  EmbedService.TYPES.CONVERSATION_MESSAGE.TIME
-  EmbedService.TYPES.CONVERSATION_MESSAGE.GROUP_USER
-]
 
 MAX_CONVERSATION_USER_IDS = 20
 URL_REGEX = /\b(https?):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[A-Z0-9+&@#/%=~_|]/gi
@@ -43,15 +37,6 @@ RATE_LIMIT_CONVERSATION_MESSAGES_MEDIA_EXPIRE_S = 10
 # LARGE_IMAGE_SIZE = 1000
 
 defaultConversationEmbed = [EmbedService.TYPES.CONVERSATION.USERS]
-prepareFn = (item) ->
-  EmbedService.embed {
-    embed: defaultEmbed
-    # FIXME: pass groupId for groupUser embed. don't embed groupUser for pm
-  }, ConversationMessage.defaultOutput(item)
-  .then (item) ->
-    # TODO: rm?
-    if item?.user?.flags?.isChatBanned isnt true
-      item
 
 class ConversationMessageCtrl
   constructor: ->
@@ -233,7 +218,7 @@ class ConversationMessageCtrl
             card: card
           }, {
             prepareFn: (item) ->
-              prepareFn item
+              ConversationMessageService.prepare item
           }
       .then (conversationMessage) =>
         userIds = conversation.userIds
@@ -323,7 +308,9 @@ class ConversationMessageCtrl
     radioactiveHost = config.RADIOACTIVE_API_URL.replace /https?:\/\//i, ''
     isPrivate = headers.host is radioactiveHost
     if isPrivate and body.secret is config.DEALER_SECRET
-      ConversationMessage.updateById params.id, {card: body.card}, {prepareFn}
+      ConversationMessage.updateById params.id, {card: body.card}, {
+        prepareFn: ConversationMessageService.prepare
+      }
 
   unsubscribeByConversationId: ({conversationId}, {user}, {socket}) ->
     ConversationMessage.unsubscribeByConversationId conversationId, {socket}
@@ -361,7 +348,7 @@ class ConversationMessageCtrl
           route: route
           reverse: true
           initialPostFn: (item) ->
-            prepareFn item
+            ConversationMessageService.prepare item
         }
 
   uploadImage: ({}, {user, file}) ->

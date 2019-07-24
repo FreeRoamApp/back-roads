@@ -18,11 +18,37 @@ storage = new Storage {
 }
 
 # missing georeferenced:
-# angeles
-# bighorn
-# mt. baker
-# olympic
-# george washington
+###
+- Bighorn
+- Mt. Baker
+- Olympic
+- George Washington and Jefferson
+- Ashley
+- Uinta-Wasatch-Cache
+- Bitterroot
+- Modoc
+
+- Flathead: Swan Lake
+- Helena-Lewis and Clark: Divide-Clancy-Unionville
+- Helena-Lewis and Clark: Big Belt Mountains
+- Helena-Lewis and Clark: Little Belt Mountains
+- Helena-Lewis and Clark: Highwood Mountains
+- Helena-Lewis and Clark: Big and Little Snowy Mountains
+- Helena-Lewis and Clark: Lewis and Clark Interpretive Center
+- Lolo: Missoula Ranger District  - Lolo Creek to Missoula West
+- Lolo: Ninemile Ranger District South
+- Lolo: Superior Ranger District
+- Six Rivers: Orleans (south)
+- Six Rivers: Orleans (north)
+- Los Padres: Balling ohv
+- Sequoia: Western Divide
+- Sequoia: Hume Lake
+- Lake Taoe Basin: North
+- Lake Tahoe Basin: South
+- Angeles: West
+- Angeles: East
+###
+
 
 class LocalMapCtrl
   getAllByRegionSlug: ({regionSlug, location}, {user}) ->
@@ -109,6 +135,11 @@ class LocalMapCtrl
   _cleanup: (pdfFileName, mbtilesFileName) ->
     fs.unlink pdfFileName, -> null
     fs.unlink mbtilesFileName, -> null
+
+  deleteByRow: ({row}, {user}) ->
+    if user?.username in ['austin', 'big_boxtruck']
+      LocalMap.deleteByRow row
+
 
   upsert: ({name, type, url, regionSlug}, {user}) =>
     console.log url

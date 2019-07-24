@@ -8,6 +8,39 @@ Subscription = require '../models/subscription'
 PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
+###
+controllers/auth
+When a new user is created (login aka loginGuest), Subscription.subscribeInitial is called
+  - this subscribes to EMPTY_UUID news, social, privateMessage
+
+---
+client / controllers/push_token
+Push token gets upserted whenever it's available by client
+  - It's also called immediately after login
+
+FIXME: this step should only do the token/subscription deletions if the userId is different?
+If any pushTokens exist for the token (for other userIds) they are deleted
+  - All existing subscriptions for that token are deleted too and unsub'd from FCM
+
+PushToken.upsert calls Subscription.subscribeNewTokenByUserId
+  - This goes through all of a user's subscriptions, and recreates them with new token
+    - If subscription has "isTopic: true", FCM subscription is created too
+
+---
+controllers/group
+
+# FIXME: figure out when/why joinById is called in certain cases
+joinById calls Subscription.subscribeToGroup
+  - subscribes to groupMessage, groupMention (or some based on group's defaultNotifications)
+  - also subs to "everyone" role
+
+
+---
+Messages can be sent via FCM topics, or individually (grabbing all in that topic subscriptions_by_topic)
+
+
+###
+
 class SubscriptionCtrl
   getAllByGroupId: ({groupId}, {user}) ->
     Subscription.getAllByUserIdAndGroupId user.id, groupId

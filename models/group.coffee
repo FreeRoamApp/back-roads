@@ -18,7 +18,15 @@ scyllaFields =
   name: 'text'
   description: 'text'
   userId: 'uuid'
-  data: {type: 'json', defaultFn: -> {language: 'en'}}
+
+  privacy: {type: 'text', defaultFn: -> 'public'} # public, private, friends
+
+  thumbnailPrefix: 'text'
+  coverPrefix: 'text'
+
+  links: {type: 'map', subType: 'text', subType2: 'text'}
+  #
+  data: {type: 'json', defaultFn: -> {language: 'en'}} # language, welcomeChannelId, defaultNotifications
 
 class GroupModel extends Base
   getScyllaTables: ->
