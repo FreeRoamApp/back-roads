@@ -46,6 +46,7 @@ AuthService = require './services/auth'
 CronService = require './services/cron'
 KueRunnerService = require './services/kue_runner'
 HealthCtrl = require './controllers/health'
+PaymentCtrl = require './controllers/payment'
 SiteMapCtrl = require './controllers/site_map'
 StreamService = require './services/stream'
 
@@ -171,9 +172,11 @@ app.get '/healthcheck/throw', HealthCtrl.checkThrow
 
 app.get '/sitemap', SiteMapCtrl.getAll
 
-app.get '/syncCell', ->
-  sync = require './sync_cell/sync_cell_towers'
-  sync()
+app.get '/payment/stripe', PaymentCtrl.stripe
+
+# app.get '/syncCell', ->
+#   sync = require './sync_cell/sync_cell_towers'
+#   sync()
 
 app.post '/log', (req, res) ->
   unless req.body?.event is 'client_error'

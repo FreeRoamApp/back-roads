@@ -205,7 +205,7 @@ class UserModel extends Base
       'embedded'
     ]
     sanitizedUser.flags = _.pick user.flags, [
-      'isModerator', 'isDev', 'isChatBanned'
+      'isModerator', 'isDev', 'isChatBanned', 'isSupporter'
     ]
     sanitizedUser
 

@@ -1,3 +1,4 @@
+
 router = require 'exoid-router'
 
 AgencyCtrl = require './controllers/agency'
@@ -31,6 +32,7 @@ OfficeCtrl = require './controllers/office'
 OvernightCtrl = require './controllers/overnight'
 OvernightReviewCtrl = require './controllers/overnight_review'
 OvernightAttachmentCtrl = require './controllers/overnight_attachment'
+PaymentCtrl = require './controllers/payment'
 PlaceAttachmentCtrl = require './controllers/campground_attachment' # HACK: use since place_review_base isn't instantiated
 PlaceCtrl = require './controllers/campground' # HACK: use since place_review_base isn't instantiated
 PlaceReviewCtrl = require './controllers/campground_review' # HACK: use since place_review_base isn't instantiated
@@ -39,6 +41,7 @@ PushTokenCtrl = require './controllers/push_token'
 RegionCtrl = require './controllers/region'
 SubscriptionCtrl = require './controllers/subscription'
 ThreadCtrl = require './controllers/thread'
+TransactionCtrl = require './controllers/transaction'
 TripCtrl = require './controllers/trip'
 UserCtrl = require './controllers/user'
 UserBlockCtrl = require './controllers/user_block'
@@ -267,6 +270,9 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'overnightAttachments.deleteByRow',
   authed OvernightAttachmentCtrl.deleteByRow
 
+.on 'payments.resetStripeInfo', authed PaymentCtrl.resetStripeInfo
+.on 'payments.purchase', authed PaymentCtrl.purchase
+
 .on 'places.dedupe', authed PlaceCtrl.dedupe
 
 .on 'placeAttachments.getAllByUserId', authed PlaceAttachmentCtrl.getAllByUserId
@@ -302,6 +308,10 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'threads.uploadImage', authed ThreadCtrl.uploadImage
 
 .on 'time.get', authed -> {now: new Date()}
+
+.on 'transactions.getAll', authed TransactionCtrl.getAll
+.on 'transactions.cancelSubscriptionByOrderId',
+  authed TransactionCtrl.cancelSubscriptionByOrderId
 
 .on 'trips.getAll', authed TripCtrl.getAll
 .on 'trips.getById', authed TripCtrl.getById
