@@ -157,6 +157,8 @@ app.post '/upload', (req, res, next) ->
     next err
 
 
+app.post '/payment/stripe', bodyParser.raw({ type: '*/*' }), PaymentCtrl.stripe
+
 app.use bodyParser.json({limit: '1mb'})
 # Avoid CORS preflight
 app.use bodyParser.json({type: 'text/plain', limit: '1mb'})
@@ -171,8 +173,6 @@ app.get '/healthcheck', HealthCtrl.check
 app.get '/healthcheck/throw', HealthCtrl.checkThrow
 
 app.get '/sitemap', SiteMapCtrl.getAll
-
-app.get '/payment/stripe', PaymentCtrl.stripe
 
 # app.get '/syncCell', ->
 #   sync = require './sync_cell/sync_cell_towers'

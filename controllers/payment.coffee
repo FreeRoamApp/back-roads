@@ -171,7 +171,7 @@ Donation amount: $#{amount}
 Donation frequency: #{frequency}
 Time: #{time}
 
-FreeRoam Foundation is a registered 501(c)3 non-profit with tax ID: 83-2974909. No good or services were provided by FreeRoam in return for this contribution.
+FreeRoam Foundation is a registered 501(c)3 non-profit with tax ID: 83-2974909. No goods or services were provided by FreeRoam in return for this contribution.
 """
     }
 
@@ -190,12 +190,24 @@ FreeRoam Foundation is a registered 501(c)3 non-profit with tax ID: 83-2974909. 
 
   stripe: (req, res) -> # stripe webhook
     sig = req.headers['stripe-signature']
-    stripe.webhooks.constructEvent req.body, sig, config.STRIPE_SIGNING_SECRET
-    .catch (err) ->
+    try
+      event = stripe.webhooks.constructEvent req.body, sig, config.STRIPE_SIGNING_SECRET
+    catch err
       res.status(400).send err.message
-    .then (event) ->
-      if event is 'payment_intent.succeeded'
-        console.log event.data.object
+
+    if event.type is 'invoice.payment_succeeded'
+      object = event.data.object
+      Transaction.getAllByOrderId object.subscription
+      .then (transactions) ->
+        unless transactions?[0]
+          return res.status(200).send('no txn found')
+        delete transactions[0].id
+        Transaction.upsert _.defaults {
+          amountCents: object.amount_paid
+        }, transactions[0]
+      .then ->
+        res.status(200).send('success')
+    else
       res.status(200).send()
 
 module.exports = new PaymentCtrl()

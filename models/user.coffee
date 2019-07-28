@@ -96,6 +96,13 @@ class UserModel extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
+  getByEmail: (email) =>
+    cknex().select '*'
+    .from 'users_by_email'
+    .where 'email', '=', email
+    .run {isSingle: true}
+    .then @defaultOutput
+
   getAllByUsername: (username, {limit} = {}) ->
     null # TODO: search using >= operator on username?
 

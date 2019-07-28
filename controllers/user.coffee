@@ -178,6 +178,21 @@ class UserCtrl
             }
       else
         Promise.resolve null
+
+
+      if email and email isnt user.email
+        User.getByEmail email
+        .then (existingUser) ->
+          if existingUser
+            router.throw {
+              status: 401
+              info:
+                langKey: 'error.emailTaken'
+                field: 'email'
+              ignoreLog: true
+            }
+      else
+        Promise.resolve null
     ]
     .then ([avatarImage, password]) ->
       if password

@@ -128,14 +128,25 @@ class AuthCtrl
         ignoreLog: true
       }
     else if user
-      User.getByUsername username
-      .then (existingUser) ->
-        if existingUser
+      Promise.all [
+        User.getByUsername username
+        User.getByEmail email
+      ]
+      .then ([existingUserByUsername, existingUserByEmail]) ->
+        if existingUserByUsername
           router.throw {
             status: 401
             info:
               langKey: 'error.usernameTaken'
               field: 'username'
+            ignoreLog: true
+          }
+        if existingUserByEmail
+          router.throw {
+            status: 401
+            info:
+              langKey: 'error.emailTaken'
+              field: 'email'
             ignoreLog: true
           }
 

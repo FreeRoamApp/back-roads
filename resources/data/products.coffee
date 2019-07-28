@@ -3,8 +3,6 @@ _ = require 'lodash'
 
 config = require '../../config'
 
-# TODO: maxxair, fantastic fan, weboost
-
 # TODO:
 # parameters: [{name: 'name', value: 'value'}]
 # eg: parameters: [{name: 'watts', value: 100}, {name: 'type', value: 'monocrystalline'}]
