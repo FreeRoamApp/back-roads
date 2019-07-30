@@ -85,6 +85,22 @@ class UserCtrl
     .then ({users}) ->
       users
 
+  verifyEmail: ({userId, token}, {user}) ->
+    unless token is md5 "#{config.EMAIL_VERIFY_SALT}#{userId}"
+      router.throw {
+        status: 401
+        info:
+          langKey: 'error.invalidEmailToken'
+          field: 'email'
+      }
+    User.getById userId
+    .then (user) ->
+      User.upsertByRow user, {
+        flags: _.defaults {
+          isEmailVerified: true
+        }, user.flags
+      }
+
   upsert: ({userDiff}, {user, file}) =>
     currentInsecurePassword = userDiff.currentPassword
     passwordReset = userDiff.passwordReset

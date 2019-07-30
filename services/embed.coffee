@@ -71,7 +71,7 @@ TYPES =
     ROLE_NAMES: 'groupUser:roleNames'
     USER: 'groupUser:user'
   ITEM:
-    FIRST_PRODUCT_SLUG: 'item:firstProductSlug'
+    PRODUCT_SLUGS: 'item:productSlugs'
   OVERNIGHT:
     ATTACHMENTS_PREVIEW: 'overnight:attachmentsPreview'
   PRODUCT:

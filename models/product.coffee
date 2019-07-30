@@ -55,13 +55,12 @@ class Product extends Base
     .run()
     .map @defaultOutput
 
-  getFirstByItemSlug: (itemSlug) =>
-    cknex().select '*'
+  getSlugsByItemSlug: (itemSlug) =>
+    cknex().select 'slug'
     .from 'products_by_itemSlug'
     .where 'itemSlug', '=', itemSlug
-    .limit 1
-    .run {isSingle: true}
-    .then @defaultOutput
+    .run()
+    .map (product) -> product.slug
 
   getAll: ({limit} = {}) =>
     limit ?= 30

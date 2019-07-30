@@ -7,6 +7,7 @@ Promise = require 'bluebird'
 geoip = require 'geoip-lite'
 
 Auth = require '../models/auth'
+Language = require '../models/language'
 LoginLink = require '../models/login_link'
 Subscription = require '../models/subscription'
 User = require '../models/user'
@@ -50,7 +51,7 @@ class AuthCtrl
           subject: "Password reset request"
           text: """
   Click the link below to login to FreeRoam to change your password:
-  https://#{config.FREE_ROAM_HOST}/loginLink/#{userId}/#{token}
+  https://#{config.FREE_ROAM_HOST}/login-link/#{userId}/#{token}
 
   This link will only work once. Do NOT share it with anyone else.
 
@@ -93,7 +94,7 @@ class AuthCtrl
       Subscription.subscribeInitial user
       Auth.fromUserId user.id
 
-  join: ({email, username, password}, {user}) ->
+  join: ({email, username, password}, {user}) =>
     insecurePassword = password
     username = username?.toLowerCase()
     email = email?.toLowerCase()
@@ -132,7 +133,7 @@ class AuthCtrl
         User.getByUsername username
         User.getByEmail email
       ]
-      .then ([existingUserByUsername, existingUserByEmail]) ->
+      .then ([existingUserByUsername, existingUserByEmail]) =>
         if existingUserByUsername
           router.throw {
             status: 401
@@ -151,10 +152,38 @@ class AuthCtrl
           }
 
         Promise.promisify(bcrypt.hash)(insecurePassword, bcrypt.genSaltSync(config.BCRYPT_ROUNDS), null)
-        .then (password) ->
+        .then (password) =>
           User.upsertByRow user, {username, password, email}
+          .then ({id}) =>
+            @_sendWelcomeEmail {id, username, email, language: user.language}
+            null # don't need to block
       .then ->
         Auth.fromUserId user.id
+
+  _sendWelcomeEmail: ({id, username, email, language}) ->
+    token = md5 "#{config.EMAIL_VERIFY_SALT}#{id}"
+    EmailService.send {
+      to: email
+      subject: Language.get 'welcomeEmail.subject', {
+        replacements:
+          name: username
+        language: language
+      }
+      # TODO: Lang
+      text: """
+Welcome to FreeRoam!
+
+First things, first... if you want to receive future emails from us (we don't send many), please go ahead and click the link below to verify your email:
+
+https://#{config.FREE_ROAM_HOST}/verify-email/#{id}/#{token}
+
+Next up, we just want to thank you for using FreeRoam! As you probably know by now, FreeRoam is a non-profit and we have big plans for it. To achieve our mission, the entire community within the app needs to grow, so you joining is another step toward that :)
+
+If you have any questions or suggestions, feel free to message one of us in the app (our preferred means of communication), or you can reply to this email.
+
+Austin & Rachel
+"""
+    }
 
   loginUsername: ({username, password}) ->
     insecurePassword = password

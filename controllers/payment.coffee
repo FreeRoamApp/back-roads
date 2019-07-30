@@ -119,9 +119,10 @@ class PaymentCtrl
         ).then (response) =>
           Promise.all [
             User.upsertByRow user, {
-              flags:
+              flags: _.defaults {
                 hasStripeId: true
                 isSupporter: true
+              }, user.flags
             }
 
             UserPrivateData.upsert {
@@ -179,7 +180,7 @@ FreeRoam Foundation is a registered 501(c)3 non-profit with tax ID: 83-2974909. 
     Promise.all [
       User.upsertByRow user, {
         flags:
-          hasStripeId: false
+          _.defaults {hasStripeId: false}, user.flags
       }
       UserPrivateData.upsert {
         userId: user.id

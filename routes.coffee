@@ -332,6 +332,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'users.setPartner', authed UserCtrl.setPartner
 .on 'users.getPartner', authed UserCtrl.getPartner
 .on 'users.upsert', authed UserCtrl.upsert
+.on 'users.verifyEmail', authed UserCtrl.verifyEmail
 
 .on 'userBlocks.getAll', authed UserBlockCtrl.getAll
 .on 'userBlocks.getAllIds', authed UserBlockCtrl.getAllIds

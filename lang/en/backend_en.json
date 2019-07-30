@@ -12,5 +12,7 @@
   "audit.updateRoleChannel": "updated role permissions for {role} in {channel}",
   "audit.addChannel": "added the channel: {channel}",
   "audit.updateChannel": "updated the channel: {channel}",
-  "audit.giveXp": "gave {xp}xp to {name}"
+  "audit.giveXp": "gave {xp}xp to {name}",
+
+  "welcomeEmail.subject": "Welcome to FreeRoam!"
 }

@@ -70,8 +70,10 @@ class BanCtrl
           }
         }
 
-        if user.username in ['ponkat', 'jaimejosuee']
-          User.upsertByRow otherUser, {flags: {isChatBanned: true}}
+        if user.username in ['austin', 'rachel']
+          User.upsertByRow otherUser, {
+            flags: _.defaults {isChatBanned: true}, otherUser.flags
+          }
 
         Ban.upsert ban, {
           ttl: if duration is '24h' then 3600 * 24 else undefined
@@ -104,8 +106,10 @@ class BanCtrl
           }
         }
 
-        if user.username in ['ponkat', 'jaimejosuee']
-          User.upsertByRow otherUser, {flags: {isChatBanned: false}}
+        if user.username in ['austin', 'rachel']
+          User.upsertByRow otherUser, {
+            flags: _.defaults {isChatBanned: false}, otherUser.flags
+          }
 
       Ban.deleteAllByGroupIdAndUserId groupId, userId
 

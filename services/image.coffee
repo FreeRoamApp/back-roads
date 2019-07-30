@@ -27,12 +27,13 @@ class ImageService
 
   getSizeByBuffer: (buffer) ->
     new Promise (resolve, reject) ->
-      gm(buffer).autoOrient()
-      .size (err, size) ->
-        if err
-          reject err
-        else
-          resolve size
+      # https://stackoverflow.com/a/45804023
+      gm(buffer).autoOrient().toBuffer (err, buffer) ->
+        gm(buffer).size (err, size) ->
+          if err
+            reject err
+          else
+            resolve size
 
   toStream: ({buffer, path, width, height, quality, type, useMin}) ->
     quality ?= DEFAULT_IMAGE_QUALITY
@@ -90,6 +91,7 @@ class ImageService
 
     @getSizeByBuffer file.buffer
     .then (size) =>
+      console.log 'size', size
       key = "#{userId}_#{id}"
       keyPrefix = "#{folder}/#{key}"
 

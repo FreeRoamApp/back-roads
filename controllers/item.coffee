@@ -5,7 +5,7 @@ Item = require '../models/item'
 EmbedService = require '../services/embed'
 config = require '../config'
 
-defaultEmbed = [EmbedService.TYPES.ITEM.FIRST_PRODUCT_SLUG]
+defaultEmbed = [EmbedService.TYPES.ITEM.PRODUCT_SLUGS]
 
 class ItemCtrl
   getBySlug: ({slug}, {user}) ->

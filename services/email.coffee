@@ -14,7 +14,7 @@ server = email.server.connect
 
 class EmailService
   EMAILS:
-    EVERYONE: 'Everyone <austin@freeroam.app>'
+    EVERYONE: 'Everyone <team@freeroam.app>'
 
   send: ({to, subject, text}) ->
     if config.ENV is config.ENVS.TEST
