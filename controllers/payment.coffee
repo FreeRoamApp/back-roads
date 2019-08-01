@@ -1,3 +1,4 @@
+_ = require 'lodash'
 Promise = require 'bluebird'
 stripe = require 'stripe'
 router = require 'exoid-router'
@@ -116,7 +117,15 @@ class PaymentCtrl
           }
         else
           @_charge {amountCents, customerId: customer.id}
-        ).then (response) =>
+        )
+        .catch (err) ->
+          console.log err
+          Transaction.upsert transaction
+          router.throw
+            status: 400
+            info: 'Unable to verify payment'
+
+        .then (response) =>
           Promise.all [
             User.upsertByRow user, {
               flags: _.defaults {
@@ -150,7 +159,7 @@ class PaymentCtrl
         Transaction.upsert transaction
         router.throw
           status: 400
-          info: 'Unable to verify payment'
+          info: 'Payment succeeded, but there was an error after. Please email austin@freeroam.app'
 
   _sendEmail: ({user, amount, subscriptionInterval}) ->
     name = User.getDisplayName user

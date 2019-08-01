@@ -5,7 +5,7 @@ Category = require '../models/category'
 EmbedService = require '../services/embed'
 config = require '../config'
 
-defaultEmbed = [EmbedService.TYPES.CATEGORY.FIRST_ITEM_PRODUCT_SLUG]
+defaultEmbed = [EmbedService.TYPES.CATEGORY.ITEM_NAMES]
 
 class CategoryCtrl
   getAll: ({}, {user}) ->

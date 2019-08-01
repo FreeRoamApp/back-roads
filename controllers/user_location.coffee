@@ -77,7 +77,7 @@ class UserLocationCtrl extends PlaceBaseCtrl
           distance = geodist myUserLocation.place.location, place.location
           distance = 5 * Math.round(distance / 5) # round to nearest 5
           place = _.defaults {distance}, place
-          console.log place
+
           if place.sourceType is 'coordinate'
             place.place.name = "#{place.place.address.locality}, #{place.place.address.administrativeArea}"
           _.omit place, 'location'

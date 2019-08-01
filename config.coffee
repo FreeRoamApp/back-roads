@@ -14,7 +14,7 @@ config =
   # also in free-roam
   USER_CDN_URL: 'https://fdn.uno/images'
   BASE_NAME_COLORS: ['#2196F3', '#8BC34A', '#FFC107', '#f44336', '#673AB7']
-  AMAZON_AFFILIATE_CODE: 'freeroam02-20'
+  AMAZON_AFFILIATE_CODE: 'freeroamfound-20'
   COMMON_AMENITIES: ['dump', 'water', 'propane', 'groceries']
   LANGUAGES: ['en']
   VERBOSE: if env.VERBOSE then env.VERBOSE is '1' else true

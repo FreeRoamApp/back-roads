@@ -182,6 +182,12 @@ class UserModel extends Base
           @defaultESOutput _.defaults _source, {id: _id}
       }
 
+  defaultESInput: (user) ->
+    user = super user
+    if typeof user.avatarImage is 'object'
+      user.avatarImage = JSON.stringify user.avatarImage
+    user
+
   defaultESOutput: (user) ->
     if user.avatarImage
       user.avatarImage = try

@@ -15,7 +15,6 @@ Campground = require '../models/campground'
 Product = require '../models/product'
 AmazonService = require '../services/amazon'
 FireService = require '../services/fire'
-console.log FireService
 PlacesService = require '../services/places'
 allCategories = require '../resources/data/categories'
 # allGroups = require '../resources/data/groups'
@@ -26,7 +25,6 @@ allCampgrounds = require '../resources/data/campgrounds'
 allEarnActions = require '../resources/data/earn_actions'
 allProducts = require '../resources/data/products'
 config = require '../config'
-
 THIRTY_SECONDS = 30
 
 class CronService
@@ -44,15 +42,15 @@ class CronService
         Campground.batchUpsert _.cloneDeep allCampgrounds
         Event.batchUpsert _.cloneDeep allEvents
         Item.batchUpsert _.cloneDeep allItems
-        Amenity.batchUpsert _.cloneDeep allAmenities
         Product.batchUpsert _.cloneDeep allProducts
+        Amenity.batchUpsert _.cloneDeep allAmenities
         Category.batchUpsert _.cloneDeep allCategories
 
     @addCron 'tenMin', '0 */10 * * * *', ->
       EarnAction.batchUpsert _.cloneDeep allEarnActions
       Thread.updateScores 'time'
 
-    @addCron 'oneHour', '0 2 * * * *', ->
+    @addCron 'oneHour', '0 55 * * * *', ->
       CleanupService.trimLeaderboards()
       # Promise.map allGroups, (group) ->
       #   Group.upsert _.cloneDeep group

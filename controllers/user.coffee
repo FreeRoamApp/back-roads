@@ -108,6 +108,7 @@ class UserCtrl
     if userDiff.username
       userDiff.username = userDiff.username.toLowerCase()
     username = userDiff.username
+    email = userDiff.email
     userDiff = _.pick userDiff, ['username', 'links', 'bio', 'name']
 
     if userDiff.links?.instagram and userDiff.links.instagram.indexOf('instagram.com') is -1

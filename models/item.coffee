@@ -19,6 +19,7 @@ class Item extends Base
           name: 'text'
           why: 'text'
           what: 'text'
+          decisions: 'json' # json (array of decision objects)
           videos: 'json' # json (array of video objects)
         primaryKey:
           partitionKey: ['slug']
@@ -33,6 +34,7 @@ class Item extends Base
           name: 'text'
           why: 'text'
           what: 'text'
+          decisions: 'json' # json (array of decision objects)
           videos: 'json' # json (array of video objects)
         primaryKey:
           partitionKey: ['category']
@@ -89,12 +91,12 @@ class Item extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
-  getFirstByCategory: (category) =>
-    cknex().select '*'
+  getNamesByCategory: (category) =>
+    cknex().select 'name'
     .from 'items_by_category'
     .where 'category', '=', category
-    .run {isSingle: true}
-    .then @defaultOutput
+    .run()
+    .map (item) -> item.name
 
   getAll: ({limit} = {}) =>
     limit ?= 30

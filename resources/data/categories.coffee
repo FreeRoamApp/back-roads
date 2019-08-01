@@ -4,24 +4,18 @@ _ = require 'lodash'
 config = require '../../config'
 
 categories =
-  'starting-out':
-    name: 'RV'
-    description: 'Products to get you ready to start RVing'
-    priority: 2
-    data:
-      defaultProductSlug: 'camco-plastic-wheel-chocks'
-  'maintenance':
-    name: 'Maintenance'
-    description: 'Products to keep your RV in tip-top shape'
-    priority: 1
-    data:
-      defaultProductSlug: 'bio-pak-digester'
+  # 'starting-out':
+  #   name: 'Starting out'
+  #   description: 'Products to get you ready to start with an RV'
+  #   priority: 2
+  # 'maintenance':
+  #   name: 'Maintenance'
+  #   description: 'Products to keep your RV in tip-top shape'
+  #   priority: 1
   'boondocking':
     name: 'Boondocking'
-    description: 'Solar, generators, and everything you need to boondock'
+    description: 'Everything you need to get started with boondocking (and more!)'
     priority: 0
-    data:
-      defaultProductSlug: 'renogy-100w-solar-panel-mono'
 
 module.exports = _.map categories, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity

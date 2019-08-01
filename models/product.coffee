@@ -16,6 +16,8 @@ scyllaFields =
   sellers: 'text' # [{seller: 'amazon', sellerId: 'amazon-id'}]
   reviewersLiked: {type: 'set', subType: 'text'}
   reviewersDisliked: {type: 'set', subType: 'text'}
+  decisions: {type: 'set', subType: 'text'}
+  videos: 'json' # (array of video objects)
   data: 'json'
 
 class Product extends Base

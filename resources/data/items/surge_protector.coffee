@@ -1,14 +1,12 @@
 # coffeelint: disable=max_line_length,cyclomatic_complexity
 _ = require 'lodash'
 
-config = require '../../config'
-
 item =
-  key: 'surge-protector'
+  slug: 'surge-protector'
   id: 'e7664710-ba06-11e8-9337-58da70b4ae7a'
   name: 'Surge Protector'
   categories: ['starting-out']
-  why: 'Electricity is not something to mess around with - one bad electrical hookup and you could fry your internal RV systems. Surge protectors will let you know when a hookup is going to cause problems, and even prevent issues with power surges and outages.'
+  why: 'Electricity is not something to mess around with - one bad electrical hookup and you could fry your {home}\'s internal electrical systems. Surge protectors will let you know when a hookup is going to cause problems, and even prevent issues with power surges and outages.'
   what: ''
   decisions: [
     {
@@ -21,7 +19,7 @@ item =
     }
     {
       title: 'Internal vs External'
-      text: "Internal surge protectors are wired into your system from inside the RV. External surge protectors just plug straight into the pedestal, and you plug your RV cord into it. Internal will cost more and be more difficult to install, while external are more easily stolen"
+      text: "Internal surge protectors are wired into your system from inside the {home}. External surge protectors just plug straight into the pedestal, and you plug your power cord into it. Internal will cost more and be more difficult to install, while external are more easily stolen"
     }
   ]
   videos: [
@@ -29,29 +27,35 @@ item =
   ]
 
 products =
-  "camco-heavy-duty-dogbone-rv-surge-protector":
+  "camco-dogbone-surge-protector-30a":
     name: 'Camco Heavy Duty Dogbone Surge Protector, 30A'
-    description: "This is your budget (though they're still a little pricey) surge protector for an RV. It informs and protects you from power issues, but doesn't have any extra features beyond that. If it encounters a surge, it will sacrifice itself to save the RV (which means you'll need a new surge protector)"
-    itemSlug: 'surge-protector'
+    description: "This is your budget (though they're still a little pricey) surge protector. It informs and protects you from power issues, but doesn't have any extra features beyond that. If it encounters a surge, it will sacrifice itself to save the {home}'s electrical system (which means you'll need a new surge protector)"
     source: 'amazon'
     sourceId: 'B00WED0XBC'
     reviewersLiked: ['Easy to read indicator lights', 'Peace of mind', 'Priced well']
-    reviewersDisliked: ['Despite being weather resistant, some had issues with water getting inside', 'Easy for someone to steal', 'Bulky and heavy']
+    reviewersDisliked: ['Despite being weather resistant, some had issues with water getting inside', 'Easy to steal', 'Bulky and heavy']
+    decisions: ['30A', 'Self-sacrificing', 'External']
     data:
       countryOfOrigin: 'Unknown'
-    # TODO: bullets that are uniform across all item's products (eg max voltage, ...)
 
-  "southwire-surge-guard-30":
+  "southwire-surge-guard-30a":
     name: 'Southwire Surge Guard, 30A'
     description: "This surge protector is a little pricier. It has all of the usual analysis for power problems and will auto-shutoff. This unit is able to reset itself after power issue (it does not \"sacrifice\" itself)"
-    itemSlug: 'surge-protector'
     source: 'amazon'
-    sourceId: 'B00T36Q7R2'
+    sourceId: 'B07BNVKS9F'
     reviewersLiked: ['Screen with voltage and amperage draw readouts', 'Peace of mind']
-    reviewersDisliked: ['Bulky and heavy']
-    data:
-      countryOfOrigin: 'Honduras'
+    reviewersDisliked: ['Bulky and heavy', 'Easy to steal']
+    decisions: ['30A', 'Resettable', 'External']
+
+  "progressive-industries-30a":
+    name: 'Progressive Industries 30A EMS'
+    description: "This is an internal surge protector that you wire in inside the {home}. It's the most popular brand for this sort of thing and has excellent reviews"
+    source: 'amazon'
+    sourceId: 'B0050EGS5W'
+    reviewersLiked: ['Works flawless', 'Peace of mind', 'Easy to install']
+    reviewersDisliked: ['None']
+    decisions: ['30A', 'Resettable', 'Internal']
 
 
-module.exports = _.map items, (value, slug) -> _.defaults {slug}, value
+module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

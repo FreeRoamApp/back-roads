@@ -40,7 +40,7 @@ TYPES =
     USER: 'ban:user'
     BANNED_BY_USER: 'ban:bannedByUser'
   CATEGORY:
-    FIRST_ITEM_PRODUCT_SLUG: 'category:firstItemFirstProductSlug'
+    ITEM_NAMES: 'category:itemNames'
   CAMPGROUND:
     ATTACHMENTS_PREVIEW: 'campground:attachmentsPreview'
   CHECK_IN:
