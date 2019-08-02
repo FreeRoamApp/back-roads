@@ -84,16 +84,29 @@ class PushNotificationService
       # if you pass notification to android, it uses that and doesn't use data
       # https://github.com/phonegap/phonegap-plugin-push/issues/387
 
-      if isiOS
+      if isiOS # only toType token, topics are different
         messageOptions.notification =
           title: title
           body: text
           # icon: 'notification_icon'
           color: config.NOTIFICATION_COLOR
         messageOptions.data = data
-      else
-        messageOptions.data =
+      else # for android, and all push topics
+        ###
+        TODO: look into this some more.
+        when sending to pushTopics, it needs to work for both iOS and Android.
+        This option sort of works, but sending as a data notification is more
+        advantageous for android. Otherwise notification actions don't work,
+        the callback isn't called in app, so android
+        doesn't get sent to right page (ios does).
+        But sending as data notification means iOS
+        gets nothing... Solution is probably to use something other than
+        phonegap-plugin-push??? As of 8/2019 I don't see anything
+        ###
+        key = if toType is 'topic' then 'notification' else 'data'
+        messageOptions[key] =
           title: title
+          body: text # nec when we're setting messageOptions.notification
           message: text
           ledColor: [0, 255, 0, 0]
           image: if icon then icon else null
