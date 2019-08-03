@@ -15,6 +15,13 @@ module.exports = items
 # {Home} or {home} with van, RV, etc...
 
 ###
+pet / eco-friendly: https://www.amazon.com/CompostaPoop-Biodegradable-Compostable-Friendly-Dispenser/dp/B07BH31GTM
+trash grabber
+reusable rv dump gloves B01EAIR384
+
+###
+
+###
 renogy-100ah-agm-battery https://amzn.com/B075RFXHYK
 
 champion-3400w-dual-fuel-inverter-generator https://amzn.com/B01FAWMMEY
@@ -37,6 +44,19 @@ progressive-industries-30a https://amzn.com/B0050EGS5W
 
 ruixu-100ah-lithium-battery https://amzn.com/B07PBCDVHZ
 
+valterra-heated-fresh-water-hose-25 https://amzn.com/B00ON793UE
+
+andersen-levelers https://amzn.com/B001GC2LVM
+
+happy-campers-organic-black-tank-treatment https://amzn.com/B005XEFADU
+
+camco-orange-rv-black-tank-treatment https://amzn.com/B00NFIOLL8
+
+maxxhaul-rubber-wheel-chocks https://amzn.com/B01CGU14T2
+
+filtrete-water-filtration-system https://amzn.com/B001DVW0PI
+
+lippert-waste-master-20-sewer-hose https://amzn.com/B010X65OHE
 ###
 
 # TODO: wiring

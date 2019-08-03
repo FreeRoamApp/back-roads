@@ -41,8 +41,8 @@ class CronService
         #   Group.upsert _.cloneDeep group
         Campground.batchUpsert _.cloneDeep allCampgrounds
         Event.batchUpsert _.cloneDeep allEvents
-        Item.batchUpsert _.cloneDeep allItems
-        Product.batchUpsert _.cloneDeep allProducts
+        # Item.batchUpsert _.cloneDeep allItems
+        # Product.batchUpsert _.cloneDeep allProducts
         Amenity.batchUpsert _.cloneDeep allAmenities
         Category.batchUpsert _.cloneDeep allCategories
 

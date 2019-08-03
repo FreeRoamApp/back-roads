@@ -1,12 +1,13 @@
 # coffeelint: disable=max_line_length,cyclomatic_complexity
 _ = require 'lodash'
 
-# wiring, fuses/breakers, solar mounting,
+module.exports = {items: [], products: []} # FIXME
+return
 
 item =
-  slug: 'solar-kit'
-  id: '6aa62b30-b4c6-11e9-952b-8f9f939355df'
-  name: 'Solar Kit'
+  slug: 'wiring'
+  id: '11a87340-b4c5-11e9-b6a9-313977c8e13a'
+  name: 'Wiring'
   categories: ['boondocking']
   why: ''
   # what: ''
@@ -35,6 +36,7 @@ Renogy is the most well-known brand of RV solar panels, and these are good panel
     reviewersLiked: ['Quality material', 'Priced well']
     reviewersDisliked: ['Sharp edges', 'Small percent of units arrived damaged (glass)']
     decisions: ['Mounted', '100W', 'Mono']
+
 
 module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

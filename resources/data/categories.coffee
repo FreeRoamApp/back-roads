@@ -4,10 +4,10 @@ _ = require 'lodash'
 config = require '../../config'
 
 categories =
-  # 'starting-out':
-  #   name: 'Starting out'
-  #   description: 'Products to get you ready to start with an RV'
-  #   priority: 2
+  'starting-out':
+    name: 'Starting out'
+    description: 'Products to get you ready to start with your {home}'
+    priority: 2
   # 'maintenance':
   #   name: 'Maintenance'
   #   description: 'Products to keep your RV in tip-top shape'
