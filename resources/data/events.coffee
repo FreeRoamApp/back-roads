@@ -350,5 +350,30 @@ This event is free to attend, but to stay in the RV resort (Palisade Basecamp) c
       website: 'https://nomadcollab.com/'
 
 
+  'adventure-van-meetup-2019':
+    name: 'Aventure Van Meetup'
+    id: '165bf060-b70e-11e9-844b-fbb64903225c'
+    location: {lat: 39.782255, lon: -105.233578}
+    details: '''
+Calling all #vanlife purveyors and fans! It’s time for the 3rd Annual Powder7 Adventure Van Meetup.
+
+Note: if you want to bring a rig, RSVP to Matty (mattm@powder7.com) or on this page by 9/1.
+
+Here are the details on this year's event:
+When: Saturday September 7, 9-11 a.m.
+Where: Powder7, 880 Brickyard Circle, Golden, CO
+What: A classic adventure rig meetup with coffee and donuts, stories from the open road, and a variety of rigs (last year, we saw a wizened Westy, a new-age 4WD Sprinter, and everything in between...)
+'''
+    startTime: new Date(2019, 8, 7, 8, 0, 0) # 9am MT
+    endTime: new Date(2019, 8, 7, 10, 0, 0) # 11am mt
+    address:
+      locality: 'Golden'
+      administrativeArea: 'CO'
+    prices:
+      all: 0
+    contact:
+      website: 'https://www.facebook.com/events/213498472931922/'
+
+
 module.exports = _.map events, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity

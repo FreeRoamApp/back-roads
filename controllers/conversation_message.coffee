@@ -1,6 +1,5 @@
 _ = require 'lodash'
 router = require 'exoid-router'
-cardBuilder = require 'card-builder'
 uuid = require 'node-uuid'
 Promise = require 'bluebird'
 Joi = require 'joi'
@@ -19,6 +18,7 @@ ConversationMessageService = require '../services/conversation_message'
 PushNotificationService = require '../services/push_notification'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
+CardBuilderService = require '../services/card_builder'
 cknex = require '../services/cknex'
 config = require '../config'
 
@@ -39,9 +39,6 @@ RATE_LIMIT_CONVERSATION_MESSAGES_MEDIA_EXPIRE_S = 10
 defaultConversationEmbed = [EmbedService.TYPES.CONVERSATION.USERS]
 
 class ConversationMessageCtrl
-  constructor: ->
-    @cardBuilder = new cardBuilder {api: config.DEALER_API_URL}
-
   _checkRateLimit: (userId, isMedia, router) ->
     if isMedia
       key = "#{CacheService.PREFIXES.RATE_LIMIT_CONVERSATION_MESSAGES_MEDIA}:#{userId}"
@@ -142,16 +139,23 @@ class ConversationMessageCtrl
   _createCards: (body, isImage, conversationMessageId) =>
     urls = not isImage and body.match(URL_REGEX)
 
+    console.log 'create cards', urls
+
     (if _.isEmpty urls
       Promise.resolve null
     else
-      @cardBuilder.create {
-        url: urls[0]
-        callbackUrl:
-          "#{config.RADIOACTIVE_API_URL}/conversationMessage/#{conversationMessageId}/card"
-      }
-      .timeout CARD_BUILDER_TIMEOUT_MS
-      .catch -> null
+      firstUrl = urls[0]
+      if firstUrl.indexOf("#{config.FREE_ROAM_HOST}/trip/") isnt -1
+        CardBuilderService.createTripCard {url: firstUrl}
+        .catch -> null
+      else
+        CardBuilderService.create {
+          url: firstUrl
+          callbackUrl:
+            "#{config.BACK_ROADS_API_URL}/conversationMessage/#{conversationMessageId}/card"
+        }
+        .timeout CARD_BUILDER_TIMEOUT_MS
+        .catch -> null
     )
 
   create: ({body, conversationId, clientId}, {user, headers, connection}) =>
@@ -305,8 +309,8 @@ class ConversationMessageCtrl
         ConversationMessage.deleteAllByGroupIdAndUserId groupId, userId, {duration}
 
   updateCard: ({body, params, headers}) ->
-    radioactiveHost = config.RADIOACTIVE_API_URL.replace /https?:\/\//i, ''
-    isPrivate = headers.host is radioactiveHost
+    backRoadsHost = config.BACK_ROADS_API_URL.replace /https?:\/\//i, ''
+    isPrivate = headers.host is backRoadsHost.replace(':80', '')
     if isPrivate and body.secret is config.DEALER_SECRET
       ConversationMessage.updateById params.id, {card: body.card}, {
         prepareFn: ConversationMessageService.prepare

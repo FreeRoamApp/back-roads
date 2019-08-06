@@ -1,4 +1,3 @@
-request = require 'request-promise'
 Promise = require 'bluebird'
 _ = require 'lodash'
 DarkSky = require 'dark-sky'

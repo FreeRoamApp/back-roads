@@ -57,6 +57,8 @@ class CacheService
     THREAD_WITH_EMBEDS_BY_SLUG: 'thread:with_embeds:slug3'
     THREADS_BY_CATEGORY: 'threads:by_category'
     THREADS_CATEGORY: 'threads:category'
+    TRIP_FOLLOWERS_BY_TRIP_ID: 'trip_followers:tripId'
+    TRIP_FOLLOWERS_BY_USER_ID: 'trip_followers:userId'
     COMMENT_COUNT: 'thread:comment_count1'
     THREAD_CREATOR: 'thread:creator'
     THREAD_USER: 'thread:user'

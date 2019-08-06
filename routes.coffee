@@ -43,6 +43,7 @@ SubscriptionCtrl = require './controllers/subscription'
 ThreadCtrl = require './controllers/thread'
 TransactionCtrl = require './controllers/transaction'
 TripCtrl = require './controllers/trip'
+TripFollowerCtrl = require './controllers/trip_follower'
 UserCtrl = require './controllers/user'
 UserBlockCtrl = require './controllers/user_block'
 UserLocationCtrl = require './controllers/user_location'
@@ -314,6 +315,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
   authed TransactionCtrl.cancelSubscriptionByOrderId
 
 .on 'trips.getAll', authed TripCtrl.getAll
+.on 'trips.getAllFollowingByUserId', authed TripCtrl.getAllFollowingByUserId
 .on 'trips.getById', authed TripCtrl.getById
 .on 'trips.getByType', authed TripCtrl.getByType
 .on 'trips.getByUserIdAndType', authed TripCtrl.getByUserIdAndType
@@ -322,6 +324,11 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'trips.getStatesGeoJson', authed TripCtrl.getStatesGeoJson
 .on 'trips.uploadImage', authed TripCtrl.uploadImage
 .on 'trips.upsert', authed TripCtrl.upsert
+
+.on 'tripFollowers.getAllByTripId', authed TripFollowerCtrl.getAllByTripId
+.on 'tripFollowers.getAllByUserId', authed TripFollowerCtrl.getAllByUserId
+.on 'tripFollowers.deleteByRow', authed TripFollowerCtrl.deleteByRow
+.on 'tripFollowers.upsertByTripId', authed TripFollowerCtrl.upsertByTripId
 
 .on 'users.getMe', authed UserCtrl.getMe
 .on 'users.getById', authed UserCtrl.getById

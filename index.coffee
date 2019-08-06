@@ -45,6 +45,7 @@ ElasticsearchSetupService = require './services/elasticsearch_setup'
 AuthService = require './services/auth'
 CronService = require './services/cron'
 KueRunnerService = require './services/kue_runner'
+ConversationMessageCtrl = require './controllers/conversation_message'
 HealthCtrl = require './controllers/health'
 PaymentCtrl = require './controllers/payment'
 SiteMapCtrl = require './controllers/site_map'
@@ -165,6 +166,9 @@ app.use bodyParser.json({type: 'text/plain', limit: '1mb'})
 app.use bodyParser.urlencoded {extended: true} # Kiip uses
 
 app.get '/', (req, res) -> res.status(200).send 'ok'
+
+# TODO: restrict to backroads.production
+app.post '/conversationMessage/:id/card', ConversationMessageCtrl.updateCard
 
 app.get '/ping', (req, res) -> res.send 'pong'
 

@@ -309,7 +309,7 @@ class PushNotificationService
     if (config.ENV isnt config.ENVS.PROD or config.IS_STAGING) and
         not forceDevSend
       console.log 'send notification', subscription, topic, JSON.stringify message
-      # return Promise.resolve()
+      return Promise.resolve()
 
     console.log 'send', topic
 

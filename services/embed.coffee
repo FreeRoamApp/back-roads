@@ -25,6 +25,7 @@ EmbedClasses =
   thread: require '../embeds/thread'
   threadComment: require '../embeds/comment'
   trip: require '../embeds/trip'
+  tripFollower: require '../embeds/trip_follower'
   user: require '../embeds/user'
   userBlock: require '../embeds/user_block'
   userLocation: require '../embeds/user_location'
@@ -93,7 +94,11 @@ TYPES =
     CHECK_INS: 'trip:checkIns'
     ROUTE: 'trip:route'
     STATS: 'trip:stats'
+    OVERVIEW: 'trip:overview'
     USER: 'trip:user'
+  TRIP_FOLLOWER:
+    TRIP: 'tripFollower:trip'
+    USER: 'tripFollower:user'
   USER:
     KARMA: 'user:karma'
     DATA: 'user:data'

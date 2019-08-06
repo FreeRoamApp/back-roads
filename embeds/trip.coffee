@@ -48,6 +48,15 @@ class TripEmbed
       place?.address?.administrativeArea
     {stateCounts}
 
+  overview: ({checkIns, route}) ->
+    {
+      stops: checkIns?.length
+      distance: route?.distance
+      time: route?.time
+      startTime: _.minBy(checkIns, 'startTime')?.startTime
+      endTime: _.maxBy(checkIns, 'endTime')?.endTime
+    }
+
   route: ({checkIns}) ->
     # valhalla can do whole country, but a bunch of legs of whole country
     # (i think 3k miles?) will cause it to fail.

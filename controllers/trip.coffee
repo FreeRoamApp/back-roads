@@ -4,6 +4,7 @@ router = require 'exoid-router'
 
 CheckIn = require '../models/check_in'
 Trip = require '../models/trip'
+TripFollower = require '../models/trip_follower'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 statesGeoJson = require '../resources/data/states.json'
@@ -20,7 +21,7 @@ extrasEmbed = [
 
 class TripCtrl
   upsert: (diff, {user}) ->
-    diff = _.pick diff, ['checkInIds', 'id', 'imagePrefix', 'privacy']
+    diff = _.pick diff, ['checkInIds', 'id', 'imagePrefix', 'privacy', 'name']
     diff = _.defaults {userId: user.id}, diff
     (if diff.id
       Trip.getById diff.id
@@ -33,7 +34,27 @@ class TripCtrl
       Trip.upsertByRow trip, diff
 
   getAll: ({}, {user}) ->
+    # TODO: cache this entire response. can cache for a while since it should be
+    # smallish (no checkins, no route)
     Trip.getAllByUserId user.id
+    .map EmbedService.embed {embed: defaultEmbed}
+    .map EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTE]}
+    .map EmbedService.embed {embed: [EmbedService.TYPES.TRIP.OVERVIEW]}
+    .map (trip) -> _.omit trip, ['checkIns']
+
+  getAllFollowingByUserId: ({userId}, {user}) ->
+    # TODO: cache this entire response. can cache for a while since it should be
+    # smallish (no checkins, no route)
+    TripFollower.getAllByUserId userId
+    .map EmbedService.embed {embed: [EmbedService.TYPES.TRIP_FOLLOWER.TRIP]}
+    .map (tripFollower) ->
+      console.log tripFollower
+      tripFollower.trip
+    .then (trips) -> _.filter trips
+    .map EmbedService.embed {embed: defaultEmbed}
+    .map EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTE]}
+    .map EmbedService.embed {embed: [EmbedService.TYPES.TRIP.OVERVIEW]}
+    .map (trip) -> _.omit trip, ['checkIns']
 
   getById: ({id}, {user}) ->
     # HACK: not sure where, but this is caled with 'null' when tooltip is opened

@@ -221,7 +221,9 @@ module.exports = class Base
 
     _.mapValues row, (value, key) =>
       {type} = @fieldsWithType[key] or {}
-      if type is 'json' and value
+      if type is 'json' and value and typeof value is 'object'
+        value
+      else if type is 'json' and value
         try
           JSON.parse value
         catch
