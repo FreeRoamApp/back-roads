@@ -12,6 +12,7 @@ scyllaFields =
   id: 'timeuuid'
   userId: 'uuid'
   name: 'text'
+  notes: 'text'
   sourceType: 'text'
   sourceId: 'text'
   startTime: 'timestamp'

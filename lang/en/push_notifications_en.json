@@ -12,5 +12,5 @@
   "overnightReviewLiked.title": "Review liked",
   "overnightReviewLiked.text": "{name} liked your review on {place}",
   "newTripFollower.title": "New trip follower",
-  "newTripFollower.text": "{name} is following your trip, {tripName}",
+  "newTripFollower.text": "{name} is following your trip, {tripName}"
 }

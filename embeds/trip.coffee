@@ -28,7 +28,8 @@ class TripEmbed
   checkIns: (trip) ->
     # TODO: cache as a whole and maybe per checkinId
     trip.checkInIds ?= []
-    checkInIds = _.clone(trip.checkInIds).reverse()
+    # checkInIds = _.clone(trip.checkInIds).reverse()
+    checkInIds = trip.checkInIds
     Promise.map checkInIds, (checkInId) ->
       CheckIn.getById checkInId
       .then (checkIn) ->
@@ -66,8 +67,22 @@ class TripEmbed
     # only need to cache for maybe an hour
     locations = _.filter _.map checkIns, ({place}) ->
       place?.location
-    locations = _.clone(locations).reverse()
+    # locations = _.clone(locations).reverse()
     pairs = pairwise locations
+
+    minX = _.minBy checkIns, ({place}) -> place.location.lon
+    minY = _.minBy checkIns, ({place}) -> place.location.lat
+    maxX = _.maxBy checkIns, ({place}) -> place.location.lon
+    maxY = _.maxBy checkIns, ({place}) -> place.location.lat
+    if minX
+      bounds = {
+        x1: minX.place.location.lon - 1.5
+        y1: maxY.place.location.lat + 1.5
+        x2: maxX.place.location.lon + 1.5
+        y2: minY.place.location.lat - 1.5
+      }
+    else
+      {x1: -141.187, x2: 18.440, y1: -53.766, y2: 55.152}
 
     Promise.map pairs, (pair) ->
       RoutingService.getRoute {locations: pair}
@@ -77,6 +92,7 @@ class TripEmbed
           legs: (combinedRoute.legs or []).concat route.legs
           time: (combinedRoute.time or 0) + (route.time or 0)
           distance: (combinedRoute.distance or 0) + (route.distance or 0)
+          bounds: bounds
         }
       , {}
 

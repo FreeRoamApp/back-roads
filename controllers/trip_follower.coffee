@@ -43,13 +43,9 @@ class TripFollowerCtrl
             }
           .catch -> null
 
-  deleteByRow: (row, {user}) ->
-    unless row.userId is user.id
-      router.throw {
-        info: 'Unauthorized'
-        status: 401
-      }
-    TripFollower.deleteByRow row
+  deleteByTripId: ({tripId}, {user}) ->
+    TripFollower.getByUserIdAndTripId user.id, tripId
+    .then TripFollower.deleteByRow
 
 
 module.exports = new TripFollowerCtrl()

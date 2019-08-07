@@ -5,20 +5,22 @@ request = require 'request-promise'
 
 Base = require './base'
 cknex = require '../services/cknex'
+CacheService = require '../services/cache'
 elasticsearch = require '../services/elasticsearch'
 config = require '../config'
 
 scyllaFields =
   # common between all places
   id: 'timeuuid'
-  type: 'text' # past, future, custom
+  type: {type: 'text', defaultFn: -> 'custom'} # past, future, custom
   userId: 'uuid'
   name: 'text'
   privacy: {type: 'text', defaultFn: -> 'public'} # public, private, friends
+  thumbnailPrefix: 'text'
+  imagePrefix: 'text' # screenshot of map
   # 'set's don't appear to work with ordering
   checkInIds: {type: 'list', subType: 'uuid'}
   lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
-  imagePrefix: 'text'
 
 class Trip extends Base
   getScyllaTables: ->
@@ -38,6 +40,18 @@ class Trip extends Base
         primaryKey:
           partitionKey: ['id']
       }
+    ]
+
+  clearCacheByRow: (row) =>
+    userPrefix = CacheService.PREFIXES.TRIPS_GET_ALL_BY_USER_ID
+    followingPrefix = CacheService.PREFIXES.TRIPS_GET_ALL_FOLLOWING_BY_USER_ID
+    followingCategoryPrefix =
+      CacheService.PREFIXES.TRIPS_FOLLOWING_TRIP_ID_CATEGORY
+
+    Promise.all [
+      CacheService.deleteByKey "#{userPrefix}:#{row.userId}"
+      CacheService.deleteByKey "#{followingPrefix}:#{row.userId}"
+      CacheService.deleteByCategory "#{followingCategoryPrefix}:#{row.id}"
     ]
 
   updateMapByRow: (trip) =>
@@ -92,14 +106,13 @@ class Trip extends Base
         trip
     .then @defaultOutput
 
-
   deleteCheckInIdById: (id, checkInId) =>
     @getById id
     .then (trip) =>
       @upsertByRow trip, {}, {remove: {checkInIds: [checkInId]}}
 
-  defaultInput: (row) ->
+  defaultInput: (row, options) ->
     row.lastUpdateTime = new Date()
-    super row
+    super row, options
 
 module.exports = new Trip()

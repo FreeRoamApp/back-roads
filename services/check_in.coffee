@@ -12,7 +12,7 @@ class CheckInService
   upsert: (diff, user, {emit} = {}) ->
     setUserLocation = diff.setUserLocation
     diff = _.pick diff, [
-      'id', 'sourceId', 'sourceType', 'name',
+      'id', 'sourceId', 'sourceType', 'name', 'notes'
       'attachments', 'startTime', 'endTime', 'status', 'tripIds'
     ]
 

@@ -59,6 +59,9 @@ class CacheService
     THREADS_CATEGORY: 'threads:category'
     TRIP_FOLLOWERS_BY_TRIP_ID: 'trip_followers:tripId'
     TRIP_FOLLOWERS_BY_USER_ID: 'trip_followers:userId'
+    TRIPS_GET_ALL_BY_USER_ID: 'trips:getAll:userId'
+    TRIPS_GET_ALL_FOLLOWING_BY_USER_ID: 'trips:getAllFollowing:userId'
+    TRIPS_FOLLOWING_TRIP_ID_CATEGORY: 'trips:following:tripId:category'
     COMMENT_COUNT: 'thread:comment_count1'
     THREAD_CREATOR: 'thread:creator'
     THREAD_USER: 'thread:user'
@@ -175,6 +178,10 @@ class CacheService
         throw {isLocked: true}
       # don't pass back other (redlock) errors
 
+  addCacheKeyToCategory: (key, category) =>
+    categoryKey = 'category:' + category
+    @tempSetAdd categoryKey, key
+
   # run fn that returns promise and cache result
   # if many request before result is ready, then all subscribe/wait for result
   # if we want to reduce load / network on pubsub, we could have it be
@@ -187,8 +194,7 @@ class CacheService
     expireSeconds ?= DEFAULT_CACHE_EXPIRE_SECONDS
 
     if category
-      categoryKey = 'category:' + category
-      @tempSetAdd categoryKey, rawKey
+      @addCacheKeyToCategory rawKey, category
 
     RedisService.get key
     .then (value) =>

@@ -55,16 +55,15 @@ class ConnectionModel extends Base
       }
     ]
 
-  upsert: (tripFollower) =>
-    super tripFollower
-    .tap =>
-      userPrefix = CacheService.PREFIXES.TRIP_FOLLOWERS_BY_USER_ID
-      tripPrefix = CacheService.PREFIXES.TRIP_FOLLOWERS_BY_TRIP_ID
-      Promise.all [
-        @incrementCountByTripFollower tripFollower, 1
-        CacheService.deleteByKey "#{userPrefix}:#{tripFollower.userId}"
-        CacheService.deleteByKey "#{tripPrefix}:#{tripFollower.tripId}"
-      ]
+  clearCacheByRow: (row) =>
+    userPrefix = CacheService.PREFIXES.TRIP_FOLLOWERS_BY_USER_ID
+    tripPrefix = CacheService.PREFIXES.TRIP_FOLLOWERS_BY_TRIP_ID
+    followingPrefix = CacheService.PREFIXES.TRIPS_GET_ALL_FOLLOWING_BY_USER_ID
+    Promise.all [
+      CacheService.deleteByKey "#{userPrefix}:#{row.userId}"
+      CacheService.deleteByKey "#{tripPrefix}:#{row.tripId}"
+      CacheService.deleteByKey "#{followingPrefix}:#{row.userId}"
+    ]
 
   getByUserIdAndTripId: (userId, tripId) ->
     cknex().select '*'
@@ -120,15 +119,15 @@ class ConnectionModel extends Base
     .where 'tripId', '=', tripFollower.tripId
     .run()
 
+  upsert: (row) =>
+    super row
+    .tap =>
+      @incrementCountByTripFollower row, 1
+
   deleteByRow: (row) =>
     super row
-    .then =>
+    .tap =>
       @incrementCountByTripFollower row, -1
-    .then =>
-      userPrefix = CacheService.PREFIXES.TRIP_FOLLOWERS_BY_USER_ID
-      tripPrefix = CacheService.PREFIXES.TRIP_FOLLOWERS_BY_TRIP_ID
-      CacheService.deleteByKey "#{userPrefix}:#{row.userId}"
-      CacheService.deleteByKey "#{tripPrefix}:#{row.tripId}"
 
   defaultOutput: (tripFollower) ->
     unless tripFollower

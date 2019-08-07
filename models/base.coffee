@@ -83,6 +83,8 @@ module.exports = class Base
         return
       @_upsertScyllaRowByTableAndRow table, scyllaRow, options
     ).concat [@index elasticSearchRow]
+    .tap =>
+      @clearCacheByRow? scyllaRow
     .then =>
       if @streamChannelKey
         (if prepareFn
@@ -176,6 +178,8 @@ module.exports = class Base
     Promise.all _.filter _.map(@getScyllaTables(), (table) =>
       @_deleteScyllaRowByTableAndRow table, row
     ).concat [@deleteESById row.id]
+    .tap =>
+      @clearCacheByRow? row
     .then =>
       if @streamChannelKey
         @streamDeleteById row.id, row

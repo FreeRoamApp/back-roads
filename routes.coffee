@@ -324,10 +324,11 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'trips.getStatesGeoJson', authed TripCtrl.getStatesGeoJson
 .on 'trips.uploadImage', authed TripCtrl.uploadImage
 .on 'trips.upsert', authed TripCtrl.upsert
+.on 'trips.deleteByRow', authed TripCtrl.deleteByRow
 
 .on 'tripFollowers.getAllByTripId', authed TripFollowerCtrl.getAllByTripId
 .on 'tripFollowers.getAllByUserId', authed TripFollowerCtrl.getAllByUserId
-.on 'tripFollowers.deleteByRow', authed TripFollowerCtrl.deleteByRow
+.on 'tripFollowers.deleteByTripId', authed TripFollowerCtrl.deleteByTripId
 .on 'tripFollowers.upsertByTripId', authed TripFollowerCtrl.upsertByTripId
 
 .on 'users.getMe', authed UserCtrl.getMe
