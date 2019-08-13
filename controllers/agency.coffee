@@ -28,10 +28,10 @@ class AgencyCtrl
       lat: parseFloat(matches[1])
       lon: parseFloat(matches[2])
     }
-    console.log location
     FeatureLookupService.getOfficeSlugByLocation location
     .then (officeSlug) ->
-      Office.getBySlug officeSlug
+      if officeSlug
+        Office.getBySlug officeSlug
 
 
 module.exports = new AgencyCtrl()

@@ -8,6 +8,11 @@ item =
   categories: ['starting-out']
   why: "Some city water hookups will have pressure that's high enough to damage your RV's pipes. A regulator will reduce water pressure to an acceptable amount (40-50 PSI)"
 
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['some', 'all']
+
   decisions: [
     {
       title: 'Adjustable vs fixed'
@@ -30,6 +35,7 @@ A gauge on a regulator can tell you want the current water pressure is. It's not
 products =
 
   "camco-inline-water-pressure-regulator":
+    id: '7d1dcc60-bcb8-11e9-83b4-1fe8adb22f90'
     name: 'Camco Inline Water Pressure Regulator'
     description: """
 A barebones, budget-friendly water regulator. It'll do the job of protecting your pipes from high pressure, reducing pressure to 40-50 PSI
@@ -42,6 +48,7 @@ A barebones, budget-friendly water regulator. It'll do the job of protecting you
       countryOfOrigin: 'Unknown'
 
   "renator-adjustable-water-pressure-regulator":
+    id: '891ec410-bcb8-11e9-ab20-134f94c7b880'
     name: 'Renator Adjustable Water Pressure Regulator'
     description: """
 You can adjust this to whatever water pressure is best for you, and use the gauge to see what the pressure is. Those features make it the most expensive on this list
@@ -56,5 +63,5 @@ You can adjust this to whatever water pressure is best for you, and use the gaug
 
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

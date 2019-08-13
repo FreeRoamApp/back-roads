@@ -19,6 +19,10 @@ class UserData extends Base
           startTime: 'text'
           # could put links here instead of on user model, but we do want
           # those to show on profileDialog, etc... w/o pulling all data
+
+          # use for personalized product guides
+          hookupPreference: 'text' # none, some, all
+          experience: 'text' # none, little, some, lots
         primaryKey:
           partitionKey: ['userId']
       }

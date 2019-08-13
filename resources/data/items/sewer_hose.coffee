@@ -7,6 +7,12 @@ item =
   name: 'Sewer Hose'
   categories: ['starting-out']
   why: "You'll need a sewer hose to get the black and gray water out of your {home} and into the RV park or dump station's septic or sewer system"
+
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some', 'all']
+
   decisions: [
     {
       title: 'How long?'
@@ -30,6 +36,7 @@ The cheaper sewer hoses tend to get brittle and crack over time
 
 products =
   "thetford-20-premium-sewer-hose":
+    id: '502fe030-bcb8-11e9-b3be-a6adf1f68454'
     name: 'Thetford 20\' Premium RV Sewer Hose Kit'
     description: "A mid-tier sewer hose. Not the best quality, not the worst."
     itemSlug: 'sewer-hose'
@@ -40,6 +47,7 @@ products =
       countryOfOrigin: 'Unknown'
 
   "camco-20-super-kit-sewer-hose":
+    id: '57804820-bcb8-11e9-905f-7766d63fe959'
     name: 'Camco 20\' Super Kit RV Sewer Hose Kit'
     description: "The budget option. It works, but tends to get brittle and crack over time"
     itemSlug: 'sewer-hose'
@@ -50,6 +58,7 @@ products =
       countryOfOrigin: 'Unknown'
 
   "lippert-waste-master-20-sewer-hose":
+    id: '578fb170-bcb8-11e9-b46f-ce8cd90aaa47'
     name: 'Lipper Waste Master 20\' Sewer Hose'
     description: "The Rolls-Royce of sewer hoses... but holy cow it's expensive. If you want the highest-quality, durable sewer hose, this is it."
     itemSlug: 'sewer-hose'
@@ -62,5 +71,5 @@ products =
 
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

@@ -2,6 +2,8 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 Product = require '../models/product'
+UserData = require '../models/user_data'
+UserRig = require '../models/user_rig'
 EmbedService = require '../services/embed'
 config = require '../config'
 
@@ -15,7 +17,16 @@ class ProductCtrl
     .then EmbedService.embed {embed: defaultEmbed}
 
   getAllByItemSlug: ({itemSlug}, {user}) ->
-    Product.getAllByItemSlug itemSlug
+    Promise.all [
+      UserData.getByUserId user.id
+      UserRig.getByUserId user.id
+    ]
+    .then ([userData, userRig]) ->
+      Product.getAllByItemSlug itemSlug, {
+        rig: userRig?.type
+        experience: userData?.experience
+        hookupPreference: userData?.hookupPreference
+      }
     .map EmbedService.embed {embed: defaultEmbed}
 
 module.exports = new ProductCtrl()

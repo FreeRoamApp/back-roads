@@ -41,6 +41,7 @@ class TripFollowerCtrl
                 path:
                   key: 'social'
             }
+            null # don't block
           .catch -> null
 
   deleteByTripId: ({tripId}, {user}) ->

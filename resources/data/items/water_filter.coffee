@@ -7,6 +7,12 @@ item =
   name: 'Water Filter'
   categories: ['starting-out']
   why: 'Campgrounds don’t always have the cleanest water, so it’s good to filter for both health and taste.'
+
+  filters:
+    rigType: ['tent', 'car', 'van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some', 'all']
+
   # what: ''
   decisions: [
     {
@@ -26,7 +32,14 @@ Container water filters are just a pitcher that filters the water - you may have
 
 products =
   "camco-tastepure-with-hose":
+    id: '728194d0-bcb8-11e9-bf49-4f65e205bd8e'
     name: 'Camco TastePURE'
+
+    filters:
+      rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+      experience: ['none', 'little', 'some', 'lots']
+      hookupPreference: ['none', 'some', 'all']
+
     description: "Hooks up to your fresh water hose outside, each filter lasts about 3 months."
     itemSlug: 'water-filter'
     source: 'amazon'
@@ -36,7 +49,14 @@ products =
     decisions: ['External']
 
   "brita-pitcher-5-cup":
+    id: '7d0932f0-bcb8-11e9-881f-465398a6a71e'
     name: 'Small Brita Pitcher (5 cup)'
+
+    filters:
+      rigType: ['tent', 'car', 'van', 'motorhome', 'travelTrailer', 'fifthWheel']
+      experience: ['none', 'little', 'some', 'lots']
+      hookupPreference: ['none', 'some', 'all']
+
     description: "You've probably heard of this one before :) Your standard Brita pitcher. Filters last 2 months"
     itemSlug: 'water-filter'
     source: 'amazon'
@@ -44,7 +64,14 @@ products =
     decisions: ['Container']
 
   "filtrete-water-filtration-system":
+    id: '7d180000-bcb8-11e9-b3e4-aa1d30b44d1a'
     name: 'Filtrete Water Filtration System'
+
+    filters:
+      rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+      experience: ['none', 'little', 'some', 'lots']
+      hookupPreference: ['none', 'some', 'all']
+
     description: "A budget-friendly under-sink filter. Hooks up directly to your cold water line under sink - uses compression fittings to connect, so you'll have to do a bit of (easy) plumbing. Filters last 6 months"
     itemSlug: 'water-filter'
     source: 'amazon'
@@ -52,5 +79,5 @@ products =
     decisions: ['Under-sink']
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

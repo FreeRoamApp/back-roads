@@ -6,6 +6,11 @@ item =
   id: '6b5a2f50-ba07-11e8-bdb7-ffa1efdd209b'
   name: 'Inverter'
   categories: ['boondocking']
+  priority: 4
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some']
   why: """
 Inverters transform the 12V power from your batteries to 120V power, which lets you run computers, microwave, a coffee pot, etc... when not plugged into shore power or a generator
 
@@ -48,6 +53,7 @@ In almost all cases, you'll want a 12V inverter. If you need a 24V or 48V one, y
 
 products =
   "aims-power-2000w-pure-sine-inverter-charger":
+    id: '2cf13380-bcb8-11e9-a9bd-54ad0dcf3a5b'
     name: 'AIMS Power 2000W Inverter Charger'
     description: '''
 A good-quality inverter charger that will give you pure sine 120V, as well as charge your batteries efficiently
@@ -59,6 +65,7 @@ A good-quality inverter charger that will give you pure sine 120V, as well as ch
       countryOfOrigin: 'China'
 
   "giandel-2000w-modified-sine-inverter":
+    id: '3d600ca0-bcb8-11e9-bce6-2719ad19684d'
     name: 'GIANDEL 2000W Power Inverter'
     description: '''
 A cheap inverter that will get you 120V power, but it's modified sine, so your electronics might not work properly.
@@ -70,6 +77,7 @@ A cheap inverter that will get you 120V power, but it's modified sine, so your e
       countryOfOrigin: 'China'
 
   "wzrelb-3000w-pure-sine-inverter":
+    id: '3d6ed9b0-bcb8-11e9-aa9c-490162b0aac3'
     name: 'WZRELB 3000W Power Inverter'
     description: '''
 If you need to power a bit more than most, this inverter is 3,000W and has good reviews
@@ -81,6 +89,7 @@ If you need to power a bit more than most, this inverter is 3,000W and has good 
       countryOfOrigin: 'China'
 
   "kinverch-1000w-pure-sine-inverter":
+    id: '3d76a1e0-bcb8-11e9-a271-28b665356d84'
     name: 'Kinverch 1000W Power Inverter'
     description: '''
 If you're on a budget, but still want pure sine, this is probably your best option. It's only 1,000W so you may not be able to run a microwave, but it'll power laptops, TVs, etc...
@@ -90,5 +99,5 @@ If you're on a budget, but still want pure sine, this is probably your best opti
     decisions: ['1000W', 'Pure sine', 'Inverter']
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

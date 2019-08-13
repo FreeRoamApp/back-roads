@@ -8,6 +8,11 @@ item =
   categories: ['starting-out']
   why: "You don’t want your RV rolling off, do you? ;) Chocks will prevent that. They can also get you more stability in your {home}, preventing back and forth rocking"
 
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some', 'all']
+
   decisions: [
     {
       title: 'Plastic vs rubber'
@@ -29,6 +34,7 @@ Most people who use the X-style use them in combination with the wedge style. Th
 
 products =
   "camco-plastic-wheel-chocks":
+    id: '052843c0-bcb8-11e9-8055-da2510309121'
     name: 'Camco Plastic Wheel Chocks'
     description: "Your basic, cheap plastic wheel chocks"
     itemSlug: 'chocks'
@@ -41,7 +47,13 @@ products =
       countryOfOrigin: 'Unknown'
 
   "x-chock-wheel-stabilizer":
+    id: '052eac60-bcb8-11e9-9f45-6a38f66380fd'
     name: 'X-Chock Wheel Stabilizer'
+    filters:
+      rigType: ['travelTrailer', 'fifthWheel']
+      experience: ['none', 'little', 'some', 'lots']
+      hookupPreference: ['none', 'some', 'all']
+
     description: "Provides added stabilization and prevents tire shifts by applying opposing force to tandem tire applications"
     itemSlug: 'chocks'
     source: 'amazon'
@@ -53,6 +65,7 @@ products =
       countryOfOrigin: 'USA'
 
   "maxxhaul-rubber-wheel-chocks":
+    id: '0c4391f0-bcb8-11e9-b364-4da5b30af823'
     name: 'MaxxHaul Rubber Wheel Chocks'
     description: "Durable rubber wheel chocks - they're solid rubber and heavy-duty. Main drawback is they smell pretty bad at first ;)"
     itemSlug: 'chocks'
@@ -67,5 +80,5 @@ products =
 
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

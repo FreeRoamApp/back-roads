@@ -30,4 +30,14 @@ class UserRig extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
+  defaultOutput: (userRig) ->
+    userRig = super userRig
+
+    if userRig?.type and not (userRig.type in config.RIG_TYPES)
+      userRig.type = null
+
+    console.log userRig
+
+    userRig
+
 module.exports = new UserRig()

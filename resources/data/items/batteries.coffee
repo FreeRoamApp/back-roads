@@ -6,10 +6,15 @@ item =
   id: '6fe55cc0-ba07-11e8-872f-18e7258b765c'
   name: 'Batteries'
   categories: ['boondocking']
+  priority: 1
   why: "Batteries are what will power all of your electronics. By default they'll power anything 12v (lights, water pump, etc...) and with an inverter, they'll power 120v (laptops, microwave, A/C). The goal with solar and generators is typically just to keep your batteries charged, and the batteries will provide the power."
   what: "You'll most-likely need a 12V deep cycle battery. A standard car battery is different, so be sure it's a deep cycle battery."
 #   what: '''With complex products like batteries, it's best to watch a video or two to learn more about which you should buy.
 # '''
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some', 'all']
 
   decisions: [
     {
@@ -43,7 +48,9 @@ Lead acid batteries will be cheapest, and they'll definitely work, but they do n
 
 products =
   "mighty-max-100ah-battery":
+    id: '60b34830-bcb7-11e9-9ce9-046380752818'
     name: 'Mighty Max 100Ah Lead Acid Battery'
+    priority: 4
     description: '''
 As of this writing, the cheapest 100Ah lead acid battery on Amazon. You can find cheaper at local retailers, since these are expensive to ship (which is reflected in the price), but the reviews for this one are good.
 '''
@@ -56,7 +63,9 @@ As of this writing, the cheapest 100Ah lead acid battery on Amazon. You can find
       countryOfOrigin: 'China'
 
   "renogy-100ah-agm-battery":
+    id: '60c28a70-bcb7-11e9-94cc-b9a2e0783ceb'
     name: 'Renogy 100Ah AGM Battery'
+    priority: 3
     description: '''
 A good, budget AGM battery. Not much more than the lead acid, but with less maintenance and no requirement to vent. Renogy is a well-known brand in the RVing space.
 '''
@@ -69,7 +78,9 @@ A good, budget AGM battery. Not much more than the lead acid, but with less main
       countryOfOrigin: 'China'
 
   "battle-born-100ah-lithium-battery":
+    id: '60cc7580-bcb7-11e9-ba21-5cca07bd2251'
     name: 'Battle Born 100Ah Lithium battery'
+    priority: 1
     description: '''
 These are the cream of the crop batteries, and the price tag reflects it. You'll get good support, a good warranty, and excellent lithium batteries, if you're willing to spend that much.
 '''
@@ -85,7 +96,9 @@ These are the cream of the crop batteries, and the price tag reflects it. You'll
     ]
 
   "ruixu-100ah-lithium-battery":
+    id: 'e275aa70-bcb7-11e9-b910-e428924358cb'
     name: 'Ruixu 100Ah Lithium battery'
+    priority: 2
     description: '''
 The budget option for lithium batteries. Watch the video to learn more about this one - it performs well, but doesn't have a low-temp cutoff, or as good of a warranty
 '''
@@ -96,5 +109,5 @@ The budget option for lithium batteries. Watch the video to learn more about thi
       {sourceType: 'youtube', sourceId: 'WVxvBkeY0UY', name: 'Battle Born ($950) vs Ruixu ($750)'}
     ]
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

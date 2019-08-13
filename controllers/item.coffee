@@ -2,6 +2,8 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 Item = require '../models/item'
+UserData = require '../models/user_data'
+UserRig = require '../models/user_rig'
 EmbedService = require '../services/embed'
 config = require '../config'
 
@@ -17,7 +19,16 @@ class ItemCtrl
     .map EmbedService.embed {embed: defaultEmbed}
 
   getAllByCategory: ({category}, {user}) ->
-    Item.getAllByCategory category
+    Promise.all [
+      UserData.getByUserId user.id
+      UserRig.getByUserId user.id
+    ]
+    .then ([userData, userRig]) ->
+      Item.getAllByCategory category, {
+        rig: userRig?.type
+        experience: userData?.experience
+        hookupPreference: userData?.hookupPreference
+      }
     .map EmbedService.embed {embed: defaultEmbed}
 
   search: ({query}, {user}) ->

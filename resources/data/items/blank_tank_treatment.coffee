@@ -9,6 +9,11 @@ item =
   why: "Black tanks are pretty gross... Solids and toilet paper can build up, so you're going to want to use some sort of treatment to break things down and keep things from smelling too bad..."
   what: 'Most people use drop-in packs - you drop one into the toilet after you dump the black tank, and add a few gallons of water - that\'s it! Alternatively you can use a pour-in detergent, which works the same - just in liquid-form.'
 
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some']
+
   # what: ''
   decisions: [
     {
@@ -27,6 +32,7 @@ Pods are easiest, followed by powder, then liquid. The cost is usually the inver
 
 products =
   "bio-pak-digester":
+    id: 'e2849e90-bcb7-11e9-87b9-fb962b4c9811'
     name: 'Bio-Pak Black Tank Deodorizer and Waste Digester'
     description: "Easy to use pods that deodorize and break down waste and paper."
     itemSlug: 'black-tank-treatment'
@@ -37,6 +43,7 @@ products =
     decisions: ['Drop-in pod']
 
   "happy-campers-organic-black-tank-treatment":
+    id: 'e28ab910-bcb7-11e9-bcf0-5b92fb6b035e'
     name: 'Happy Campers Black Tank Treatment'
     description: "A popular powder treatment that deodorizes and liquifies waste and toilet paper"
     itemSlug: 'black-tank-treatment'
@@ -48,6 +55,7 @@ products =
     ]
 
   "camco-orange-rv-black-tank-treatment":
+    id: 'e9cd3e50-bcb7-11e9-9575-8e02b1a38e4f'
     name: 'Camco Orange-Scented Black Tank Treatment'
     description: "The budget option: 64 treatments for a low price"
     itemSlug: 'black-tank-treatment'

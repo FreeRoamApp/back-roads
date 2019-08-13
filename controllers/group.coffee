@@ -257,6 +257,7 @@ class GroupCtrl
       @_setupGroup group, {autoJoin, user}
 
   getBySlug: ({slug, autoJoin}, {user}) =>
+    slug = slug.toLowerCase()
     Group.getBySlug slug
     .then (group) =>
       unless group

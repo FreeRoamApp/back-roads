@@ -12,7 +12,9 @@ class UserDataCtrl
 
   upsert: (diff, {user}) ->
     console.log 'diff', diff
-    diff = _.pick diff, ['bio', 'occupation', 'home', 'startTime']
+    diff = _.pick diff, [
+      'bio', 'occupation', 'home', 'startTime', 'experience', 'hookupPreference'
+    ]
     diff.userId = user.id
     UserData.upsert diff
 

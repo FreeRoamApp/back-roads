@@ -56,6 +56,7 @@ class Trip extends Base
 
   updateMapByRow: (trip) =>
     imagePrefix = "trips/#{trip.id}_profile"
+    console.log "#{config.SCREENSHOTTER_HOST}/screenshot"
     Promise.resolve request "#{config.SCREENSHOTTER_HOST}/screenshot",
       json: true
       qs:
@@ -69,6 +70,7 @@ class Trip extends Base
     .then =>
       @upsertByRow trip, {
         imagePrefix
+        lastUpdateTime: new Date()
       }
 
   getAllByUserId: (userId, {limit} = {}) =>

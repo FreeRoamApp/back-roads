@@ -7,6 +7,12 @@ item =
   name: 'Levelers'
   categories: ['starting-out']
   why: "Many RV parks and boondocking spots you visit won't be very level. You'll want your RV level not only for comfort reasons, but also to ensure your fridge works properly. Leveling blocks are the easiest way to get your rig level."
+
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some', 'all']
+
   decisions: [
     {
       title: 'Wood vs plastic'
@@ -28,6 +34,7 @@ Flat leveling blocks look like legos that you stack together and drive over. Cur
 
 products =
   "lynx-levelers":
+    id: '50110d90-bcb8-11e9-a4df-f782fe493654'
     name: 'Lynx Levelers (10 pack)'
     description: "Probably the most popular leveling blocks sold. These are budget-friendly lego-like pieces of plastic that you stack in a pyramid and drive over to get level"
     itemSlug: 'leveling-blocks'
@@ -43,6 +50,7 @@ products =
       countryOfOrigin: 'USA'
 
   "andersen-levelers":
+    id: '5026df80-bcb8-11e9-bcc1-9413ab354a68'
     name: 'Andersen Levelers'
     description: "These are a good bit more expensive than flat plastic blocks, but people tend to prefer them for ease-of-use. Do note that they don't work very well on soft ground"
     itemSlug: 'leveling-blocks'
@@ -54,5 +62,5 @@ products =
     ]
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

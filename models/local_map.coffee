@@ -119,8 +119,5 @@ class LocalMap extends Base
                   type: 'point'
                   coordinates: location
     }
-    .then (res) ->
-      console.log res
-      res
 
 module.exports = new LocalMap()

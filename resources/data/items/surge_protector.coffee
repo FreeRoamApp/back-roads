@@ -8,6 +8,13 @@ item =
   categories: ['starting-out']
   why: 'Electricity is not something to mess around with - one bad electrical hookup and you could fry your {home}\'s internal electrical systems. Surge protectors will let you know when a hookup is going to cause problems, and even prevent issues with power surges and outages.'
   what: ''
+
+
+  filters:
+    rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['some', 'all']
+
   decisions: [
     {
       title: '30A vs 50A'
@@ -28,6 +35,7 @@ item =
 
 products =
   "camco-dogbone-surge-protector-30a":
+    id: '63713a40-bcb8-11e9-a7f2-848b5a3854bd'
     name: 'Camco Heavy Duty Dogbone Surge Protector, 30A'
     description: "This is your budget (though they're still a little pricey) surge protector. It informs and protects you from power issues, but doesn't have any extra features beyond that. If it encounters a surge, it will sacrifice itself to save the {home}'s electrical system (which means you'll need a new surge protector)"
     source: 'amazon'
@@ -39,6 +47,7 @@ products =
       countryOfOrigin: 'Unknown'
 
   "southwire-surge-guard-30a":
+    id: '7267cb40-bcb8-11e9-be86-6131515c4cad'
     name: 'Southwire Surge Guard, 30A'
     description: "This surge protector is a little pricier. It has all of the usual analysis for power problems and will auto-shutoff. This unit is able to reset itself after power issue (it does not \"sacrifice\" itself)"
     source: 'amazon'
@@ -48,6 +57,7 @@ products =
     decisions: ['30A', 'Resettable', 'External']
 
   "progressive-industries-30a":
+    id: '72795770-bcb8-11e9-846d-9a668f9ff772'
     name: 'Progressive Industries 30A EMS'
     description: "This is an internal surge protector that you wire in inside the {home}. It's the most popular brand for this sort of thing and has excellent reviews"
     source: 'amazon'
@@ -57,5 +67,5 @@ products =
     decisions: ['30A', 'Resettable', 'Internal']
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

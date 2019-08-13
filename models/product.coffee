@@ -4,6 +4,7 @@ uuid = require 'node-uuid'
 
 Base = require './base'
 cknex = require '../services/cknex'
+elasticsearch = require '../services/elasticsearch'
 
 scyllaFields =
   slug: 'text' # eg: kebab-case name
@@ -19,6 +20,8 @@ scyllaFields =
   decisions: {type: 'set', subType: 'text'}
   videos: 'json' # (array of video objects)
   data: 'json'
+  filters: 'json'
+  priority: 'int'
 
 class Product extends Base
   getScyllaTables: ->
@@ -40,6 +43,26 @@ class Product extends Base
       }
     ]
 
+  getElasticSearchIndices: ->
+    [
+      {
+        name: 'products'
+        mappings:
+          slug: {type: 'keyword'}
+          itemSlug: {type: 'keyword'}
+          name: {type: 'text'}
+          description: {type: 'text'}
+          source: {type: 'keyword'}
+          sourceId: {type: 'text'}
+          sellers: {type: 'object'}
+          decisions: {type: 'text'}
+          videos: {type: 'object'}
+          data: {type: 'object'}
+          filters: {type: 'object'}
+          priority: {type: 'integer'}
+      }
+    ]
+
   getBySlug: (slug) =>
     cknex().select '*'
     .from 'products_by_slug'
@@ -47,15 +70,38 @@ class Product extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
-  getAllByItemSlug: (itemSlug, {limit} = {}) =>
+  getAllByItemSlug: (itemSlug, {rig, experience, hookupPreference, limit} = {}) =>
     limit ?= 10
 
-    cknex().select '*'
-    .from 'products_by_itemSlug'
-    .where 'itemSlug', '=', itemSlug
-    .limit limit
-    .run()
-    .map @defaultOutput
+    filters = {itemSlug}
+    if rig
+      filters['filters.rigType'] = rig
+    if experience
+      filters['filters.experience'] = experience
+    if hookupPreference
+      filters['filters.hookupPreference'] = hookupPreference
+
+    filter = _.map filters, (value, key) ->
+      {
+        bool:
+          must:
+            match:
+              "#{key}": value
+      }
+
+    elasticsearch.search {
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
+      body:
+        query:
+          bool:
+            filter: filter
+        sort: 'priority'
+    }
+    .then ({hits}) ->
+      _.map hits.hits, ({_id, _source}) ->
+        _.defaults _source, {id: _id}
+
 
   getSlugsByItemSlug: (itemSlug) =>
     cknex().select 'slug'

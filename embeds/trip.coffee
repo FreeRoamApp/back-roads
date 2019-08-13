@@ -42,7 +42,7 @@ class TripEmbed
         .then (place) ->
           checkIn.place = place
           checkIn
-    .then (checkIns) -> _.filter checkIns
+    .then (checkIns) -> _.filter checkIns, (checkIn) -> checkIn?.place?.location
 
   stats: ({checkIns}) ->
     stateCounts = _.countBy checkIns, ({place}) ->
@@ -70,16 +70,16 @@ class TripEmbed
     # locations = _.clone(locations).reverse()
     pairs = pairwise locations
 
-    minX = _.minBy checkIns, ({place}) -> place.location.lon
-    minY = _.minBy checkIns, ({place}) -> place.location.lat
-    maxX = _.maxBy checkIns, ({place}) -> place.location.lon
-    maxY = _.maxBy checkIns, ({place}) -> place.location.lat
+    minX = _.minBy locations, ({lon}) -> lon
+    minY = _.minBy locations, ({lat}) -> lat
+    maxX = _.maxBy locations, ({lon}) -> lon
+    maxY = _.maxBy locations, ({lat}) -> lat
     if minX
       bounds = {
-        x1: minX.place.location.lon - 1.5
-        y1: maxY.place.location.lat + 1.5
-        x2: maxX.place.location.lon + 1.5
-        y2: minY.place.location.lat - 1.5
+        x1: minX.lon - 1.5
+        y1: maxY.lat + 1.5
+        x2: maxX.lon + 1.5
+        y2: minY.lat - 1.5
       }
     else
       {x1: -141.187, x2: 18.440, y1: -53.766, y2: 55.152}

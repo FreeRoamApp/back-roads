@@ -6,8 +6,13 @@ item =
   id: '73de0e30-ba07-11e8-9fde-687163ee8e09'
   name: 'Generator'
   categories: ['boondocking']
+  priority: 3
   why: "Solar is great, but if you want to run A/C, or have string of cloudy days, it's good to have a generator. You can even use just a generator without solar. A generator will charge your batteries and give you power off-grid."
   # what: ''
+  filters:
+    rigType: ['tent', 'car', 'van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some']
   decisions: [
     {
       title: 'Inverter generator vs standard'
@@ -49,7 +54,9 @@ The two brands people trust most, by far, are Honda and Yamaha, BUT they cost ab
 
 products =
   "honda-eu2200i-inverter-generator":
+    id: '19e197d0-bcb8-11e9-be8b-29cdae2025ea'
     name: 'Honda EU2200i (1800W running) Inverter Generator'
+    priority: 2
     description: '''
 Hands-down the most recommended generator you can get. They're reliable and quiet, at a cost (twice the price of some of the others here)
 '''
@@ -62,6 +69,7 @@ Hands-down the most recommended generator you can get. They're reliable and quie
       countryOfOrigin: 'Thailand'
 
   "westinghouse-igen2500-inverter-generator":
+    id: '19ebf810-bcb8-11e9-ad61-557bc36d5ae5'
     name: 'Westinghouse iGen2500 (2200W running) Inverter Generator'
     description: '''
 An affordable generator with more running watts than the Honda for about half the price. Not as well-built, but has good reviews on Amazon.
@@ -75,7 +83,9 @@ An affordable generator with more running watts than the Honda for about half th
       countryOfOrigin: 'China'
 
   "champion-3400w-dual-fuel-inverter-generator":
+    id: '2cda9e40-bcb8-11e9-a1fd-b570a7d2a41a'
     name: 'Champion 3100W (running) Dual Fuel Inverter Generator'
+    priority: 1
     description: '''
 A generator big enough to run a 15,000btu A/C and can run off of propane or gas. Champion has been making generators for a long time
 '''
@@ -86,6 +96,7 @@ A generator big enough to run a 15,000btu A/C and can run off of propane or gas.
     decisions: ['3100W', 'Dual Fuel']
 
   "wen-1250w-inverter-generator":
+    id: '2ce9b970-bcb8-11e9-bb4a-1f61bd2a3181'
     name: 'WEN 1000W (running) Inverter Generator'
     description: '''
   A no-frills small inverter generator that's good for recharging batteries. Smaller and lighter than most generators, but doesn't produce as much power
@@ -97,5 +108,5 @@ A generator big enough to run a 15,000btu A/C and can run off of propane or gas.
     decisions: ['1000W', 'Gas']
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

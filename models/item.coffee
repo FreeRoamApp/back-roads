@@ -21,6 +21,8 @@ class Item extends Base
           what: 'text'
           decisions: 'json' # json (array of decision objects)
           videos: 'json' # json (array of video objects)
+          filters: 'json'
+          priority: 'int'
         primaryKey:
           partitionKey: ['slug']
       }
@@ -36,11 +38,14 @@ class Item extends Base
           what: 'text'
           decisions: 'json' # json (array of decision objects)
           videos: 'json' # json (array of video objects)
+          filters: 'json'
+          priority: 'int'
         primaryKey:
           partitionKey: ['category']
           clusteringColumns: ['slug']
       }
     ]
+
   getElasticSearchIndices: ->
     [
       {
@@ -51,6 +56,8 @@ class Item extends Base
           categories: {type: 'text'}
           why: {type: 'text'}
           what: {type: 'text'}
+          filters: {type: 'object'}
+          priority: {type: 'integer'}
       }
     ]
 
@@ -107,14 +114,43 @@ class Item extends Base
     .run()
     .map @defaultOutput
 
-  getAllByCategory: (category, {limit} = {}) =>
+  getAllByCategory: (category, {rig, experience, hookupPreference, limit} = {}) =>
     limit ?= 30
 
-    cknex().select '*'
-    .from 'items_by_category'
-    .where 'category', '=', category
-    .limit limit
-    .run()
-    .map @defaultOutput
+    filters = {categories: category}
+    if rig
+      filters['filters.rigType'] = rig
+    if experience
+      filters['filters.experience'] = experience
+    if hookupPreference
+      filters['filters.hookupPreference'] = hookupPreference
+
+    filter = _.map filters, (value, key) ->
+      {
+        bool:
+          must:
+            match:
+              "#{key}": value
+      }
+
+    elasticsearch.search {
+      index: @getElasticSearchIndices()[0].name
+      type: @getElasticSearchIndices()[0].name
+      body:
+        query:
+          bool:
+            filter: filter
+        sort: 'priority'
+    }
+    .then ({hits}) ->
+      _.map hits.hits, ({_id, _source}) ->
+        _.defaults _source, {id: _id}
+
+    # cknex().select '*'
+    # .from 'items_by_category'
+    # .where 'category', '=', category
+    # .limit limit
+    # .run()
+    # .map @defaultOutput
 
 module.exports = new Item()

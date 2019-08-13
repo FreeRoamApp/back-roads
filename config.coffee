@@ -64,6 +64,7 @@ config =
   DEFAULT_NOTIFICATIONS:
     chatMessage: true
     chatMention: true
+  RIG_TYPES: ['tent', 'car', 'van', 'motorhome', 'travelTrailer', 'fifthWheel']
   GA_ID: env.BACK_ROADS_GA_ID
   GOOGLE:
     CLIENT_ID: env.GOOGLE_CLIENT_ID

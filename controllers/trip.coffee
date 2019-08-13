@@ -60,9 +60,14 @@ class TripCtrl
     )
 
   deleteByRow: ({row}, {user}) ->
-    unless row.userId is user.id
-      router.throw {status: 401, info: 'Unauthorized'}
-    Trip.deleteByRow row
+    Trip.getById row.id
+    .then (trip) ->
+      unless trip.userId is user.id
+        router.throw {status: 401, info: 'Unauthorized'}
+      unless trip.type is 'custom'
+        router.throw {status: 400, info: 'Can only delete custom trips'}
+
+      Trip.deleteByRow trip
 
   getAll: ({}, {user}) ->
     prefix = CacheService.PREFIXES.TRIPS_GET_ALL_BY_USER_ID

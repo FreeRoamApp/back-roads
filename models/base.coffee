@@ -239,10 +239,17 @@ module.exports = class Base
       else
         value
 
-  defaultESInput: (row) ->
+  defaultESInput: (row) =>
     if row.id
       row.id = "#{row.id}"
-    row
+    _.mapValues row, (value, key) =>
+      {type} = @fieldsWithType[key] or {}
+
+      if type is 'json' and typeof value is 'string'
+        JSON.parse value
+      else
+        value
+
   defaultESOutput: (row) -> row
 
   # streaming fns

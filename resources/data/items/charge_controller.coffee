@@ -6,7 +6,12 @@ item =
   id: '64a8ed90-ba07-11e8-b8a5-42d3bcf1c1ac'
   name: 'Charge Controller'
   categories: ['boondocking']
+  priority: 5
   why: "Charge controllers regulate the voltage and current from the panels to the batteries to prevent overcharging."
+  filters:
+    rigType: ['tent', 'car', 'van', 'motorhome', 'travelTrailer', 'fifthWheel']
+    experience: ['none', 'little', 'some', 'lots']
+    hookupPreference: ['none', 'some']
 
   # what: ''
   decisions: [
@@ -38,6 +43,7 @@ It's also good to "size up", in case you add more solar panels in the future (al
 
 products =
   "epever-30a-mppt-solar-charge-controller":
+    id: '0516dea0-bcb8-11e9-9708-b750ec3122df'
     name: 'EPEVER 30A MPPT Charge Controller'
     description: '''
 '''
@@ -49,6 +55,7 @@ products =
       countryOfOrigin: 'China'
 
   "renogy-wanderer-30a-pwm-charge-controller":
+    id: 'f8eb7b90-bcb7-11e9-b6dd-391f84243ee1'
     name: 'Renogy Wanderer 30A PWM Charge Controller'
     description: '''
 
@@ -64,5 +71,5 @@ products =
 
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

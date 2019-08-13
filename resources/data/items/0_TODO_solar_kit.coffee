@@ -39,5 +39,5 @@ Renogy is the most well-known brand of RV solar panels, and these are good panel
     reviewersDisliked: ['Sharp edges', 'Small percent of units arrived damaged (glass)']
     decisions: ['Mounted', '100W', 'Mono']
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity
