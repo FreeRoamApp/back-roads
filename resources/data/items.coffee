@@ -46,15 +46,31 @@ lifetime-camping-table https://amzn.com/B003YJPC2A
 anker-powercore-20100mah https://amzn.com/B00X5SP0HC
 renogy-72000mah-power-bank https://amzn.com/B0791WDZTW
 anker-powercore-5000mah https://amzn.com/B01CU1EC6Y
+
+portal-steel-folding-chair https://amzn.com/B073PQ6KG2
+zero-gravity-lounge-chairs https://amzn.com/B003KK3C52
+sportneer-camping-chair https://amzn.com/B01N67GCKW
+coleman-camping-quad-chair https://amzn.com/B0033990ZQ
+
+dji-mavic-2-pro https://amzn.com/B07GDC5X74
+dji-mavic-air https://amzn.com/B078WQ9SN3
+dji-spark https://amzn.com/B071SKF6PS
+tello-quadcopter https://amzn.com/B07BDHJJTH
+
+arcshell-two-way-radios https://amzn.com/B072JJFVJG
+midland-two-way-radios https://amzn.com/B072JJFVJG
+motorola-t100-talkabout-radios https://amzn.com/B01DM7AESK
 ###
 
 # TODO: wiring
 
 # TODO: fans, weboost?, different types of levelers, better generator options, better batteries
-# mats?, camping chairs, grill, outdoor table, cell plans / booster / hotspot, propane heater, shower head, composting toilet, water (collapsible?) containers, air compressor, laundry bag?
+# mats?, camping chairs, cell plans / booster / hotspot, propane heater, shower head, composting toilet, water (collapsible?) containers, air compressor, laundry bag?
 
 # starting out tent camping: tent, sleeping bag, sleeping pad, ice chest, chargers
 # outdoor: hammock, mat, chairs,
+
+# tech: drones, action cam, backup cam, weboost, walkie-talkies
 
 # TODO: different items and products for van / motorhome / 5th wheel / travel trailers
 # eventually 30v50 amp

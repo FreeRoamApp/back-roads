@@ -133,7 +133,7 @@ class Item extends Base
               "#{key}": value
       }
 
-    elasticsearch.search {
+    Promise.resolve elasticsearch.search {
       index: @getElasticSearchIndices()[0].name
       type: @getElasticSearchIndices()[0].name
       body:

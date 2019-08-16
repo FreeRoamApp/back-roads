@@ -39,7 +39,7 @@ If you're familiar with Amp-hour storage of other battery types, do note that it
 
 products =
   "anker-powercore-20100mah":
-    id: '06f023b0-bd82-11e9-8707-a49b89db6990'
+    id: 'cbe1b8c0-be11-11e9-b3b7-6bb6f0f77256'
     name: 'Anker PowerCore 20100mAh'
     description: "A good mid-range pack that will charge an iPhone X 5 times. Has 2 USB ports"
     source: 'amazon'

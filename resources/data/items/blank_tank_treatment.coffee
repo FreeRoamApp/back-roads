@@ -12,7 +12,7 @@ item =
   filters:
     rigType: ['van', 'motorhome', 'travelTrailer', 'fifthWheel']
     experience: ['none', 'little', 'some', 'lots']
-    hookupPreference: ['none', 'some']
+    hookupPreference: ['none', 'some', 'all']
 
   # what: ''
   decisions: [
@@ -65,5 +65,5 @@ products =
 
 
 
-module.exports = {item, products: _.map products, (product, slug) -> _.defaults {itemSlug: item.slug, slug}, product}
+module.exports = {item, products: _.map products, (product, slug) -> _.defaultsDeep product, {itemSlug: item.slug, filters: item.filters, slug}}
 # coffeelint: enable=max_line_length,cyclomatic_complexity

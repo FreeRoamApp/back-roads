@@ -48,6 +48,17 @@ categories =
       hookupPreference: ['none', 'some', 'all']
 
 
+  'tech':
+    id: 'b1e5a2f0-bfc5-11e9-baca-ae3e0de3a4a7'
+    name: 'Tech'
+    description: 'Cool gadgets that can be helpful when camping'
+    priority: 4
+    filters:
+      rigType: ['tent', 'car', 'van', 'motorhome', 'travelTrailer', 'fifthWheel']
+      experience: ['none', 'little', 'some', 'lots']
+      hookupPreference: ['none', 'some', 'all']
+
+
 
 module.exports = _.map categories, (value, slug) -> _.defaults {slug}, value
 # coffeelint: enable=max_line_length,cyclomatic_complexity

@@ -22,11 +22,12 @@ class ProductCtrl
       UserRig.getByUserId user.id
     ]
     .then ([userData, userRig]) ->
-      Product.getAllByItemSlug itemSlug, {
+      filters = {
         rig: userRig?.type
         experience: userData?.experience
         hookupPreference: userData?.hookupPreference
       }
-    .map EmbedService.embed {embed: defaultEmbed}
+      Product.getAllByItemSlug itemSlug, filters
+      .map EmbedService.embed {embed: defaultEmbed}
 
 module.exports = new ProductCtrl()

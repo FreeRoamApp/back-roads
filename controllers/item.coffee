@@ -24,12 +24,13 @@ class ItemCtrl
       UserRig.getByUserId user.id
     ]
     .then ([userData, userRig]) ->
-      Item.getAllByCategory category, {
+      filters = {
         rig: userRig?.type
         experience: userData?.experience
         hookupPreference: userData?.hookupPreference
       }
-    .map EmbedService.embed {embed: defaultEmbed}
+      Item.getAllByCategory category, filters
+      .map EmbedService.embed {embed: defaultEmbed, options: {filters}}
 
   search: ({query}, {user}) ->
     Item.search {query}

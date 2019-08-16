@@ -89,7 +89,7 @@ class Product extends Base
               "#{key}": value
       }
 
-    elasticsearch.search {
+    Promise.resolve elasticsearch.search {
       index: @getElasticSearchIndices()[0].name
       type: @getElasticSearchIndices()[0].name
       body:
@@ -103,11 +103,8 @@ class Product extends Base
         _.defaults _source, {id: _id}
 
 
-  getSlugsByItemSlug: (itemSlug) =>
-    cknex().select 'slug'
-    .from 'products_by_itemSlug'
-    .where 'itemSlug', '=', itemSlug
-    .run()
+  getSlugsByItemSlug: (itemSlug, filters) =>
+    @getAllByItemSlug itemSlug, filters
     .map (product) -> product.slug
 
   getAll: ({limit} = {}) =>
