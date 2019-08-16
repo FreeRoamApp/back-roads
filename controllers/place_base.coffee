@@ -266,9 +266,6 @@ module.exports = class PlaceBaseCtrl
           if @Model.getScyllaTables()[0].fields.distanceTo
             @_setNearbyAmenities place
 
-          if place.weather
-            ImageService.uploadWeatherImageByPlace place
-
           if @Model.getScyllaTables()[0].fields.weather
             WeatherService.getForecastDiff place
             .then (diff) ->
