@@ -111,13 +111,12 @@ class Subscription extends Base
           tokens: [token]
       }
 
-  removeTokenByToken: (token) =>
-    @getAllByToken token
-    .map (subscription) =>
-      @upsertByRow subscription, {}, {
-        remove:
-          tokens: [token]
-      }
+  removeTokenBySubscriptionToken: (subscriptionToken) =>
+    subscription = _.omit subscriptionToken, 'token'
+    @upsertByRow subscription, {}, {
+      remove:
+        tokens: [subscriptionToken.token]
+    }
 
   subscribeNewTokenByUserId: (userId, {token, deviceId}) =>
     @getAllByUserId userId
@@ -233,7 +232,7 @@ class Subscription extends Base
     topic = @getTopicFromSubscription subscriptionToken
 
     Promise.all _.filter [
-      @removeTokenByToken subscriptionToken.token
+      @removeTokenBySubscriptionToken subscriptionToken
       @fcmUnsubscribeToTopicByToken subscriptionToken.token, topic
     ]
 

@@ -26,7 +26,7 @@ class PushTokensCtrl
         Promise.map pushTokens, (pushToken) ->
           unless token is 'none'
             Subscription.getAllByToken pushToken.token
-            .map Subscription.unsubscribeBySubscriptionToken
+            .map Subscription.unsubscribeBySubscriptionAndToken
       ]
       .then ->
         PushToken.upsert {
