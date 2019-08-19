@@ -19,7 +19,6 @@ class WeatherService
     .get()
 
   getForecastDiff: (place) =>
-    console.log 'forecast place'
     Promise.all [
       @getForecast {location: place.location}
       FeatureLookupService.getFeaturesByLocation _.defaults {

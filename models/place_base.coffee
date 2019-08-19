@@ -10,6 +10,8 @@ module.exports = class PlaceBase extends Base
     limit ?= 250
     outputFn ?= @defaultESOutput
 
+    # console.log JSON.stringify query, null, 2
+
     elasticsearch.search {
       index: @getElasticSearchIndices()[0].name
       type: @getElasticSearchIndices()[0].name

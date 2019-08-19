@@ -56,7 +56,7 @@ scyllaFields =
   attachmentCount: 'int'
 
   source: 'text' # empty (user), coe, rec.gov, usfs
-  subType: 'text' # rvPark, public
+  subType: {type: 'text', defaultFn: -> 'public'} # private, public
   # or... isPrivate: boolean for rvParks?
   # affiliations: goodSam, passportAmerica, etc...
 

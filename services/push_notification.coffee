@@ -53,141 +53,67 @@ class PushNotificationService
   isGcmHealthy: ->
     Promise.resolve true # TODO
 
-  sendFcm: (to, message, {isiOS} = {}) =>
+  sendFcm: (to, message) =>
     {title, text, type, data, icon, toType, notId, style, summaryText} = message
     toType ?= 'token'
-    new Promise (resolve, reject) =>
-      message = {
-        apns:
-          payload: _.defaults {data}, {
-            aps:
-              alert:
-                title: title
-                body: text
-                'content-available': 1
-          }
-        android:
-          priority: 1
-          data:
-            title: title
-            body: text # nec when we're setting messageOptions.notification
-            message: text
-            ledColor: JSON.stringify [0, 255, 0, 0]
-            image: if icon then icon else ''
-            # data: JSON.stringify data
-            payload: JSON.stringify data # android
+    message = {
+      apns:
+        payload: _.defaults {data}, {
+          aps:
+            alert:
+              title: title
+              body: text
+              'content-available': 1
+        }
+      android:
+        priority: 1
+        data:
+          title: title
+          body: text # nec when we're setting messageOptions.notification
+          message: text
+          ledColor: JSON.stringify [0, 255, 0, 0]
+          image: if icon then icon else ''
+          # data: JSON.stringify data
+          payload: JSON.stringify data # android
 
-            # https://github.com/phonegap/phonegap-plugin-push/issues/158
-            # unfortunately causes flash as app opens and closes.
-            # spent 3 hours trying to solve and no luck
-            # https://github.com/phonegap/phonegap-plugin-push/issues/1846
-            # 'force-start': 1
-            # 'content-available': true
+          # https://github.com/phonegap/phonegap-plugin-push/issues/158
+          # unfortunately causes flash as app opens and closes.
+          # spent 3 hours trying to solve and no luck
+          # https://github.com/phonegap/phonegap-plugin-push/issues/1846
+          # 'force-start': 1
+          # 'content-available': true
 
-            actions: JSON.stringify _.filter [
-              if type in [
-                Subscription.TYPES.CHANNEL_MESSAGE
-                Subscription.TYPES.CHANNEL_MENTION
-                Subscription.TYPES.PRIVATE_MESSAGE
-              ]
-                {
-                  title: 'REPLY'
-                  callback: 'app.pushActions.reply'
-                  foreground: false
-                  inline: true
-                }
+          actions: JSON.stringify _.filter [
+            if type in [
+              Subscription.TYPES.CHANNEL_MESSAGE
+              Subscription.TYPES.CHANNEL_MENTION
+              Subscription.TYPES.PRIVATE_MESSAGE
             ]
-            type: type
-            icon: 'notification_icon'
-            color: config.NOTIFICATION_COLOR
-            notId: JSON.stringify(notId or (Date.now() % 100000)) # should be int, not uuid.v4()
-            style: style or ''
-            summaryText: summaryText or ''
-            # android_channel_id: 'test'
-      }
+              {
+                title: 'REPLY'
+                callback: 'app.pushActions.reply'
+                foreground: false
+                inline: true
+              }
+          ]
+          type: type
+          icon: 'notification_icon'
+          color: config.NOTIFICATION_COLOR
+          notId: JSON.stringify(notId or (Date.now() % 100000)) # should be int, not uuid.v4()
+          style: style or ''
+          summaryText: summaryText or ''
+          # android_channel_id: 'test'
+    }
 
-      if toType is 'topic'
-        message.topic = to
-      else
-        message.token = to
+    if toType is 'topic'
+      message.topic = to
+    else
+      message.token = to
 
-      return admin.messaging().send message
-      # ios and android take different formats for whatever reason...
-      # if you pass notification to android, it uses that and doesn't use data
-      # https://github.com/phonegap/phonegap-plugin-push/issues/387
-
-      # if isiOS # only toType token, topics are different
-      #   messageOptions.notification =
-      #     title: title
-      #     body: text
-      #     # icon: 'notification_icon'
-      #     color: config.NOTIFICATION_COLOR
-      #   messageOptions.data = data
-      # else # for android, and all push topics
-      #   ###
-      #   TODO: look into this some more.
-      #   when sending to pushTopics, it needs to work for both iOS and Android.
-      #   This option sort of works, but sending as a data notification is more
-      #   advantageous for android. Otherwise notification actions don't work,
-      #   the callback isn't called in app, so android
-      #   doesn't get sent to right page (ios does).
-      #   But sending as data notification means iOS
-      #   gets nothing... Solution is probably to use something other than
-      #   phonegap-plugin-push??? As of 8/2019 I don't see anything
-      #   ###
-      #   key = if toType is 'topic' then 'notification' else 'data'
-      #   messageOptions[key] =
-      #     title: title
-      #     body: text # nec when we're setting messageOptions.notification
-      #     message: text
-      #     ledColor: [0, 255, 0, 0]
-      #     image: if icon then icon else null
-      #     payload: data # android
-      #     data: data
-      #     # https://github.com/phonegap/phonegap-plugin-push/issues/158
-      #     # unfortunately causes flash as app opens and closes.
-      #     # spent 3 hours trying to solve and no luck
-      #     # https://github.com/phonegap/phonegap-plugin-push/issues/1846
-      #     # 'force-start': 1
-      #     # 'content-available': true
-      #     priority: 1
-      #     actions: _.filter [
-      #       if type in [
-      #         Subscription.TYPES.CHANNEL_MESSAGE
-      #         Subscription.TYPES.CHANNEL_MENTION
-      #         Subscription.TYPES.PRIVATE_MESSAGE
-      #       ]
-      #         {
-      #           title: 'REPLY'
-      #           callback: 'app.pushActions.reply'
-      #           foreground: false
-      #           inline: true
-      #         }
-      #     ]
-      #     type: type
-      #     icon: 'notification_icon'
-      #     color: config.NOTIFICATION_COLOR
-      #     notId: notId or (Date.now() % 100000) # should be int, not uuid.v4()
-      #     style: style
-      #     summaryText: summaryText
-      #     # android_channel_id: 'test'
-
-      notification = new gcm.Message messageOptions
-
-      if toType is 'token'
-        toObj = {registrationTokens: [to]}
-      else if toType is 'topic' and to
-        toObj = {topic: "/topics/#{to}"}
-        # toObj = {condition: "'#{to}' in topics || '#{to}2' in topics"}
-
-      console.log 'try gcm', toObj
-      @gcmConn.send notification, toObj, RETRY_COUNT, (err, result) ->
-        console.log 'gcm response', err, result
-        successes = result?.success or result?.message_id
-        if err or not successes
-          reject err
-        else
-          resolve true
+    admin.messaging().send message
+    .catch (err) ->
+      console.log to, err
+      throw err
 
   sendToConversation: (conversation, options = {}) =>
     {skipMe, meUser, text, mentionUserIds, mentionRoles, conversationMessage} = options
@@ -415,7 +341,7 @@ class PushNotificationService
 
       if config.ENV is config.ENVS.DEV and not message.forceDevSend
         console.log 'send notification', user.id, message
-        return Promise.resolve()
+        # return Promise.resolve()
 
       successfullyPushedToNative = false
 
@@ -434,16 +360,12 @@ class PushNotificationService
 
         Promise.map pushTokens, (pushToken) =>
           {sourceType, userId, token, errorCount} = pushToken
-          fn = if sourceType is 'web' \
-               then @sendWeb
-               else if sourceType in ['android', 'ios-fcm', 'web-fcm']
-               then @sendFcm
 
           unless fn
             console.log 'no fn', sourceType
             return
 
-          fn token, message, {isiOS: sourceType is 'ios-fcm'}
+          @sendFcm token, message
           .then ->
             successfullyPushedToNative = true
             if errorCount

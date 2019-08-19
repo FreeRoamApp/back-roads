@@ -197,6 +197,11 @@ app.get '/cleanKueFailed', (req, res) ->
     console.log 'kue clean route fail'
   res.sendStatus 200
 
+# app.get '/prune', (req, res) ->
+#   prune = require './services/prune_dupes.coffee'
+#   prune req.query.minSlug or '0'
+#   res.sendStatus 200
+
 
 server = if config.DEV_USE_HTTPS \
          then https.createServer credentials, app

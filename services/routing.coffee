@@ -82,6 +82,7 @@ class RoutingService
 
   # returns {distance: (mi), time: (min)}
   getDistance: (location1, location2) ->
+    # FIXME: use own routing
     request 'https://route.api.here.com/routing/7.2/calculateroute.json', {
       json: true
       qs:
