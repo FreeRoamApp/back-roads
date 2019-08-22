@@ -10,14 +10,6 @@ Overnight = require '../models/overnight'
 PlacesService = require '../services/places'
 RoutingService = require '../services/routing'
 
-pairwise = (arr) ->
-  newArr = []
-  i = 0
-  while i < arr.length - 1
-    newArr.push [arr[i], arr[i + 1]]
-    i += 1
-  newArr
-
 class TripEmbed
   user: (trip) ->
     if trip.userId
@@ -25,13 +17,12 @@ class TripEmbed
         userId: trip.userId
       }
 
-  checkIns: (trip) ->
+  destinationsInfo: (trip) ->
     # TODO: cache as a whole and maybe per checkinId
-    trip.checkInIds ?= []
-    # checkInIds = _.clone(trip.checkInIds).reverse()
-    checkInIds = trip.checkInIds
-    Promise.map checkInIds, (checkInId) ->
-      CheckIn.getById checkInId
+    trip.destinations ?= []
+    destinations = trip.destinations
+    Promise.map destinations, (destination) ->
+      CheckIn.getById destination.id
       .then (checkIn) ->
         unless checkIn
           return
@@ -42,7 +33,26 @@ class TripEmbed
         .then (place) ->
           checkIn.place = place
           checkIn
-    .then (checkIns) -> _.filter checkIns, (checkIn) -> checkIn?.place?.location
+    .then (destinations) -> _.filter destinations, (destination) ->
+      destination?.place?.location
+
+  stopsInfo: (trip) ->
+    # TODO: cache as a whole and maybe per checkinId
+    trip.stops ?= {}
+    stops = trip.stops
+    Promise.props _.mapValues stops, (routeStops, routeId) ->
+      Promise.map routeStops, (stop) ->
+        CheckIn.getById stop.id
+        .then (checkIn) ->
+          unless checkIn
+            return
+          PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
+            userId: trip.userId
+          }
+          .catch (err) -> null
+          .then (place) ->
+            checkIn.place = place
+            checkIn
 
   stats: ({checkIns}) ->
     stateCounts = _.countBy checkIns, ({place}) ->
@@ -68,7 +78,7 @@ class TripEmbed
     locations = _.filter _.map checkIns, ({place}) ->
       place?.location
     # locations = _.clone(locations).reverse()
-    pairs = pairwise locations
+    pairs = RoutingService.pairwise locations
 
     minX = _.minBy locations, ({lon}) -> lon
     minY = _.minBy locations, ({lat}) -> lat

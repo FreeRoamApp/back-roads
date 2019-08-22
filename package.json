@@ -86,6 +86,7 @@
     "money": "^0.2.0",
     "multer": "^1.4.1",
     "natives": "^1.1.6",
+    "ngeohash": "^0.6.3",
     "node-chartist": "^1.0.5",
     "node-geocoder": "^3.22.0",
     "node-uuid": "^1.4.7",

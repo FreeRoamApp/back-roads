@@ -91,7 +91,8 @@ TYPES =
     USER: 'thread:user'
     COMMENT_COUNT: 'thread:commentCount'
   TRIP:
-    CHECK_INS: 'trip:checkIns'
+    DESTINATIONS_INFO: 'trip:destinationsInfo'
+    STOPS_INFO: 'trip:stopsInfo'
     ROUTE: 'trip:route'
     STATS: 'trip:stats'
     OVERVIEW: 'trip:overview'

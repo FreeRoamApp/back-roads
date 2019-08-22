@@ -7,16 +7,18 @@ Trip = require '../models/trip'
 TripFollower = require '../models/trip_follower'
 CacheService = require '../services/cache'
 EmbedService = require '../services/embed'
+PlacesService = require '../services/places'
 ImageService = require '../services/image'
 statesGeoJson = require '../resources/data/states.json'
 config = require '../config'
 
 defaultEmbed = [
-  EmbedService.TYPES.TRIP.CHECK_INS
+  EmbedService.TYPES.TRIP.DESTINATIONS_INFO
   EmbedService.TYPES.TRIP.USER
 ]
 extrasEmbed = [
-  EmbedService.TYPES.TRIP.ROUTE
+  # EmbedService.TYPES.TRIP.STOPS_INFO
+  # EmbedService.TYPES.TRIP.ROUTE
 ]
 overviewEmbed = [
   # TODO: consolidate stats, overview
@@ -125,6 +127,7 @@ class TripCtrl
     , {expireSeconds: ONE_DAY_SECONDS}
 
   getById: ({id}, {user}) ->
+    console.log 'get', id
     # HACK: not sure where, but this is caled with 'null' when tooltip is opened
     # when adding new checkin
     if id is 'null'
@@ -150,6 +153,40 @@ class TripCtrl
         router.throw status: 401, info: 'Unauthorized'
     .then EmbedService.embed {embed: defaultEmbed, options: {userId}}
     # .then EmbedService.embed {embed: extrasEmbed}
+
+  getRouteStopsByTripIdAndRouteIds: ({tripId, routeIds}, {user}) ->
+    Trip.getById tripId
+    .then (trip) ->
+      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+        router.throw status: 401, info: 'Unauthorized'
+
+      stops = _.pick trip.stops, routeIds
+      Promise.props _.mapValues stops, (routeStops, routeId) ->
+        Promise.map routeStops, (stop) ->
+          CheckIn.getById stop.id
+          .then (checkIn) ->
+            unless checkIn
+              return
+            PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
+              userId: trip.userId
+            }
+            .catch (err) -> null
+            .then (place) ->
+              checkIn.place = place
+              checkIn
+
+  upsertStopByIdAndRouteId: ({id, routeId, checkIn}) =>
+    Promise.all [
+      Trip.getById id
+      PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
+        userId: user.id
+      }
+    ]
+    .then ([trip, place]) ->
+      unless trip.userId is user.id
+        router.throw {status: 401, info: 'Unauthorized'}
+
+      Trip.upsertStopByRowAndRouteId trip, routeId, checkIn, place.location
 
   uploadImage: ({}, {user, file}) ->
     ImageService.uploadImageByUserIdAndFile(

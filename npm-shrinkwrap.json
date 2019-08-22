@@ -7931,6 +7931,11 @@
       "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-0.6.1.tgz",
       "integrity": "sha1-KzJxhOiZIQEXeyhWP7XnECrNDKk="
     },
+    "ngeohash": {
+      "version": "0.6.3",
+      "resolved": "https://registry.npmjs.org/ngeohash/-/ngeohash-0.6.3.tgz",
+      "integrity": "sha512-kltF0cOxgx1AbmVzKxYZaoB0aj7mOxZeHaerEtQV0YaqnkXNq26WWqMmJ6lTqShYxVRWZ/mwvvTrNeOwdslWiw=="
+    },
     "nib": {
       "version": "1.1.2",
       "resolved": "https://registry.npmjs.org/nib/-/nib-1.1.2.tgz",

@@ -197,9 +197,9 @@ app.get '/cleanKueFailed', (req, res) ->
     console.log 'kue clean route fail'
   res.sendStatus 200
 
-# app.get '/prune', (req, res) ->
-#   prune = require './services/prune_dupes.coffee'
-#   prune req.query.minSlug or '0'
+# app.get '/gas', (req, res) ->
+#   sync = require './services/sync_gas/sync.coffee'
+#   sync()
 #   res.sendStatus 200
 
 

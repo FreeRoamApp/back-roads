@@ -36,10 +36,10 @@ module.exports = class PlaceBaseCtrl
         router.throw {status: 404, info: 'Place not found'}
     .then EmbedService.embed {embed: @defaultEmbed}
 
-  search: ({query, tripId, sort, limit, includeId}, {user}) =>
+  search: ({query, tripId, tripRouteId, sort, limit, includeId}, {user}) =>
     (if tripId
       # limit = 2000 # show them all
-      @_updateESQueryFromTripId tripId, query
+      @_updateESQueryFromTripIdAndTripRouteId tripId, tripRouteId, query
     else
       Promise.resolve query
     ).then (query) =>
@@ -52,13 +52,17 @@ module.exports = class PlaceBaseCtrl
             place
       }
 
-  _updateESQueryFromTripId: (tripId, query) ->
+  _updateESQueryFromTripIdAndTripRouteId: (tripId, tripRouteId, query) ->
     Trip.getById tripId
-    .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.CHECK_INS]}
-    .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTE]}
     .then (trip) ->
-      points = _.flatten _.map trip.route.legs, ({shape}) ->
-        simplify polyline.decode(shape), 0.5
+      console.log 'trid', tripRouteId
+      if tripRouteId
+        routes = [_.find trip.routes, {id: tripRouteId}]
+      else
+        routes = trip.routes
+      points = _.flatten _.map routes, (route) ->
+        _.flatten _.map route.legs, ({route}) ->
+          simplify polyline.decode(route.shape), 0.5
 
       points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
       line = turf.lineString points
@@ -139,9 +143,7 @@ module.exports = class PlaceBaseCtrl
           obj
         , {}
     .then (distanceTo) =>
-      @Model.upsert {
-        id: place.id
-        slug: place.slug
+      @Model.upsertByRow place, {
         distanceTo
       }
 

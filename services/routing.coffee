@@ -26,6 +26,16 @@ pbf_costing_options->set_height(kDefaultTruckHeight);
 class RoutingService
   constructor: -> null
 
+  pairwise: (arr) ->
+    unless arr
+      return []
+    newArr = []
+    i = 0
+    while i < arr.length - 1
+      newArr.push [arr[i], arr[i + 1]]
+      i += 1
+    newArr
+
   # TODO: use {lat, lon} instead of [lon, lat]
   getElevation: ({location}) ->
     request 'https://valhalla.freeroam.app/height',
@@ -41,6 +51,8 @@ class RoutingService
 
   getRoute: ({locations}, {preferCache} = {}) ->
     preferCache ?= true
+
+    console.log locations
 
     get = ->
       request 'https://valhalla.freeroam.app/route',

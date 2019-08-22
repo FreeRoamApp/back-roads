@@ -2,11 +2,13 @@ _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
 request = require 'request-promise'
+geohash = require 'ngeohash'
 
 Base = require './base'
 cknex = require '../services/cknex'
 CacheService = require '../services/cache'
 elasticsearch = require '../services/elasticsearch'
+RoutingService = require '../services/routing'
 config = require '../config'
 
 scyllaFields =
@@ -18,8 +20,38 @@ scyllaFields =
   privacy: {type: 'text', defaultFn: -> 'public'} # public, private, friends
   thumbnailPrefix: 'text'
   imagePrefix: 'text' # screenshot of map
+
   # 'set's don't appear to work with ordering
-  checkInIds: {type: 'list', subType: 'uuid'}
+  # checkInIds: {type: 'list', subType: 'uuid'}
+
+  destinations: {type: 'json', defaultFn: -> []}
+  stops: {type: 'json', defaultFn: -> {}}
+  routes: {type: 'json', defaultFn: -> []}
+
+  # TODO: destinations / waypoints (aka stops?)
+  # destinations: type: 'list', subType: 'text'
+  # subtype is json with: {route: {checkInIds: [stops]}, checkInId: ''}
+
+  ###
+  deleting checkin deletes both current route, previous check-in's route, and
+  has to recreate previous check-in's route...
+
+  could have checkIns and routes as separate columns
+  if checkIns change... grab the routes where startCheckInId/endCheckInId changed and update
+
+  routes: [
+    {id, startCheckInId, endCheckInId, route, stopCheckInIds, distance, duration}
+  ]
+
+
+  what happens to stops when reordering?
+  maybe should be routes instead of destinations?
+
+  routes: type 'list', subType: 'text'
+
+  no?
+  ###
+
   lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
 
 class Trip extends Base
@@ -108,6 +140,133 @@ class Trip extends Base
         trip
     .then @defaultOutput
 
+  _getRouteIdFromDestinations: (startCheckIn, endCheckIn) ->
+    # [
+    #   startCheckIn.lat, startCheckIn.lon
+    #   endCheckIn.lat, endCheckIn.lon
+    # ].join ':'
+    [
+      geohash.encode(startCheckIn.lat, startCheckIn.lon)
+      geohash.encode(endCheckIn.lat, endCheckIn.lon)
+    ].join ':'
+
+  _replaceCheckIn: (checkIns, checkIn, location, {includeTime} = {}) ->
+    checkIns = _.clone(checkIns) or []
+    # check if checkIn is already in this trip (eg updating time, location, ...)
+    existingIndex = _.findIndex checkIns, {id: checkIn.id}
+    if existingIndex isnt -1
+      oldCheckIn = checkIns.splice existingIndex, 1
+
+    if includeTime
+      insertIndex = _.findLastIndex(checkIns, ({start}) ->
+        console.log checkIn.startTime, start
+        checkIn.startTime < start
+      ) + 1
+    else
+      insertIndex = checkIns.length
+
+    shortCheckIn = {
+      id: checkIn.id, lat: location.lat, lon: location.lon
+    }
+    if includeTime
+      shortCheckIn.start = checkIn.startTime
+
+    checkIns.splice insertIndex, 0, shortCheckIn
+    checkIns
+
+  _buildRoutes: ({existingRoutes, destinations, stops}) =>
+    pairs = RoutingService.pairwise destinations
+    routes = _.map pairs, ([startCheckIn, endCheckIn]) =>
+      id = @_getRouteIdFromDestinations startCheckIn, endCheckIn
+      routeStops = [startCheckIn]
+      if stops[id]
+        routeStops = routeStops.concat stops[id]
+      routeStops = routeStops.concat endCheckIn
+
+      console.log 'rs', routeStops
+
+      legPairs = RoutingService.pairwise routeStops
+      legs = _.map legPairs, ([legStartCheckIn, legEndCheckIn]) ->
+        existingLeg = _.find(existingRoutes?[id], {id})
+        _.defaults {
+          startCheckInId: legStartCheckIn.id, endCheckInId: legEndCheckIn.id
+        }, existingLeg
+
+      # if _.isEmpty legs
+      #   existingRoute = _.find existingRoutes, {id}
+      #   existingLeg = _.find(existingRoute?.legs, {id})
+      #   legs.push _.defaults {
+      #     id: id
+      #     startCheckInId: startCheckIn.id
+      #     endCheckInId: endCheckIn.id
+      #   }, existingLeg
+
+      {
+        id: id
+        startCheckInId: startCheckIn.id
+        endCheckInId: endCheckIn.id
+        legs: legs
+      }
+
+    console.log 'stops', _.values stops
+    allCheckIns = destinations.concat _.flatten _.values(stops)
+    console.log 'all', allCheckIns
+
+    Promise.map routes, (route) =>
+      route.legs = Promise.map route.legs, (leg) =>
+        console.log 'leg', leg
+        unless leg.route
+          leg.route = @_getRoute(
+            _.find allCheckIns, {id: leg.startCheckInId}
+            _.find allCheckIns, {id: leg.endCheckInId}
+          )
+        leg
+        Promise.props leg
+      Promise.props route
+
+  _getRoute: (startCheckIn, endCheckIn) ->
+    RoutingService.getRoute {
+      locations: [
+        {lat: startCheckIn.lat, lon: startCheckIn.lon}
+        {lat: endCheckIn.lat, lon: endCheckIn.lon}
+      ]
+    }
+    .then (routes) ->
+      routes?.legs?[0]
+
+  upsertStopByRowAndRouteId: (row, routeId, checkIn, location) =>
+    stops = row.stops
+    console.log 'stops1', row.stops
+    stops[routeId] = @_replaceCheckIn row.stops[routeId], checkIn, location
+    @_buildRoutes {destinations: row.destinations, stops}
+    .then (routes) =>
+      # console.log JSON.stringify routes, null, 2
+      console.log 'stops', stops
+      @upsertByRow row, {
+        routes: routes
+        stops: stops
+      }
+
+  upsertDestinationByRow: (row, checkIn, location) =>
+    console.log 'go...', row.destinations
+    destinations = @_replaceCheckIn row.destinations, checkIn, location, {
+      includeTime: true
+    }
+    # console.log destinations
+    @_buildRoutes {existingRoutes: row.routes, destinations, stops: row.stops}
+    .then (routes) =>
+      console.log 'after', JSON.stringify routes, null, 2
+      console.log row.id
+      @upsertByRow row, {
+        routes: routes
+        destinations: destinations
+      }
+
+
+
+    # @upsertByRow row, {}, {add: {checkInIds: [[checkInId]]}}
+
+
   deleteCheckInIdById: (id, checkInId) =>
     @getById id
     .then (trip) =>
@@ -118,3 +277,65 @@ class Trip extends Base
     super row, options
 
 module.exports = new Trip()
+
+
+
+
+
+# module.exports.upsertStopByRowAndRouteId {
+#   destinations: [
+#     {id: 'existing-checkin-id', start: new Date(Date.now() - 3600000), lat: 1, lon: 2}
+#     {id: 'checkin-id', start: new Date(Date.now() - 1800000), lat: 3, lon: 4}
+#   ]
+#   stops: {}
+#   routes: [
+#     {
+#       "id": "1:2:3:4",
+#       "startCheckInId": "checkin-id",
+#       "endCheckInId": "existing-checkin-id",
+#       "legs": [
+#         {
+#           "id": "1:2:3:4"
+#           "startCheckInId": "existing-checkin-id"
+#           "endCheckInId": "checkin-id"
+#           "route":
+#             "duration": 1
+#             "distance": 1
+#             "polyline": "existing-route"
+#         }
+#       ]
+#     }
+#   ]
+#
+# }, '1:2:3:4', {id: 'new-stop-id', startTime: new Date(), endTime: new Date()}, {lat: 5, lon: 6}
+
+
+
+
+
+# module.exports.upsertDestinationByRow {
+#   destinations: [
+#     {id: 'existing-checkin-id', start: new Date(Date.now() - 3600000), lat: 1, lon: 2}
+#     {id: 'checkin-id', start: new Date(Date.now() - 1800000), lat: 3, lon: 4}
+#   ]
+#   stops: {}
+#   routes: [
+#     {
+#       "id": "1:2:3:4",
+#       "startCheckInId": "checkin-id",
+#       "endCheckInId": "existing-checkin-id",
+#       "legs": [
+#         {
+#           "id": "1:2:3:4"
+#           "startCheckInId": "existing-checkin-id"
+#           "endCheckInId": "checkin-id"
+#           "route":
+#             "duration": 1
+#             "distance": 1
+#             "polyline": "existing-route"
+#         }
+#       ]
+#     }
+#   ]
+#
+# }, {id: 'new-checkin-id', startTime: new Date(), endTime: new Date(), lat: 5, lon: 6}

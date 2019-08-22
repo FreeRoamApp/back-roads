@@ -321,9 +321,12 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'trips.getByUserIdAndType', authed TripCtrl.getByUserIdAndType
 .on 'trips.getRoute', authed TripCtrl.getRoute
 .on 'trips.getStats', authed TripCtrl.getStats
+.on 'trips.getRouteStopsByTripIdAndRouteIds',
+  authed TripCtrl.getRouteStopsByTripIdAndRouteIds
 .on 'trips.getStatesGeoJson', authed TripCtrl.getStatesGeoJson
 .on 'trips.uploadImage', authed TripCtrl.uploadImage
 .on 'trips.upsert', authed TripCtrl.upsert
+.on 'trips.upsertStopByIdAndRouteId', authed TripCtrl.upsertStopByIdAndRouteId
 .on 'trips.deleteByRow', authed TripCtrl.deleteByRow
 
 .on 'tripFollowers.getAllByTripId', authed TripFollowerCtrl.getAllByTripId

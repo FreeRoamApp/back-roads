@@ -20,22 +20,22 @@ class CheckInService
 
     diff = _.defaults {userId: user.id}, diff
 
-    Promise.all [
-      if diff.tripIds?[0]
-        Trip.getById diff.tripIds[0]
-      else
-        type = if diff.status is 'planned' then 'future' else 'past'
-        Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
+    PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
+      userId: user.id
+    }
+    .then ({name, location}) ->
+      Promise.all [
+        if diff.tripIds?[0]
+          Trip.getById diff.tripIds[0]
+        else
+          type = if diff.status is 'planned' then 'future' else 'past'
+          Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
 
-      if isUpdate then CheckIn.getById diff.id else Promise.resolve null
+        if isUpdate then CheckIn.getById diff.id else Promise.resolve null
 
-      if setUserLocation
-        UserSettings.getByUserId user.id
-        .then (userSettings) ->
-          PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
-            userId: user.id
-          }
-          .then ({name, location}) ->
+        if setUserLocation
+          UserSettings.getByUserId user.id
+          .then (userSettings) ->
             UserLocation.upsert {
               name: diff.name or name
               userId: user.id
@@ -46,28 +46,30 @@ class CheckInService
               sourceType: diff.sourceType
               sourceId: diff.sourceId
             }
-      else
-        Promise.resolve null
-    ]
-    .then ([trip, checkIn]) ->
-      if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
-        router.throw {status: 401, info: 'Unauthorized'}
-      else if trip and "#{trip.userId}" isnt "#{user.id}"
-        router.throw {status: 401, info: 'Unauthorized'}
+        else
+          Promise.resolve null
+      ]
+      .then ([trip, checkIn]) ->
+        if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
+          router.throw {status: 401, info: 'Unauthorized'}
+        else if trip and "#{trip.userId}" isnt "#{user.id}"
+          router.throw {status: 401, info: 'Unauthorized'}
 
-      unless isUpdate
-        diff.tripIds ?= [trip.id]
-
-      CheckIn.upsertByRow checkIn, diff
-      .tap (checkIn) ->
         unless isUpdate
-          Trip.upsertByRow trip, {}, {add: {checkInIds: [[checkIn.id]]}}
-      .tap ->
-        Trip.updateMapByRow trip
-        .then (trip) ->
-          # tell client to reload trip image
-          emit? {updatedTrip: trip}
-        null # don't block
+          diff.tripIds ?= [trip.id]
+
+        CheckIn.upsertByRow checkIn, diff
+        .tap (checkIn) ->
+          # unless isUpdate
+
+          # Trip.upsertDestinationByRow trip, checkIn, location
+          # Trip.upsertStopByRowAndRouteId trip, '9mvxsf78h:9tdpkkbez', checkIn, location
+
+          # Trip.updateMapByRow trip
+          # .then (trip) ->
+          #   # tell client to reload trip image
+          #   emit? {updatedTrip: trip}
+          null # don't block
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
       CacheService.deleteByCategory category
