@@ -1,5 +1,6 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
+router = require 'exoid-router'
 
 Coordinate = require '../models/coordinate'
 EmbedService = require '../services/embed'
@@ -20,16 +21,6 @@ class CoordinateCtrl extends PlaceBaseCtrl
 
   upsert: ({userId, location, name}, {user}) ->
     slug = _.kebabCase name
-
-    unless location.lon and location.lat
-      matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec location
-      unless matches?[0] and matches?[1]
-        console.log 'invalid', location
-        router.throw {info: 'invalid location', status: 400}
-      location = {
-        lat: parseFloat(matches[1])
-        lon: parseFloat(matches[2])
-      }
 
     GeocoderService.reverse location
     .then (address) ->

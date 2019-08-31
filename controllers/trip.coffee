@@ -9,6 +9,7 @@ CacheService = require '../services/cache'
 EmbedService = require '../services/embed'
 PlacesService = require '../services/places'
 ImageService = require '../services/image'
+RoutingService = require '../services/routing'
 statesGeoJson = require '../resources/data/states.json'
 config = require '../config'
 
@@ -77,7 +78,6 @@ class TripCtrl
     CacheService.preferCache key, ->
       Trip.getAllByUserId user.id
       .map EmbedService.embed {embed: defaultEmbed}
-      .map EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTE]}
       .map EmbedService.embed {embed: overviewEmbed}
       .map (trip) -> _.omit trip, ['checkIns', 'route']
     , {expireSeconds: ONE_DAY_SECONDS}
@@ -121,7 +121,6 @@ class TripCtrl
         tripFollower.trip
       .then (trips) -> _.filter trips
       .map EmbedService.embed {embed: defaultEmbed}
-      .map EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTE]}
       .map EmbedService.embed {embed: overviewEmbed}
       .map (trip) -> _.omit trip, ['checkIns', 'route']
     , {expireSeconds: ONE_DAY_SECONDS}
@@ -175,7 +174,42 @@ class TripCtrl
               checkIn.place = place
               checkIn
 
-  upsertStopByIdAndRouteId: ({id, routeId, checkIn}) =>
+  getRoutesByTripIdAndRouteId: ({tripId, routeId}, {user}) ->
+    console.log tripId, routeId
+    Trip.getById tripId
+    .then (trip) ->
+      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+        router.throw status: 401, info: 'Unauthorized'
+
+      route = _.find trip.routes, {id: routeId}
+      console.log route
+      # TODO: startCheckIn, endCheckIn lat/lon, route both ways
+      # get elevation for each route
+      startCheckIn = _.find trip.destinations, {id: route.startCheckInId}
+      endCheckIn = _.find trip.destinations, {id: route.endCheckInId}
+      Promise.all [
+        RoutingService.getRoute({
+          locations: [
+            {lat: startCheckIn.lat, lon: startCheckIn.lon}
+            {lat: endCheckIn.lat, lon: endCheckIn.lon}
+          ]
+        }, {includeLegs: true})
+
+        RoutingService.getRoute({
+          locations: [
+            {lat: startCheckIn.lat, lon: startCheckIn.lon}
+            {lat: endCheckIn.lat, lon: endCheckIn.lon}
+          ]
+        }, {includeLegs: true, costing: 'truck'})
+      ]
+      .then (routes) ->
+        Promise.map routes, (route) ->
+          RoutingService.getElevationsFromPolyline route.legs[0].shape
+          .then (elevations) ->
+            _.defaults {elevations}, route
+
+
+  upsertStopByIdAndRouteId: ({id, routeId, checkIn}, {user}) =>
     Promise.all [
       Trip.getById id
       PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
@@ -187,6 +221,19 @@ class TripCtrl
         router.throw {status: 401, info: 'Unauthorized'}
 
       Trip.upsertStopByRowAndRouteId trip, routeId, checkIn, place.location
+
+  upsertDestinationById: ({id, checkIn}, {user}) =>
+    Promise.all [
+      Trip.getById id
+      PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
+        userId: user.id
+      }
+    ]
+    .then ([trip, place]) ->
+      unless trip.userId is user.id
+        router.throw {status: 401, info: 'Unauthorized'}
+
+      Trip.upsertDestinationByRow trip, checkIn, place.location
 
   uploadImage: ({}, {user, file}) ->
     ImageService.uploadImageByUserIdAndFile(

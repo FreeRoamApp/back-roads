@@ -58,7 +58,6 @@ class Hazard extends PlaceBase
       hazard.description = hazard.details
     hazard = _.defaults {
       type: 'hazard'
-      icon: _.snakeCase hazard.subType
-    }, _.pick hazard, ['name', 'description', 'location']
+    }, _.pick hazard, ['name', 'description', 'location', 'subType']
 
 module.exports = new Hazard()

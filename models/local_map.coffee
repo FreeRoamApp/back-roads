@@ -117,7 +117,7 @@ class LocalMap extends Base
                 relation: 'intersects'
                 shape:
                   type: 'point'
-                  coordinates: location
+                  coordinates: [location.lon, location.lat]
     }
 
 module.exports = new LocalMap()

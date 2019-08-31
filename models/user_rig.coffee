@@ -16,7 +16,8 @@ class UserRig extends Base
           name: 'text'
           # fifthWheel, travelTrailer, van, classA, classB, classC, car, tent, motorcycle
           type: 'text'
-          length: 'int'
+          length: 'int' # ft
+          heightInches: 'int'
           is4x4: 'boolean'
         primaryKey:
           partitionKey: ['userId']

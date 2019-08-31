@@ -5,7 +5,6 @@ GeocoderService = require '../services/geocoder'
 RoutingService = require '../services/routing'
 FeatureLookupService = require '../services/feature_lookup'
 PlacesService = require '../services/places'
-LocalMap = require '../models/local_map'
 statesAbbr = require '../resources/data/states_abbr'
 config = require '../config'
 
@@ -27,15 +26,6 @@ class GeocoderCtrl
 
   getBoundingFromLocation: ({location}, {user}) ->
     PlacesService.getBestBounding {location}
-
-  getCoordinateInfoFromLocation: ({location}, {user}) ->
-    Promise.all [
-      RoutingService.getElevation {location}
-      LocalMap.getAllByLocationInPolygon location
-      # FeatureLookupService.getFeaturesByLocation _.defaults {file}, location
-    ]
-    .then ([elevation, localMaps]) ->
-      {elevation, localMaps}
 
   getFeaturesFromLocation: ({location, file}, {user}) ->
     FeatureLookupService.getFeaturesByLocation _.defaults {file}, location

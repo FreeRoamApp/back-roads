@@ -20,6 +20,7 @@ class CheckInService
 
     diff = _.defaults {userId: user.id}, diff
 
+    console.log diff
     PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
       userId: user.id
     }

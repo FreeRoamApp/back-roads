@@ -94,7 +94,6 @@ class Event extends PlaceBase
   defaultESOutput: (event) ->
     event = _.defaults {
       type: 'event'
-      icon: 'event'
     }, _.pick event, ['id', 'slug', 'name', 'location']
 
 module.exports = new Event()

@@ -76,7 +76,6 @@ class Coordinate extends PlaceBase
   defaultESOutput: (coordinate) ->
     amenity = _.defaults {
       type: 'coordinate'
-      icon: 'default'
     }, _.pick coordinate, [
       'slug', 'name', 'location'
     ]

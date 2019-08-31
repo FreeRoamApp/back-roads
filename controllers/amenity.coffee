@@ -31,7 +31,9 @@ class AmenityCtrl extends PlaceBaseCtrl
           campground
 
       Promise.map campgroundsIsClosestAmenity, (campground) ->
-        RoutingService.getDistance amenity.location, campground.location
+        RoutingService.getRoute {
+          locations: [amenity.location, campground.location]
+        }
         .then (distance) ->
           {campground, distance}
       .filter ({campground, distance}) ->

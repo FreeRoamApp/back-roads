@@ -193,8 +193,6 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'geocoder.getBoundingFromRegion', authed GeocoderCtrl.getBoundingFromRegion
 .on 'geocoder.getBoundingFromLocation',
   authed GeocoderCtrl.getBoundingFromLocation
-.on 'geocoder.getCoordinateInfoFromLocation',
-  authed GeocoderCtrl.getCoordinateInfoFromLocation
 .on 'geocoder.getFeaturesFromLocation',
   authed GeocoderCtrl.getFeaturesFromLocation
 
@@ -275,6 +273,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'payments.purchase', authed PaymentCtrl.purchase
 
 .on 'places.dedupe', authed PlaceCtrl.dedupe
+.on 'places.getSheetInfo', authed PlaceCtrl.getSheetInfo
 
 .on 'placeAttachments.getAllByUserId', authed PlaceAttachmentCtrl.getAllByUserId
 
@@ -323,10 +322,15 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'trips.getStats', authed TripCtrl.getStats
 .on 'trips.getRouteStopsByTripIdAndRouteIds',
   authed TripCtrl.getRouteStopsByTripIdAndRouteIds
+.on 'trips.getRoutesByTripIdAndRouteId',
+  authed TripCtrl.getRoutesByTripIdAndRouteId
 .on 'trips.getStatesGeoJson', authed TripCtrl.getStatesGeoJson
 .on 'trips.uploadImage', authed TripCtrl.uploadImage
 .on 'trips.upsert', authed TripCtrl.upsert
+.on 'trips.upsertDestinationById', authed TripCtrl.upsertDestinationById
 .on 'trips.upsertStopByIdAndRouteId', authed TripCtrl.upsertStopByIdAndRouteId
+.on 'trips.deleteDestinationById', authed TripCtrl.deleteDestinationById
+.on 'trips.deleteStopByIdAndRouteId', authed TripCtrl.deleteStopByIdAndRouteId
 .on 'trips.deleteByRow', authed TripCtrl.deleteByRow
 
 .on 'tripFollowers.getAllByTripId', authed TripFollowerCtrl.getAllByTripId

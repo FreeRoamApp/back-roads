@@ -1,3 +1,4 @@
+
 _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
@@ -17,7 +18,7 @@ scyllaFields =
   type: {type: 'text', defaultFn: -> 'custom'} # past, future, custom
   userId: 'uuid'
   name: 'text'
-  privacy: {type: 'text', defaultFn: -> 'public'} # public, private, friends
+  settings: {type: 'json', defaultFn: -> {privacy: 'public', donut: {isVisible: true, min: 200, max: 300}}} # donut min max, avoidTolls, avoidHighways, privacy (public, private, friend)
   thumbnailPrefix: 'text'
   imagePrefix: 'text' # screenshot of map
 
@@ -159,8 +160,7 @@ class Trip extends Base
 
     if includeTime
       insertIndex = _.findLastIndex(checkIns, ({start}) ->
-        console.log checkIn.startTime, start
-        checkIn.startTime < start
+        not checkIn.startTime or checkIn.startTime < start
       ) + 1
     else
       insertIndex = checkIns.length
@@ -183,13 +183,16 @@ class Trip extends Base
         routeStops = routeStops.concat stops[id]
       routeStops = routeStops.concat endCheckIn
 
-      console.log 'rs', routeStops
+      console.log 'id', id
 
       legPairs = RoutingService.pairwise routeStops
-      legs = _.map legPairs, ([legStartCheckIn, legEndCheckIn]) ->
-        existingLeg = _.find(existingRoutes?[id], {id})
+      existingRoute = _.find existingRoutes, {id}
+      legs = _.map legPairs, ([legStartCheckIn, legEndCheckIn]) =>
+        legId = @_getRouteIdFromDestinations legStartCheckIn, legEndCheckIn
+        existingLeg = _.find(existingRoute?.legs, {id: legId})
         _.defaults {
-          startCheckInId: legStartCheckIn.id, endCheckInId: legEndCheckIn.id
+          id: legId, startCheckInId: legStartCheckIn.id
+          endCheckInId: legEndCheckIn.id
         }, existingLeg
 
       # if _.isEmpty legs
@@ -208,35 +211,48 @@ class Trip extends Base
         legs: legs
       }
 
-    console.log 'stops', _.values stops
     allCheckIns = destinations.concat _.flatten _.values(stops)
-    console.log 'all', allCheckIns
 
     Promise.map routes, (route) =>
       route.legs = Promise.map route.legs, (leg) =>
-        console.log 'leg', leg
         unless leg.route
           leg.route = @_getRoute(
             _.find allCheckIns, {id: leg.startCheckInId}
             _.find allCheckIns, {id: leg.endCheckInId}
           )
-        leg
         Promise.props leg
       Promise.props route
 
   _getRoute: (startCheckIn, endCheckIn) ->
-    RoutingService.getRoute {
+    console.log 'get route', startCheckIn, endCheckIn
+    RoutingService.getRoute({
       locations: [
         {lat: startCheckIn.lat, lon: startCheckIn.lon}
         {lat: endCheckIn.lat, lon: endCheckIn.lon}
       ]
-    }
+    }, {includeLegs: true})
     .then (routes) ->
       routes?.legs?[0]
+
+  # gives route legs {lon, lat}
+  embedTripRouteLegLocationsByTrip: (trip, tripRoute) ->
+    allCheckIns = trip.destinations
+    if tripRoute?.id
+      allCheckIns = allCheckIns.concat trip.stops[tripRoute.id]
+
+      _.defaults {
+        legs: _.map tripRoute.legs, (leg) ->
+          _.defaults {
+            startCheckIn: _.find allCheckIns, {id: leg.startCheckInId}
+            endCheckIn: _.find allCheckIns, {id: leg.endCheckInId}
+          }, leg
+      }, tripRoute
 
   upsertStopByRowAndRouteId: (row, routeId, checkIn, location) =>
     stops = row.stops
     console.log 'stops1', row.stops
+    # TODO: check if stop exists, if so, update...
+    # if not, determineStopIndexAndDetourTimeByTripRoute
     stops[routeId] = @_replaceCheckIn row.stops[routeId], checkIn, location
     @_buildRoutes {destinations: row.destinations, stops}
     .then (routes) =>
@@ -255,8 +271,6 @@ class Trip extends Base
     # console.log destinations
     @_buildRoutes {existingRoutes: row.routes, destinations, stops: row.stops}
     .then (routes) =>
-      console.log 'after', JSON.stringify routes, null, 2
-      console.log row.id
       @upsertByRow row, {
         routes: routes
         destinations: destinations

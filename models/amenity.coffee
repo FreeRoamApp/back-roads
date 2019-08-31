@@ -6,11 +6,6 @@ PlaceBase = require './place_base'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
-# low to high
-ICON_ORDER = [
-  'gas', 'trash', 'recycle', 'npwater', 'propane', 'groceries', 'water', 'dump'
-]
-
 scyllaFields =
   # common between all places
   slug: 'text' # eg: old-settlers-rv-park
@@ -85,9 +80,6 @@ class Amenity extends PlaceBase
   defaultESOutput: (amenity) ->
     amenity = _.defaults {
       type: 'amenity'
-      icon: _.orderBy(amenity.amenities, (amenity) ->
-        ICON_ORDER.indexOf(amenity)
-      , ['desc'])[0]
     }, _.pick amenity, ['id', 'slug', 'name', 'location', 'rating', 'amenities']
 
 module.exports = new Amenity()

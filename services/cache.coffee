@@ -49,7 +49,7 @@ class CacheService
     HONEY_POT_BAN_IP: 'honey_pot:ban_ip'
     PLACE_BEST_BOUNDING: 'place:best_bounding3'
     PUBLIC_CHANNELS_BY_GROUP_ID: 'conversation:public_by_groupId'
-    ROUTING_ROUTE: 'routing:route'
+    ROUTING_ROUTE: 'routing:route2'
     THREAD: 'thread:id:embedded3'
     THREAD_BY_SLUG: 'thread:slug3'
     THREAD_BY_ID: 'thread:id'
@@ -59,7 +59,7 @@ class CacheService
     THREADS_CATEGORY: 'threads:category'
     TRIP_FOLLOWERS_BY_TRIP_ID: 'trip_followers:tripId'
     TRIP_FOLLOWERS_BY_USER_ID: 'trip_followers:userId'
-    TRIPS_GET_ALL_BY_USER_ID: 'trips:getAll:userId'
+    TRIPS_GET_ALL_BY_USER_ID: 'trips:getAll:userId1'
     TRIPS_GET_ALL_FOLLOWING_BY_USER_ID: 'trips:getAllFollowing:userId'
     TRIPS_FOLLOWING_TRIP_ID_CATEGORY: 'trips:following:tripId:category'
     COMMENT_COUNT: 'thread:comment_count1'
@@ -208,17 +208,21 @@ class CacheService
       pubSubChannel = "#{key}:pubsub"
 
       @lock "#{key}:run_lock", ->
-        fn().then (value) ->
-          unless rawKey
-            console.log 'missing cache key value', value
-          if (value isnt null and value isnt undefined) or not ignoreNull
-            RedisService.set key, JSON.stringify value
-            .then ->
-              RedisService.expire key, expireSeconds
-          setTimeout ->
-            PubSub.publish [pubSubChannel], value
-          , 100 # account for however long it takes for other instances to acquire / check lock / subscribe
-          return value
+        try
+          fn().then (value) ->
+            unless rawKey
+              console.log 'missing cache key value', value
+            if (value isnt null and value isnt undefined) or not ignoreNull
+              RedisService.set key, JSON.stringify value
+              .then ->
+                RedisService.expire key, expireSeconds
+            setTimeout ->
+              PubSub.publish [pubSubChannel], value
+            , 100 # account for however long it takes for other instances to acquire / check lock / subscribe
+            return value
+        catch err
+          console.log err
+          throw err
       , {
         unlockWhenCompleted: true, expireSeconds: ONE_MINUTE_SECONDS
         throwOnLocked: true

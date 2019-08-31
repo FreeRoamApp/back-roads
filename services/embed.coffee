@@ -93,7 +93,6 @@ TYPES =
   TRIP:
     DESTINATIONS_INFO: 'trip:destinationsInfo'
     STOPS_INFO: 'trip:stopsInfo'
-    ROUTE: 'trip:route'
     STATS: 'trip:stats'
     OVERVIEW: 'trip:overview'
     USER: 'trip:user'

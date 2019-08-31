@@ -184,20 +184,11 @@ class Campground extends PlaceBase
     }, campground
 
   defaultESOutput: (campground) ->
-    ratingCount = campground.ratingCount
-    prices = campground.prices
     campground = _.pick campground, [
-      'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
+      'id', 'slug', 'name', 'location', 'rating', 'ratingCount', 'prices'
     ]
     _.defaults {
       type: 'campground'
-      icon: if prices?.all?.mode is 0 and ratingCount > 0 \
-            then 'free'
-            else if prices?.all?.mode is 0
-            then 'free_reviewless'
-            else if ratingCount > 0
-            then 'paid'
-            else 'paid_reviewless'
     }, campground
 
 module.exports = new Campground()

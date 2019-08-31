@@ -74,17 +74,9 @@ class HealthCtrl
       .timeout timeout
       .catch (err) ->
         null
-
-      RoutingService.getDistance(
-          # den -> arvada
-        {lat: 39.7392, lon: -104.9903}
-        {lat: 39.8028, lon: -105.0875}
-      )
-      .timeout timeout
-      .catch (err) -> null
     ]
     .then (responses) ->
-      [user, route, cellSignal, features, distance] = responses
+      [user, route, cellSignal, features] = responses
       result =
         users: user?.username is AUSTIN_USERNAME
         getRoute: route?.time > 1000

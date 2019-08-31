@@ -147,11 +147,8 @@ class Overnight extends PlaceBase
   defaultESOutput: (overnight) ->
     amenity = _.defaults {
       type: 'overnight'
-      icon: if overnight.subType in ['walmart', 'restArea', 'casino', 'truckStop', 'crackerBarrel', 'cabelas'] \
-            then _.snakeCase overnight.subType
-            else 'default'
     }, _.pick overnight, [
-      'slug', 'name', 'location', 'rating', 'thumbnailPrefix'
+      'id', 'slug', 'name', 'location', 'rating', 'subType'
     ]
 
 module.exports = new Overnight()

@@ -6,15 +6,16 @@ turfBuffer = require '@turf/buffer'
 polyline = require '@mapbox/polyline'
 simplify = require 'simplify-path'
 
+Amenity = require '../models/amenity'
+LocalMap = require '../models/local_map'
+Trip = require '../models/trip'
+WeatherStation = require '../models/weather_station'
 EmbedService = require '../services/embed'
 GeocoderService = require '../services/geocoder'
 ImageService = require '../services/image'
 CellSignalService = require '../services/cell_signal'
 EmbedService = require '../services/embed'
 RoutingService = require '../services/routing'
-Amenity = require '../models/amenity'
-Trip = require '../models/trip'
-WeatherStation = require '../models/weather_station'
 EmailService = require '../services/email'
 PlacesService = require '../services/places'
 PlaceReviewService = require '../services/place_review'
@@ -65,17 +66,12 @@ module.exports = class PlaceBaseCtrl
           simplify polyline.decode(route.shape), 0.5
 
       points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
-      line = turf.lineString points
-      turfPolygon = turfBuffer line, '20', {units: 'miles'}
-      polygon = simplify _.flatten(turfPolygon.geometry.coordinates), 0.1
+      if points.length >= 2
+        line = turf.lineString points
+        turfPolygon = turfBuffer line, '0.01', {units: 'miles'}
+        polygon = simplify _.flatten(turfPolygon.geometry.coordinates), 0.1
 
-      # topRight = _.map points, ([lat, lon]) ->
-      #   [lon / 10 + 0.5, lat / 10 + 0.5]
-      # bottomLeft = _.map(points, ([lat, lon]) ->
-      #   [lon / 10 - 0.5, lat / 10 - 0.5]).reverse() # reverse so we can get a continue line to draw polygon
-      # polygon = topRight.concat bottomLeft
-
-      query.bool.filter.push {geo_polygon: {location: points: polygon}}
+        query.bool.filter.push {geo_polygon: {location: points: polygon}}
       query
 
   getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
@@ -127,8 +123,8 @@ module.exports = class PlaceBaseCtrl
           amenities.indexOf(amenityType) isnt -1
       Promise.props _.reduce closestAmenities, (obj, closestAmenity) ->
         if closestAmenity
-          obj[closestAmenity.id] = RoutingService.getDistance(
-            place.location, closestAmenity.location
+          obj[closestAmenity.id] = RoutingService.getRoute(
+            {locations: [place.location, closestAmenity.location]}
           )
         obj
       , {}
@@ -286,3 +282,60 @@ module.exports = class PlaceBaseCtrl
           _.find amenities, ({amenities}) ->
             amenities.indexOf(amenityType) isnt -1
         _.uniqBy commonAmenities, 'id'
+
+  _getAddStopInfo: (tripRoute, place) ->
+    RoutingService.determineStopIndexAndDetourTimeByTripRoute(
+      tripRoute, place.location
+    )
+    .then ({index, detourTime}) ->
+      RoutingService.getRoute {
+        locations: [
+          {
+            lat: tripRoute.legs[index].startCheckIn.lat
+            lon: tripRoute.legs[index].startCheckIn.lon
+          }
+          place.location
+        ]
+      }
+      .then (fromLastStop) ->
+        {fromLastStop, detourTime}
+
+  _getAddDestinationInfo: (trip, place) ->
+    lastDestination = _.last trip.destinations
+
+    RoutingService.getRoute {
+      locations: [
+        {
+          lat: lastDestination.lat
+          lon: lastDestination.lon
+        }
+        place.location
+      ]
+    }
+    .then (fromLastStop) ->
+      {fromLastStop}
+
+
+  getSheetInfo: ({place, tripId, tripRouteId}) =>
+    # console.log place, tripId, tripRouteId
+    Promise.all [
+      RoutingService.getElevation {location: place.location}
+      LocalMap.getAllByLocationInPolygon place.location
+      # FeatureLookupService.getFeaturesByLocation _.defaults {file}, location
+      (if tripId
+        Trip.getById tripId
+      else
+        Promise.resolve null)
+    ]
+    .then ([elevation, localMaps, trip]) =>
+      tripRoute = _.find trip?.routes, {id: tripRouteId}
+      tripRoute = Trip.embedTripRouteLegLocationsByTrip trip, tripRoute
+      (if trip and tripRoute
+        # FIXME FIXME: cap amount of stops we look at
+        @_getAddStopInfo tripRoute, place
+      else if not _.isEmpty trip
+        @_getAddDestinationInfo trip, place
+      else
+        Promise.resolve null
+      ).then (addStopInfo) ->
+        {elevation, localMaps, addStopInfo}

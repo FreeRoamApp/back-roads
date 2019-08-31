@@ -57,7 +57,6 @@ class UserLocation extends PlaceBase
   defaultESOutput: (userLocation) ->
     userLocation = _.defaults {
       type: 'userLocation'
-      icon: 'search'
     }, _.pick userLocation, [
       'userId', 'location', 'time', 'sourceType', 'sourceId'
     ]
