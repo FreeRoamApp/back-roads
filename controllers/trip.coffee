@@ -1,6 +1,8 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 router = require 'exoid-router'
+polyline = require '@mapbox/polyline'
+simplify = require 'simplify-path'
 
 CheckIn = require '../models/check_in'
 Trip = require '../models/trip'
@@ -16,6 +18,7 @@ config = require '../config'
 defaultEmbed = [
   EmbedService.TYPES.TRIP.DESTINATIONS_INFO
   EmbedService.TYPES.TRIP.USER
+  EmbedService.TYPES.TRIP.ROUTES
 ]
 extrasEmbed = [
   # EmbedService.TYPES.TRIP.STOPS_INFO
@@ -32,8 +35,8 @@ ONE_DAY_SECONDS = 3600 * 24
 class TripCtrl
   upsert: (diff, {user, file}) =>
     diff = _.pick diff, [
-      'checkInIds', 'id', 'imagePrefix', 'privacy', 'name', 'type',
-      'thumbnailPrefix'
+      'checkInIds', 'id', 'imagePrefix', 'name'
+      'thumbnailPrefix', 'settings'
     ]
     diff = _.defaults {userId: user.id}, diff
     (if diff.id
@@ -67,8 +70,6 @@ class TripCtrl
     .then (trip) ->
       unless trip.userId is user.id
         router.throw {status: 401, info: 'Unauthorized'}
-      unless trip.type is 'custom'
-        router.throw {status: 400, info: 'Can only delete custom trips'}
 
       Trip.deleteByRow trip
 
@@ -79,30 +80,7 @@ class TripCtrl
       Trip.getAllByUserId user.id
       .map EmbedService.embed {embed: defaultEmbed}
       .map EmbedService.embed {embed: overviewEmbed}
-      .map (trip) -> _.omit trip, ['checkIns', 'route']
     , {expireSeconds: ONE_DAY_SECONDS}
-    .then (trips) ->
-      # add in past / future type trips if they don't exist yet
-      trips.concat _.filter [
-        unless _.find trips, {type: 'past'}
-          {
-            type: 'past'
-            userId: user.id
-            name: 'Past'
-            overview:
-              stops: 0
-              distance: 0
-          }
-        unless _.find trips, {type: 'future'}
-          {
-            type: 'future'
-            userId: user.id
-            name: 'Future'
-            overview:
-              stops: 0
-              distance: 0
-          }
-      ]
 
   getAllFollowingByUserId: ({userId}, {user}) ->
     # TODO: clear whenever trip is updated
@@ -133,30 +111,16 @@ class TripCtrl
       return null
     Trip.getById id
     .tap (trip) ->
-      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+      if trip?.settings?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
         router.throw status: 401, info: 'Unauthorized'
     .then EmbedService.embed {embed: defaultEmbed}
     .then EmbedService.embed {embed: extrasEmbed}
     .then EmbedService.embed {embed: overviewEmbed}
 
-  getByType: ({type}, {user}) ->
-    Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
-    .then EmbedService.embed {embed: defaultEmbed, options: {userId: user.id}}
-    .then EmbedService.embed {embed: extrasEmbed}
-    .then EmbedService.embed {embed: overviewEmbed}
-
-  getByUserIdAndType: ({userId, type}, {user}) ->
-    Trip.getByUserIdAndType userId, type
-    .tap (trip) ->
-      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
-        router.throw status: 401, info: 'Unauthorized'
-    .then EmbedService.embed {embed: defaultEmbed, options: {userId}}
-    # .then EmbedService.embed {embed: extrasEmbed}
-
   getRouteStopsByTripIdAndRouteIds: ({tripId, routeIds}, {user}) ->
     Trip.getById tripId
     .then (trip) ->
-      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+      if trip?.settings?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
         router.throw status: 401, info: 'Unauthorized'
 
       stops = _.pick trip.stops, routeIds
@@ -174,66 +138,102 @@ class TripCtrl
               checkIn.place = place
               checkIn
 
+  ###
+  FIXME FIXME: either allow route drag/drop, or use mapbox to find some alternate routes?
+  problem with mapbox is avoiding low clearances...
+  ###
   getRoutesByTripIdAndRouteId: ({tripId, routeId}, {user}) ->
-    console.log tripId, routeId
-    Trip.getById tripId
-    .then (trip) ->
-      if trip?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+    Promise.all [
+      Trip.getById tripId
+      Trip.getRouteByTripIdAndRouteId tripId, routeId
+    ]
+    .then ([trip, route]) ->
+      if trip?.settings?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
         router.throw status: 401, info: 'Unauthorized'
 
-      route = _.find trip.routes, {id: routeId}
-      console.log route
       # TODO: startCheckIn, endCheckIn lat/lon, route both ways
       # get elevation for each route
-      startCheckIn = _.find trip.destinations, {id: route.startCheckInId}
-      endCheckIn = _.find trip.destinations, {id: route.endCheckInId}
+      startCheckIn = _.find trip.destinations, {id: "#{route.startCheckInId}"}
+      endCheckIn = _.find trip.destinations, {id: "#{route.endCheckInId}"}
       Promise.all [
         RoutingService.getRoute({
           locations: [
             {lat: startCheckIn.lat, lon: startCheckIn.lon}
             {lat: endCheckIn.lat, lon: endCheckIn.lon}
           ]
-        }, {includeLegs: true})
+        }, {trip, includeShape: true})
 
-        RoutingService.getRoute({
-          locations: [
-            {lat: startCheckIn.lat, lon: startCheckIn.lon}
-            {lat: endCheckIn.lat, lon: endCheckIn.lon}
-          ]
-        }, {includeLegs: true, costing: 'truck'})
+        # RoutingService.getRoute({
+        #   locations: [
+        #     {lat: startCheckIn.lat, lon: startCheckIn.lon}
+        #     {lat: endCheckIn.lat, lon: endCheckIn.lon}
+        #   ]
+        # }, {includeShape: true, costing: 'truck'})
       ]
       .then (routes) ->
         Promise.map routes, (route) ->
-          RoutingService.getElevationsFromPolyline route.legs[0].shape
+          points = polyline.encode(
+            RoutingService.distributedSample polyline.decode(route.shape), 100
+          )
+          RoutingService.getElevationsFromPolyline points
           .then (elevations) ->
-            _.defaults {elevations}, route
+            lastElevation = null
+            gained = _.reduce elevations, (gained, [x, elevation]) ->
+              if lastElevation? and elevation > lastElevation
+                gained += elevation - lastElevation
+              lastElevation = elevation
+              gained
+            , 0
+            lastElevation = null
+            lost = _.reduce elevations, (lost, [x, elevation]) ->
+              if lastElevation? and elevation < lastElevation
+                lost += lastElevation - elevation
+              lastElevation = elevation
+              lost
+            , 0
+
+            max = _.maxBy(elevations, ([x, elevation]) -> elevation)[1]
+            min = _.minBy(elevations, ([x, elevation]) -> elevation)[1]
+            _.defaults {
+              elevations
+              elevationStats: {gained, lost, min, max}
+            }, route
 
 
   upsertStopByIdAndRouteId: ({id, routeId, checkIn}, {user}) =>
     Promise.all [
       Trip.getById id
+      Trip.getRouteByTripIdAndRouteId id, routeId
       PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
         userId: user.id
       }
     ]
-    .then ([trip, place]) ->
+    .then ([trip, tripRoute, place]) ->
       unless trip.userId is user.id
         router.throw {status: 401, info: 'Unauthorized'}
 
-      Trip.upsertStopByRowAndRouteId trip, routeId, checkIn, place.location
+      Trip.upsertStopByTripAndTripRoute(
+        trip, tripRoute, checkIn, place.location
+      )
 
-  upsertDestinationById: ({id, checkIn}, {user}) =>
+  deleteStopByIdAndRouteId: ({id, routeId, stopId}, {user}) ->
     Promise.all [
       Trip.getById id
-      PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
-        userId: user.id
-      }
+      Trip.getRouteByTripIdAndRouteId id, routeId
     ]
-    .then ([trip, place]) ->
+    .then ([trip, tripRoute]) ->
       unless trip.userId is user.id
         router.throw {status: 401, info: 'Unauthorized'}
 
-      Trip.upsertDestinationByRow trip, checkIn, place.location
+      Trip.deleteStopByTripAndTripRoute trip, tripRoute, stopId
+
+  deleteDestinationById: ({id, destinationId}, {user}) ->
+    Trip.getById id
+    .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTES]}
+    .then (trip) ->
+      unless trip.userId is user.id
+        router.throw {status: 401, info: 'Unauthorized'}
+      Trip.deleteDestinationByRoutesEmbeddedTrip trip, destinationId
 
   uploadImage: ({}, {user, file}) ->
     ImageService.uploadImageByUserIdAndFile(

@@ -7,6 +7,7 @@ Campground = require '../models/campground'
 CheckIn = require '../models/check_in'
 Coordinate = require '../models/coordinate'
 Overnight = require '../models/overnight'
+Trip = require '../models/trip'
 PlacesService = require '../services/places'
 RoutingService = require '../services/routing'
 
@@ -68,42 +69,7 @@ class TripEmbed
       endTime: _.maxBy(destinationsInfo, 'endTime')?.endTime
     }
 
-  # route: ({checkIns}) ->
-  #   # valhalla can do whole country, but a bunch of legs of whole country
-  #   # (i think 3k miles?) will cause it to fail.
-  #   # whole country takes 3-4 seconds
-  #
-  #   # break it up into legs, use cache for legs we've already fetched...
-  #   # only need to cache for maybe an hour
-  #   locations = _.filter _.map checkIns, ({place}) ->
-  #     place?.location
-  #   # locations = _.clone(locations).reverse()
-  #   pairs = RoutingService.pairwise locations
-  #
-  #   minX = _.minBy locations, ({lon}) -> lon
-  #   minY = _.minBy locations, ({lat}) -> lat
-  #   maxX = _.maxBy locations, ({lon}) -> lon
-  #   maxY = _.maxBy locations, ({lat}) -> lat
-  #   if minX
-  #     bounds = {
-  #       x1: minX.lon - 1.5
-  #       y1: maxY.lat + 1.5
-  #       x2: maxX.lon + 1.5
-  #       y2: minY.lat - 1.5
-  #     }
-  #   else
-  #     {x1: -141.187, x2: 18.440, y1: -53.766, y2: 55.152}
-  #
-  #   Promise.map pairs, (pair) ->
-  #     RoutingService.getRoute {locations: pair}
-  #   .then (routes) ->
-  #     _.reduce routes, (combinedRoute, route) ->
-  #       {
-  #         legs: (combinedRoute.legs or []).concat route.legs
-  #         time: (combinedRoute.time or 0) + (route.time or 0)
-  #         distance: (combinedRoute.distance or 0) + (route.distance or 0)
-  #         bounds: bounds
-  #       }
-  #     , {}
+  routes: ({id}) ->
+    Trip.getAllRoutesByTripId id
 
 module.exports = new TripEmbed()

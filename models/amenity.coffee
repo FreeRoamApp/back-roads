@@ -78,8 +78,12 @@ class Amenity extends PlaceBase
     _.defaults {type: 'amenity'}, amenity
 
   defaultESOutput: (amenity) ->
+    hasAttachments = Boolean campground.thumbnailPrefix # TODO
     amenity = _.defaults {
       type: 'amenity'
-    }, _.pick amenity, ['id', 'slug', 'name', 'location', 'rating', 'amenities']
+      hasAttachments: hasAttachments
+    }, _.pick amenity, [
+      'id', 'slug', 'name', 'location', 'rating', 'amenities', 'hasAttachments'
+    ]
 
 module.exports = new Amenity()

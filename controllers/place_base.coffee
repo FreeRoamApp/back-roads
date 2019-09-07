@@ -8,6 +8,7 @@ simplify = require 'simplify-path'
 
 Amenity = require '../models/amenity'
 LocalMap = require '../models/local_map'
+PlaceAttachment = require '../models/place_attachment_base'
 Trip = require '../models/trip'
 WeatherStation = require '../models/weather_station'
 EmbedService = require '../services/embed'
@@ -38,7 +39,7 @@ module.exports = class PlaceBaseCtrl
     .then EmbedService.embed {embed: @defaultEmbed}
 
   search: ({query, tripId, tripRouteId, sort, limit, includeId}, {user}) =>
-    (if tripId
+    (if tripId and tripRouteId
       # limit = 2000 # show them all
       @_updateESQueryFromTripIdAndTripRouteId tripId, tripRouteId, query
     else
@@ -54,23 +55,16 @@ module.exports = class PlaceBaseCtrl
       }
 
   _updateESQueryFromTripIdAndTripRouteId: (tripId, tripRouteId, query) ->
-    Trip.getById tripId
-    .then (trip) ->
-      console.log 'trid', tripRouteId
-      if tripRouteId
-        routes = [_.find trip.routes, {id: tripRouteId}]
-      else
-        routes = trip.routes
-      points = _.flatten _.map routes, (route) ->
-        _.flatten _.map route.legs, ({route}) ->
-          simplify polyline.decode(route.shape), 0.5
+    Trip.getRouteByTripIdAndRouteId tripId, tripRouteId
+    .then (route) ->
+      points = _.flatten _.map route.legs, ({route}) ->
+        simplify polyline.decode(route.shape), 0.1
 
       points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
       if points.length >= 2
         line = turf.lineString points
-        turfPolygon = turfBuffer line, '0.01', {units: 'miles'}
-        polygon = simplify _.flatten(turfPolygon.geometry.coordinates), 0.1
-
+        turfPolygon = turfBuffer line, '10', {units: 'miles'}
+        polygon = _.flatten(turfPolygon.geometry.coordinates)
         query.bool.filter.push {geo_polygon: {location: points: polygon}}
       query
 
@@ -284,6 +278,8 @@ module.exports = class PlaceBaseCtrl
         _.uniqBy commonAmenities, 'id'
 
   _getAddStopInfo: (tripRoute, place) ->
+    unless tripRoute?.legs?[0]
+      return Promise.resolve null
     RoutingService.determineStopIndexAndDetourTimeByTripRoute(
       tripRoute, place.location
     )
@@ -303,6 +299,9 @@ module.exports = class PlaceBaseCtrl
   _getAddDestinationInfo: (trip, place) ->
     lastDestination = _.last trip.destinations
 
+    unless lastDestination
+      return Promise.resolve null
+
     RoutingService.getRoute {
       locations: [
         {
@@ -319,16 +318,33 @@ module.exports = class PlaceBaseCtrl
   getSheetInfo: ({place, tripId, tripRouteId}) =>
     # console.log place, tripId, tripRouteId
     Promise.all [
-      RoutingService.getElevation {location: place.location}
-      LocalMap.getAllByLocationInPolygon place.location
+      if place.type is 'coordinate'
+        RoutingService.getElevation {location: place.location}
+      else
+        Promise.resolve null
+
+      if place.type is 'coordinate'
+        LocalMap.getAllByLocationInPolygon place.location
+      else
+        Promise.resolve null
+
       # FeatureLookupService.getFeaturesByLocation _.defaults {file}, location
-      (if tripId
+
+      PlacesService.getAttachmentsByTypeAndId place.type, place.id
+
+      if tripId
         Trip.getById tripId
       else
-        Promise.resolve null)
+        Promise.resolve null
+
+      if tripRouteId
+        Trip.getRouteByTripIdAndRouteId tripId, tripRouteId
+      else
+        Promise.resolve null
     ]
-    .then ([elevation, localMaps, trip]) =>
-      tripRoute = _.find trip?.routes, {id: tripRouteId}
+    .then ([elevation, localMaps, placeAttachments, trip, tripRoute]) =>
+      attachments = _.take(placeAttachments, 5)
+
       tripRoute = Trip.embedTripRouteLegLocationsByTrip trip, tripRoute
       (if trip and tripRoute
         # FIXME FIXME: cap amount of stops we look at
@@ -338,4 +354,4 @@ module.exports = class PlaceBaseCtrl
       else
         Promise.resolve null
       ).then (addStopInfo) ->
-        {elevation, localMaps, addStopInfo}
+        {elevation, localMaps, addStopInfo, attachments}

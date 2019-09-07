@@ -316,8 +316,6 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'trips.getAll', authed TripCtrl.getAll
 .on 'trips.getAllFollowingByUserId', authed TripCtrl.getAllFollowingByUserId
 .on 'trips.getById', authed TripCtrl.getById
-.on 'trips.getByType', authed TripCtrl.getByType
-.on 'trips.getByUserIdAndType', authed TripCtrl.getByUserIdAndType
 .on 'trips.getRoute', authed TripCtrl.getRoute
 .on 'trips.getStats', authed TripCtrl.getStats
 .on 'trips.getRouteStopsByTripIdAndRouteIds',
@@ -331,6 +329,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'trips.upsertStopByIdAndRouteId', authed TripCtrl.upsertStopByIdAndRouteId
 .on 'trips.deleteDestinationById', authed TripCtrl.deleteDestinationById
 .on 'trips.deleteStopByIdAndRouteId', authed TripCtrl.deleteStopByIdAndRouteId
+.on 'trips.deleteDestinationById', authed TripCtrl.deleteDestinationById
 .on 'trips.deleteByRow', authed TripCtrl.deleteByRow
 
 .on 'tripFollowers.getAllByTripId', authed TripFollowerCtrl.getAllByTripId

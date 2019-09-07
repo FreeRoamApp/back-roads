@@ -2,9 +2,12 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 Amenity = require '../models/amenity'
+AmenityAttachment = require '../models/amenity_attachment'
 Campground = require '../models/campground'
+CampgroundAttachment = require '../models/campground_attachment'
 Coordinate = require '../models/coordinate'
 Overnight = require '../models/overnight'
+OvernightAttachment = require '../models/overnight_attachment'
 CacheService = require './cache'
 WeatherService = require './weather'
 KueCreateService = require './kue_create'
@@ -18,6 +21,12 @@ PLACE_TYPES =
   overnight: Overnight
   amenity: Amenity
 
+PLACE_ATTACHMENT_TYPES =
+  campground: CampgroundAttachment
+  overnight: OvernightAttachment
+  amenity: AmenityAttachment
+
+
 DAILY_UPDATE_TYPES = ['campground', 'overnight']
 
 class PlacesService
@@ -29,6 +38,12 @@ class PlacesService
     else
       Model = PLACE_TYPES[type] or Campground
       Model.getById id
+
+  getAttachmentsByTypeAndId: (type, id, {userId} = {}) ->
+    unless id
+      return Promise.resolve null
+    Model = PLACE_ATTACHMENT_TYPES[type] or CampgroundAttachment
+    Model.getAllByParentId id
 
   upsertByTypeAndRow: (type, row, diff) ->
     PLACE_TYPES[type].upsertByRow row, diff

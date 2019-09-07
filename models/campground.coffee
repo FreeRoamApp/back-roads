@@ -184,11 +184,14 @@ class Campground extends PlaceBase
     }, campground
 
   defaultESOutput: (campground) ->
+    hasAttachments = Boolean campground.thumbnailPrefix # TODO
     campground = _.pick campground, [
       'id', 'slug', 'name', 'location', 'rating', 'ratingCount', 'prices'
+      'hasAttachments'
     ]
     _.defaults {
       type: 'campground'
+      hasAttachments: hasAttachments
     }, campground
 
 module.exports = new Campground()

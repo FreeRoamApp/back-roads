@@ -2,6 +2,7 @@ request = require 'request-promise'
 Promise = require 'bluebird'
 polyline = require '@mapbox/polyline'
 simplify = require 'simplify-path'
+geohash = require 'ngeohash'
 turf = require '@turf/turf'
 turfBuffer = require '@turf/buffer'
 _ = require 'lodash'
@@ -38,6 +39,18 @@ class RoutingService
       newArr.push [arr[i], arr[i + 1]]
       i += 1
     newArr
+
+  distributedSample: (points, count) ->
+    if points.length < count
+      return points
+
+    frequency = Math.floor points.length / (count - 1)
+
+    _.reduce points, (arr, point, i) ->
+      if i is 0 or i is points.length - 1 or not (i % frequency)
+        arr.push point
+      arr
+    , []
 
   getElevation: ({location}) ->
     request 'https://valhalla.freeroam.app/height',
@@ -76,11 +89,12 @@ class RoutingService
       console.log e
 
   _getRouteUncached: ({locations, avoidLocations}, options = {}) =>
-    {preferCache, includeLegs, attempts, rigHeightInches, costing} = options
+    {
+      preferCache, includeShape, attempts, costing, trip
+    } = options
     attempts ?= 0
     costing ?= 'auto'
-
-    console.log costing
+    rigHeightInches = trip?.settings?.rigHeightInches
 
     request 'https://valhalla.freeroam.app/route',
       json: true
@@ -105,7 +119,7 @@ class RoutingService
       unless route?.trip
         return null
       routePromise = Promise.resolve route
-      if includeLegs
+      if includeShape
         if attempts < 3
           console.log 'check low clearances'
           routePoints = _.flatten _.map route.trip.legs, (leg) ->
@@ -123,43 +137,43 @@ class RoutingService
       routePromise
 
 
-  getRoute: ({locations, avoidLocations,}, options = {}) =>
-    {preferCache, includeLegs, attempts, costing} = options
+  # only works w/ 2 locations since it doesn't return legs
+  getRoute: ({locations, avoidLocations}, options = {}) =>
+    {preferCache, includeShape, attempts, costing} = options
     preferCache ?= true
     costing ?= 'auto'
 
     get = =>
       @_getRouteUncached {locations, avoidLocations, costing}, options
       .then (route) ->
-        console.log 'got route', route
+        leg = route.trip.legs?[0]
         response = {
           time: route.trip.summary.time
           distance: route.trip.summary.length
         }
-        response.legs = _.map route.trip.legs, (leg) ->
+        if includeShape and leg
           points = polyline.decode leg.shape
-          # ~ 10x reduction in size
-          shape = polyline.encode simplify(points, 0.01)
-          {
-            shape: shape
-            time: leg.summary.time
-            distance: leg.summary.length
-          }
-
+          # ~ 10x reduction in size, but the routes it generates will be
+          # off since the points might be on other roads
+          response.shape = polyline.encode points # simplify(points, 0.01)
+          response.bounds =
+            x1: leg.summary.min_lon
+            y1: leg.summary.min_lat
+            x2: leg.summary.max_lon
+            y2: leg.summary.max_lat
         response
 
     if preferCache
       key = CacheService.PREFIXES.ROUTING_ROUTE + JSON.stringify(locations)
       key += "-#{costing}"
-      if includeLegs
-        key += '-withlegs'
+      if includeShape
+        key += '-withshape'
       CacheService.preferCache key, get, {expireSeconds: ONE_HOUR_S}
     else
       get()
 
   _checkForLowClearances: (points, {rigHeightInches}) ->
-    console.log 'p', points.length
-    rigHeightInches ?= 14 * 12 # inches
+    rigHeightInches ?= 13.5 * 12 # inches
     points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
     if points.length >= 2
       line = turf.lineString points
@@ -173,22 +187,22 @@ class RoutingService
             {range: 'data.heightInches': lte: rigHeightInches}
           ]
       }
-      console.log query
       Hazard.search {query}
-      .then (lc) ->
-        console.log 'lc', lc
-        lc
 
   determineStopIndexAndDetourTimeByTripRoute: (route, stop) =>
-    # TODO: use turf (nearest-point-on-line?) to reduce number of
-    # legs we iterate over (just use ones nearby)
-    Promise.map route.legs, (leg, index) =>
-      @getDetourTimeByTripRouteAndStop leg, stop
-      .then (detourTime) ->
-        console.log index, detourTime
-        {index, detourTime}
-    .then (detourTimes) ->
-      _.minBy detourTimes, 'detourTime'
+    prefix = CacheService.PREFIXES.ROUTE_STOP_INDEX
+    hash = geohash.encode stop.lat, stop.lon
+    key = "#{prefix}:#{_.map(route.legs, 'legId').join(',')}:#{hash}"
+    CacheService.preferCache key, =>
+      # TODO: use turf (nearest-point-on-line?) to reduce number of
+      # legs we iterate over (just use ones nearby)
+      Promise.map route.legs, (leg, index) =>
+        @getDetourTimeByTripRouteAndStop leg, stop
+        .then (detourTime) ->
+          {index, detourTime}
+      .then (detourTimes) ->
+        _.minBy detourTimes, 'detourTime'
+    , {expireSeconds: ONE_HOUR_S}
 
   getDetourTimeByTripRouteAndStop: (leg, stop) ->
     # TODO: get distance from route line, and compare against other stops'
@@ -201,7 +215,6 @@ class RoutingService
       ]
     }
     .then ({time}) ->
-      console.log arguments[0], {time: leg.route.time, distance: leg.route.distance}
       time - leg.route.time
 
 module.exports = new RoutingService()

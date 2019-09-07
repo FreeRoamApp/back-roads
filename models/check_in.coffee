@@ -15,8 +15,8 @@ scyllaFields =
   notes: 'text'
   sourceType: 'text'
   sourceId: 'text'
-  startTime: 'timestamp'
-  endTime: 'timestamp'
+  startTime: {type: 'timestamp', defaultFn: -> new Date()}
+  endTime: {type: 'timestamp', defaultFn: -> new Date()}
   reviewId: 'uuid' # associated review
   attachments: 'json' # json
   tripIds: {type: 'list', subType: 'uuid'}

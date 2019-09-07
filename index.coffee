@@ -178,8 +178,9 @@ app.get '/healthcheck/throw', HealthCtrl.checkThrow
 
 app.get '/sitemap', SiteMapCtrl.getAll
 
-# app.get '/syncCell', ->
-#   sync = require './sync_cell/sync_cell_towers'
+# app.get '/migrate-trips', ->
+#   sync = require './services/migrate_trips.coffee'
+#   console.log sync
 #   sync()
 
 app.post '/log', (req, res) ->

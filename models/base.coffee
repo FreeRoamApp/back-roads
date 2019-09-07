@@ -63,6 +63,8 @@ module.exports = class Base
             ).indexOf(key) isnt -1
 
           Promise.each tablesWithKey, (table) =>
+            if table.ignoreUpsert
+              return
             @_deleteScyllaRowByTableAndRow table, row
             .then (deletedRow) =>
               # transfer over any other info the row we're deleting had
@@ -158,8 +160,6 @@ module.exports = class Base
   _deleteScyllaRowByTableAndRow: (table, row) =>
     scyllaRow = @defaultInput row
 
-    if table.ignoreUpsert
-      return
     keyColumns = _.filter table.primaryKey.partitionKey.concat(
       table.primaryKey.clusteringColumns
     )
@@ -176,6 +176,8 @@ module.exports = class Base
 
   deleteByRow: (row) =>
     Promise.all _.filter _.map(@getScyllaTables(), (table) =>
+      if table.ignoreUpsert
+        return
       @_deleteScyllaRowByTableAndRow table, row
     ).concat [@deleteESById row.id]
     .tap =>

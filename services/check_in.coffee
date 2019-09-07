@@ -6,6 +6,7 @@ Trip = require '../models/trip'
 UserLocation = require '../models/user_location'
 UserSettings = require '../models/user_settings'
 PlacesService = require './places'
+EmbedService = require './embed'
 CacheService = require './cache'
 
 class CheckInService
@@ -28,9 +29,9 @@ class CheckInService
       Promise.all [
         if diff.tripIds?[0]
           Trip.getById diff.tripIds[0]
+          .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTES]}
         else
-          type = if diff.status is 'planned' then 'future' else 'past'
-          Trip.getByUserIdAndType user.id, type, {createIfNotExists: true}
+          Promise.resolve null
 
         if isUpdate then CheckIn.getById diff.id else Promise.resolve null
 
@@ -51,26 +52,19 @@ class CheckInService
           Promise.resolve null
       ]
       .then ([trip, checkIn]) ->
+        console.log 'trip', trip
         if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
           router.throw {status: 401, info: 'Unauthorized'}
         else if trip and "#{trip.userId}" isnt "#{user.id}"
           router.throw {status: 401, info: 'Unauthorized'}
 
-        unless isUpdate
+        if not isUpdate and trip
           diff.tripIds ?= [trip.id]
 
         CheckIn.upsertByRow checkIn, diff
         .tap (checkIn) ->
-          # unless isUpdate
-
-          # Trip.upsertDestinationByRow trip, checkIn, location
-          # Trip.upsertStopByRowAndRouteId trip, '9mvxsf78h:9tdpkkbez', checkIn, location
-
-          # Trip.updateMapByRow trip
-          # .then (trip) ->
-          #   # tell client to reload trip image
-          #   emit? {updatedTrip: trip}
-          null # don't block
+          if not isUpdate and trip
+            Trip.upsertDestinationByRoutesEmbeddedTrip trip, checkIn, location
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
       CacheService.deleteByCategory category

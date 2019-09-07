@@ -145,10 +145,12 @@ class Overnight extends PlaceBase
     }, overnight
 
   defaultESOutput: (overnight) ->
+    hasAttachments = Boolean campground.thumbnailPrefix # TODO
     amenity = _.defaults {
       type: 'overnight'
+      hasAttachments: hasAttachments
     }, _.pick overnight, [
-      'id', 'slug', 'name', 'location', 'rating', 'subType'
+      'id', 'slug', 'name', 'location', 'rating', 'subType', 'hasAttachments'
     ]
 
 module.exports = new Overnight()

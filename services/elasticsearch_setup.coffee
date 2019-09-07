@@ -29,7 +29,7 @@ post http://localhost:9200/_reindex
 
 class ElasticsearchSetupService
   setup: (indices) =>
-    CacheService.lock 'elasticsearch_setup2', =>
+    CacheService.lock 'elasticsearch_setup3', =>
       Promise.each indices, @createIndexIfNotExist
     , {expireSeconds: 300}
 

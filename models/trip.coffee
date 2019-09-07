@@ -1,4 +1,3 @@
-
 _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
@@ -13,46 +12,15 @@ RoutingService = require '../services/routing'
 config = require '../config'
 
 scyllaFields =
-  # common between all places
   id: 'timeuuid'
-  type: {type: 'text', defaultFn: -> 'custom'} # past, future, custom
   userId: 'uuid'
   name: 'text'
-  settings: {type: 'json', defaultFn: -> {privacy: 'public', donut: {isVisible: true, min: 200, max: 300}}} # donut min max, avoidTolls, avoidHighways, privacy (public, private, friend)
+  settings: {type: 'json', defaultFn: -> {privacy: 'public', rigHeightInches: 13.5 * 12, donut: {isVisible: true, min: 200, max: 300}}} # donut min max, avoidTolls, avoidHighways, privacy (public, private, friend)
   thumbnailPrefix: 'text'
   imagePrefix: 'text' # screenshot of map
-
-  # 'set's don't appear to work with ordering
-  # checkInIds: {type: 'list', subType: 'uuid'}
-
-  destinations: {type: 'json', defaultFn: -> []}
-  stops: {type: 'json', defaultFn: -> {}}
-  routes: {type: 'json', defaultFn: -> []}
-
-  # TODO: destinations / waypoints (aka stops?)
-  # destinations: type: 'list', subType: 'text'
-  # subtype is json with: {route: {checkInIds: [stops]}, checkInId: ''}
-
-  ###
-  deleting checkin deletes both current route, previous check-in's route, and
-  has to recreate previous check-in's route...
-
-  could have checkIns and routes as separate columns
-  if checkIns change... grab the routes where startCheckInId/endCheckInId changed and update
-
-  routes: [
-    {id, startCheckInId, endCheckInId, route, stopCheckInIds, distance, duration}
-  ]
-
-
-  what happens to stops when reordering?
-  maybe should be routes instead of destinations?
-
-  routes: type 'list', subType: 'text'
-
-  no?
-  ###
-
+  destinations: {type: 'json', defaultFn: -> []} # [{id, lat, lon}]
+  stops: {type: 'json', defaultFn: -> {}} # [{id, lat, lon}]
+  bounds: {type: 'json'}
   lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
 
 class Trip extends Base
@@ -64,7 +32,7 @@ class Trip extends Base
         fields: scyllaFields
         primaryKey:
           partitionKey: ['userId']
-          clusteringColumns: ['type', 'id']
+          clusteringColumns: ['id']
       }
       {
         name: 'trips_by_id'
@@ -72,6 +40,22 @@ class Trip extends Base
         fields: scyllaFields
         primaryKey:
           partitionKey: ['id']
+      }
+      {
+        name: 'trip_routes_by_tripId'
+        ignoreUpsert: true
+        keyspace: 'free_roam'
+        fields:
+          tripId: 'timeuuid'
+          routeId: 'text'
+          number: 'int'
+          startCheckInId: 'uuid'
+          endCheckInId: 'uuid'
+          bounds: 'json'
+          legs: {type: 'json', defaultFn: -> []} # {id, startCheckInId, endCheckInId, route: {time, distance, shape}}
+        primaryKey:
+          partitionKey: ['tripId']
+          clusteringColumns: ['routeId']
       }
     ]
 
@@ -123,23 +107,33 @@ class Trip extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
-  getByUserIdAndType: (userId, type, {createIfNotExists} = {}) =>
+  getAllRoutesByTripId: (tripId) =>
     cknex().select '*'
-    .from @getScyllaTables()[0].name
-    .where 'userId', '=', userId
-    .andWhere 'type', '=', type
-    .limit 1
+    .from @getScyllaTables()[2].name
+    .where 'tripId', '=', tripId
+    .run()
+    .then (routes) ->
+      _.orderBy routes, 'number'
+    .map @defaultRouteOutput
+
+  getRouteByTripIdAndRouteId: (tripId, routeId) =>
+    cknex().select '*'
+    .from @getScyllaTables()[2].name
+    .where 'tripId', '=', tripId
+    .andWhere 'routeId', '=', routeId
     .run {isSingle: true}
-    .then (trip) =>
-      if createIfNotExists and not trip and type in ['past', 'future']
-        @upsert {
-          type
-          userId
-          name: _.startCase type
-        }
-      else
-        trip
-    .then @defaultOutput
+    .then @defaultRouteOutput
+
+  defaultRouteOutput: (route) ->
+    route.bounds = try
+      JSON.parse route.bounds
+    catch
+      {}
+    route.legs = try
+      JSON.parse route.legs
+    catch
+      {}
+    route
 
   _getRouteIdFromDestinations: (startCheckIn, endCheckIn) ->
     # [
@@ -151,61 +145,73 @@ class Trip extends Base
       geohash.encode(endCheckIn.lat, endCheckIn.lon)
     ].join ':'
 
-  _replaceCheckIn: (checkIns, checkIn, location, {includeTime} = {}) ->
+  _spliceDestination: (checkIns, checkIn, location) ->
     checkIns = _.clone(checkIns) or []
     # check if checkIn is already in this trip (eg updating time, location, ...)
     existingIndex = _.findIndex checkIns, {id: checkIn.id}
     if existingIndex isnt -1
       oldCheckIn = checkIns.splice existingIndex, 1
 
-    if includeTime
-      insertIndex = _.findLastIndex(checkIns, ({start}) ->
-        not checkIn.startTime or checkIn.startTime < start
-      ) + 1
-    else
-      insertIndex = checkIns.length
+    insertIndex = _.findLastIndex(checkIns, ({start}) ->
+      not checkIn.startTime or checkIn.startTime >= start
+    ) + 1
 
     shortCheckIn = {
       id: checkIn.id, lat: location.lat, lon: location.lon
+      start: checkIn.startTime
     }
-    if includeTime
-      shortCheckIn.start = checkIn.startTime
 
     checkIns.splice insertIndex, 0, shortCheckIn
     checkIns
 
-  _buildRoutes: ({existingRoutes, destinations, stops}) =>
+  _spliceStop: (tripRoute, stops, checkIn, location) ->
+    stops = _.clone(stops) or []
+    # check if checkIn is already in this trip (eg updating time, location, ...)
+    existingIndex = _.findIndex stops, {id: checkIn.id}
+    if existingIndex isnt -1
+      oldCheckIn = stops.splice existingIndex, 1
+
+    insertIndex = stops.length
+
+    checkIn = _.defaults location, checkIn
+
+    RoutingService.determineStopIndexAndDetourTimeByTripRoute tripRoute, checkIn
+    .then ({index}) ->
+
+      shortCheckIn = {
+        id: checkIn.id, lat: location.lat, lon: location.lon
+      }
+
+      stops.splice index, 0, shortCheckIn
+      stops
+
+  _buildRoutes: ({destinations, stops, trip}) =>
+    destinations ?= trip.destinations
+    stops ?= trip.stops
+    existingRoutes = trip.routes
+    destinations = _.clone destinations
+    stops = _.clone stops
     pairs = RoutingService.pairwise destinations
-    routes = _.map pairs, ([startCheckIn, endCheckIn]) =>
-      id = @_getRouteIdFromDestinations startCheckIn, endCheckIn
+    routes = _.map pairs, ([startCheckIn, endCheckIn], i) =>
+      routeId = @_getRouteIdFromDestinations startCheckIn, endCheckIn
       routeStops = [startCheckIn]
-      if stops[id]
-        routeStops = routeStops.concat stops[id]
+      if stops[routeId]
+        routeStops = routeStops.concat stops[routeId]
       routeStops = routeStops.concat endCheckIn
 
-      console.log 'id', id
-
       legPairs = RoutingService.pairwise routeStops
-      existingRoute = _.find existingRoutes, {id}
+      existingRoute = _.find existingRoutes, {routeId}
       legs = _.map legPairs, ([legStartCheckIn, legEndCheckIn]) =>
         legId = @_getRouteIdFromDestinations legStartCheckIn, legEndCheckIn
-        existingLeg = _.find(existingRoute?.legs, {id: legId})
+        existingLeg = _.find(existingRoute?.legs, {legId})
         _.defaults {
-          id: legId, startCheckInId: legStartCheckIn.id
+          legId, startCheckInId: legStartCheckIn.id
           endCheckInId: legEndCheckIn.id
         }, existingLeg
 
-      # if _.isEmpty legs
-      #   existingRoute = _.find existingRoutes, {id}
-      #   existingLeg = _.find(existingRoute?.legs, {id})
-      #   legs.push _.defaults {
-      #     id: id
-      #     startCheckInId: startCheckIn.id
-      #     endCheckInId: endCheckIn.id
-      #   }, existingLeg
-
       {
-        id: id
+        routeId: routeId
+        number: i + 1
         startCheckInId: startCheckIn.id
         endCheckInId: endCheckIn.id
         legs: legs
@@ -219,26 +225,27 @@ class Trip extends Base
           leg.route = @_getRoute(
             _.find allCheckIns, {id: leg.startCheckInId}
             _.find allCheckIns, {id: leg.endCheckInId}
+            {trip}
           )
         Promise.props leg
       Promise.props route
+    .map (route) =>
+      route.bounds = @_getBoundsFromLegs route.legs
+      route
 
-  _getRoute: (startCheckIn, endCheckIn) ->
-    console.log 'get route', startCheckIn, endCheckIn
+  _getRoute: (startCheckIn, endCheckIn, {trip} = {}) ->
     RoutingService.getRoute({
       locations: [
         {lat: startCheckIn.lat, lon: startCheckIn.lon}
         {lat: endCheckIn.lat, lon: endCheckIn.lon}
       ]
-    }, {includeLegs: true})
-    .then (routes) ->
-      routes?.legs?[0]
+    }, {trip, includeShape: true})
 
   # gives route legs {lon, lat}
   embedTripRouteLegLocationsByTrip: (trip, tripRoute) ->
-    allCheckIns = trip.destinations
-    if tripRoute?.id
-      allCheckIns = allCheckIns.concat trip.stops[tripRoute.id]
+    allCheckIns = trip?.destinations
+    if tripRoute?.routeId
+      allCheckIns = allCheckIns.concat trip.stops[tripRoute.routeId]
 
       _.defaults {
         legs: _.map tripRoute.legs, (leg) ->
@@ -248,38 +255,99 @@ class Trip extends Base
           }, leg
       }, tripRoute
 
-  upsertStopByRowAndRouteId: (row, routeId, checkIn, location) =>
-    stops = row.stops
-    console.log 'stops1', row.stops
-    # TODO: check if stop exists, if so, update...
-    # if not, determineStopIndexAndDetourTimeByTripRoute
-    stops[routeId] = @_replaceCheckIn row.stops[routeId], checkIn, location
-    @_buildRoutes {destinations: row.destinations, stops}
-    .then (routes) =>
-      # console.log JSON.stringify routes, null, 2
-      console.log 'stops', stops
-      @upsertByRow row, {
-        routes: routes
-        stops: stops
-      }
+  upsertRoutesByTripId: (tripId, routes) =>
+    Promise.map routes, (route) =>
+      route.tripId = tripId
+      route.legs = JSON.stringify route.legs
+      route.bounds = JSON.stringify route.bounds
+      @_upsertScyllaRowByTableAndRow @getScyllaTables()[2], route
 
-  upsertDestinationByRow: (row, checkIn, location) =>
-    console.log 'go...', row.destinations
-    destinations = @_replaceCheckIn row.destinations, checkIn, location, {
-      includeTime: true
+  deleteRoutesByTripId: (tripId, routes) =>
+    Promise.map routes, (route) =>
+      console.log 'delete', route
+      @_deleteScyllaRowByTableAndRow @getScyllaTables()[2], route
+
+  upsertStopByTripAndTripRoute: (trip, tripRoute, checkIn, location) =>
+    stops = trip.stops
+    routeId = tripRoute.routeId
+    tripRoute = @embedTripRouteLegLocationsByTrip trip, tripRoute
+    @_spliceStop tripRoute, stops[routeId], checkIn, location
+    .then (newStops) =>
+      stops[routeId] = newStops
+      @_upsertStopsByTripAndRouteId trip, routeId, stops
+
+
+  _upsertStopsByTripAndRouteId: (trip, routeId, stops) =>
+    @_buildRoutes {
+      stops
+      trip
     }
-    # console.log destinations
-    @_buildRoutes {existingRoutes: row.routes, destinations, stops: row.stops}
     .then (routes) =>
-      @upsertByRow row, {
-        routes: routes
-        destinations: destinations
-      }
+      changedRoutes = _.filter routes, {routeId}
+
+      Promise.all [
+        @upsertByRow trip, {
+          stops: stops
+        }
+
+        @upsertRoutesByTripId trip.id, changedRoutes
+      ]
+
+  deleteStopByTripAndTripRoute: (trip, tripRoute, stopId) =>
+    index = _.findIndex trip.stops[tripRoute.routeId], {id: stopId}
+    trip.stops[tripRoute.routeId].splice index, 1
+    stops = trip.stops
+    @_upsertStopsByTripAndRouteId trip, tripRoute.routeId, stops
+
+  deleteDestinationByRoutesEmbeddedTrip: (trip, destinationId) =>
+    index = _.findIndex trip.destinations, {id: destinationId}
+    trip.destinations.splice index, 1
+    destinations = trip.destinations
+    @_upsertDestinationsByTrip trip, destinations
+
+  upsertDestinationByRoutesEmbeddedTrip: (trip, checkIn, location) =>
+    destinations = @_spliceDestination trip.destinations, checkIn, location
+    @_upsertDestinationsByTrip trip, destinations
+
+  _upsertDestinationsByTrip: (trip, destinations) =>
+    @_buildRoutes {
+      destinations
+      trip
+    }
+    .then (routes) =>
+      changedRoutes = _.filter routes, (route) ->
+        not _.find trip.routes, {routeId: route.routeId}
+
+      deletedRoutes = _.filter trip.routes, (route) ->
+        not _.find routes, {routeId: route.routeId}
+
+      Promise.all [
+        @upsertByRow trip, {
+          destinations: destinations
+          bounds: @_getBoundsFromRoutes routes
+        }
+
+        @upsertRoutesByTripId trip.id, changedRoutes
+
+        @deleteRoutesByTripId trip.id, deletedRoutes
+      ]
+
+  _getBoundsFromRoutes: (routes) ->
+    {
+      x1: _.minBy(routes, ({bounds}) -> bounds.x1)?.bounds.x1
+      y1:_.minBy(routes, ({bounds}) -> bounds.y1)?.bounds.y1
+      x2: _.maxBy(routes, ({bounds}) -> bounds.x2)?.bounds.x2
+      y2: _.maxBy(routes, ({bounds}) -> bounds.y2)?.bounds.y2
+    }
 
 
-
-    # @upsertByRow row, {}, {add: {checkInIds: [[checkInId]]}}
-
+  _getBoundsFromLegs: (legs) ->
+    {
+      x1: _.minBy(legs, ({route}) -> route?.bounds.x1)?.route?.bounds.x1
+      y1:_.minBy(legs, ({route}) -> route?.bounds.y1)?.route?.bounds.y1
+      x2: _.maxBy(legs, ({route}) -> route?.bounds.x2)?.route?.bounds.x2
+      y2: _.maxBy(legs, ({route}) -> route?.bounds.y2)?.route?.bounds.y2
+    }
 
   deleteCheckInIdById: (id, checkInId) =>
     @getById id
@@ -291,65 +359,3 @@ class Trip extends Base
     super row, options
 
 module.exports = new Trip()
-
-
-
-
-
-# module.exports.upsertStopByRowAndRouteId {
-#   destinations: [
-#     {id: 'existing-checkin-id', start: new Date(Date.now() - 3600000), lat: 1, lon: 2}
-#     {id: 'checkin-id', start: new Date(Date.now() - 1800000), lat: 3, lon: 4}
-#   ]
-#   stops: {}
-#   routes: [
-#     {
-#       "id": "1:2:3:4",
-#       "startCheckInId": "checkin-id",
-#       "endCheckInId": "existing-checkin-id",
-#       "legs": [
-#         {
-#           "id": "1:2:3:4"
-#           "startCheckInId": "existing-checkin-id"
-#           "endCheckInId": "checkin-id"
-#           "route":
-#             "duration": 1
-#             "distance": 1
-#             "polyline": "existing-route"
-#         }
-#       ]
-#     }
-#   ]
-#
-# }, '1:2:3:4', {id: 'new-stop-id', startTime: new Date(), endTime: new Date()}, {lat: 5, lon: 6}
-
-
-
-
-
-# module.exports.upsertDestinationByRow {
-#   destinations: [
-#     {id: 'existing-checkin-id', start: new Date(Date.now() - 3600000), lat: 1, lon: 2}
-#     {id: 'checkin-id', start: new Date(Date.now() - 1800000), lat: 3, lon: 4}
-#   ]
-#   stops: {}
-#   routes: [
-#     {
-#       "id": "1:2:3:4",
-#       "startCheckInId": "checkin-id",
-#       "endCheckInId": "existing-checkin-id",
-#       "legs": [
-#         {
-#           "id": "1:2:3:4"
-#           "startCheckInId": "existing-checkin-id"
-#           "endCheckInId": "checkin-id"
-#           "route":
-#             "duration": 1
-#             "distance": 1
-#             "polyline": "existing-route"
-#         }
-#       ]
-#     }
-#   ]
-#
-# }, {id: 'new-checkin-id', startTime: new Date(), endTime: new Date(), lat: 5, lon: 6}

@@ -50,6 +50,7 @@ class CacheService
     PLACE_BEST_BOUNDING: 'place:best_bounding3'
     PUBLIC_CHANNELS_BY_GROUP_ID: 'conversation:public_by_groupId'
     ROUTING_ROUTE: 'routing:route2'
+    ROUTE_STOP_INDEX: 'route:stop_index'
     THREAD: 'thread:id:embedded3'
     THREAD_BY_SLUG: 'thread:slug3'
     THREAD_BY_ID: 'thread:id'

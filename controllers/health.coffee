@@ -82,7 +82,6 @@ class HealthCtrl
         getRoute: route?.time > 1000
         estimateCellSignal: cellSignal?.verizon_lte is 3
         featureLookup: features?[0]?.Loc_Nm is 'Buttercup Mountain'
-        distance: distance?.distance > 5
 
       result.healthy = _.every _.values result
       return result
