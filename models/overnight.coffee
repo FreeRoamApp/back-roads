@@ -145,7 +145,7 @@ class Overnight extends PlaceBase
     }, overnight
 
   defaultESOutput: (overnight) ->
-    hasAttachments = Boolean campground.thumbnailPrefix # TODO
+    hasAttachments = Boolean overnight.thumbnailPrefix # TODO
     amenity = _.defaults {
       type: 'overnight'
       hasAttachments: hasAttachments

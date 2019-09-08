@@ -21,12 +21,9 @@ defaultEmbed = [
   EmbedService.TYPES.TRIP.ROUTES
 ]
 extrasEmbed = [
-  # EmbedService.TYPES.TRIP.STOPS_INFO
-  # EmbedService.TYPES.TRIP.ROUTE
+  EmbedService.TYPES.TRIP.ROUTES
 ]
 overviewEmbed = [
-  # TODO: consolidate stats, overview
-  EmbedService.TYPES.TRIP.STATS
   EmbedService.TYPES.TRIP.OVERVIEW
 ]
 

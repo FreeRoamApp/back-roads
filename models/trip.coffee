@@ -19,8 +19,9 @@ scyllaFields =
   thumbnailPrefix: 'text'
   imagePrefix: 'text' # screenshot of map
   destinations: {type: 'json', defaultFn: -> []} # [{id, lat, lon}]
-  stops: {type: 'json', defaultFn: -> {}} # [{id, lat, lon}]
+  stops: {type: 'json'} # {id, lat, lon}
   bounds: {type: 'json'}
+  stats: {type: 'json'}
   lastUpdateTime: {type: 'timestamp', defaultFn: -> new Date()}
 
 class Trip extends Base
@@ -288,6 +289,8 @@ class Trip extends Base
       Promise.all [
         @upsertByRow trip, {
           stops: stops
+          bounds: @_getStatsFromRoutes routes
+          stats: @_getStatsFromRoutes routes
         }
 
         @upsertRoutesByTripId trip.id, changedRoutes
@@ -301,6 +304,10 @@ class Trip extends Base
 
   deleteDestinationByRoutesEmbeddedTrip: (trip, destinationId) =>
     index = _.findIndex trip.destinations, {id: destinationId}
+    if index is -1
+      console.log 'delete destination id not found', destinationId
+      return
+
     trip.destinations.splice index, 1
     destinations = trip.destinations
     @_upsertDestinationsByTrip trip, destinations
@@ -325,6 +332,8 @@ class Trip extends Base
         @upsertByRow trip, {
           destinations: destinations
           bounds: @_getBoundsFromRoutes routes
+          stats: @_getStatsFromRoutes routes
+
         }
 
         @upsertRoutesByTripId trip.id, changedRoutes
@@ -349,10 +358,13 @@ class Trip extends Base
       y2: _.maxBy(legs, ({route}) -> route?.bounds.y2)?.route?.bounds.y2
     }
 
-  deleteCheckInIdById: (id, checkInId) =>
-    @getById id
-    .then (trip) =>
-      @upsertByRow trip, {}, {remove: {checkInIds: [checkInId]}}
+  _getStatsFromRoutes: (routes) ->
+    {
+      distance: _.sumBy routes, ({legs}) ->
+        _.sumBy legs, ({route}) -> route.distance
+      time: _.sumBy routes, ({legs}) ->
+        _.sumBy legs, ({route}) -> route.time
+    }
 
   defaultInput: (row, options) ->
     row.lastUpdateTime = new Date()

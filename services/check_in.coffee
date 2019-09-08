@@ -21,7 +21,6 @@ class CheckInService
 
     diff = _.defaults {userId: user.id}, diff
 
-    console.log diff
     PlacesService.getByTypeAndId diff.sourceType, diff.sourceId, {
       userId: user.id
     }
@@ -51,9 +50,8 @@ class CheckInService
         else
           Promise.resolve null
       ]
-      .then ([trip, checkIn]) ->
-        console.log 'trip', trip
-        if checkIn and "#{checkIn.userId}" isnt "#{user.id}"
+      .then ([trip, existingCheckIn]) ->
+        if existingCheckIn and "#{existingCheckIn.userId}" isnt "#{user.id}"
           router.throw {status: 401, info: 'Unauthorized'}
         else if trip and "#{trip.userId}" isnt "#{user.id}"
           router.throw {status: 401, info: 'Unauthorized'}
@@ -61,9 +59,18 @@ class CheckInService
         if not isUpdate and trip
           diff.tripIds ?= [trip.id]
 
-        CheckIn.upsertByRow checkIn, diff
+        CheckIn.upsertByRow existingCheckIn, diff
         .tap (checkIn) ->
-          if not isUpdate and trip
+          # TODO: update if time/location changed
+          startTime = new Date(diff.startTime).getTime()
+          existingStartTime = existingCheckIn?.startTime.getTime()
+          endTime = new Date(diff.endTime).getTime()
+          existingEndTime = existingCheckIn?.endTime.getTime()
+          hasStartTimeChanged =  startTime isnt existingStartTime
+          hasEndTimeChanged =  endTime isnt existingEndTime
+          hasTimeChanged = hasStartTimeChanged or hasEndTimeChanged
+
+          if (not isUpdate or hasTimeChanged) and trip
             Trip.upsertDestinationByRoutesEmbeddedTrip trip, checkIn, location
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"

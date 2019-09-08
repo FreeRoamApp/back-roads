@@ -51,7 +51,10 @@ class CheckInCtrl
 
       Promise.all [
         Promise.map (checkIn.tripIds or []), (tripId) ->
-          Trip.deleteCheckInIdById tripId, checkIn.id
+          Trip.getById tripId
+          .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTES]}
+          .then (trip) ->
+            Trip.deleteDestinationByRoutesEmbeddedTrip trip, checkIn.id
         CheckIn.deleteByRow _.defaults({userId: user.id}, checkIn)
       ]
     .tap ->

@@ -34,8 +34,9 @@ class TripEmbed
         .then (place) ->
           checkIn.place = place
           checkIn
-    .then (destinations) -> _.filter destinations, (destination) ->
-      destination?.place?.location
+    .then (destinations) ->
+      _.filter destinations, (destination) ->
+        destination?.place?.location
 
   stopsInfo: (trip) ->
     # TODO: cache as a whole and maybe per checkinId
@@ -55,13 +56,12 @@ class TripEmbed
             checkIn.place = place
             checkIn
 
-  stats: ({checkIns}) ->
-    stateCounts = _.countBy checkIns, ({place}) ->
-      place?.address?.administrativeArea
-    {stateCounts}
 
-  overview: ({destinationsInfo, destinations, route}) ->
+  overview: ({destinationsInfo, destinations}) ->
+    stateCounts = _.countBy destinationsInfo, ({place}) ->
+      place?.address?.administrativeArea
     {
+      stateCounts: stateCounts
       stops: destinationsInfo?.length or destinations?.length or 0
       distance: route?.distance
       time: route?.time

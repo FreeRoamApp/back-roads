@@ -78,7 +78,7 @@ class Amenity extends PlaceBase
     _.defaults {type: 'amenity'}, amenity
 
   defaultESOutput: (amenity) ->
-    hasAttachments = Boolean campground.thumbnailPrefix # TODO
+    hasAttachments = Boolean amenity.thumbnailPrefix # TODO
     amenity = _.defaults {
       type: 'amenity'
       hasAttachments: hasAttachments
