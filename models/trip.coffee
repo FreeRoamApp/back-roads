@@ -259,8 +259,10 @@ class Trip extends Base
   upsertRoutesByTripId: (tripId, routes) =>
     Promise.map routes, (route) =>
       route.tripId = tripId
-      route.legs = JSON.stringify route.legs
-      route.bounds = JSON.stringify route.bounds
+      if route.legs
+        route.legs = JSON.stringify route.legs
+      if route.bounds
+        route.bounds = JSON.stringify route.bounds
       @_upsertScyllaRowByTableAndRow @getScyllaTables()[2], route
 
   deleteRoutesByTripId: (tripId, routes) =>
@@ -284,7 +286,13 @@ class Trip extends Base
       trip
     }
     .then (routes) =>
-      changedRoutes = _.filter routes, {routeId}
+      upsertRoutes = _.map routes, (route) ->
+        if route.routeId is routeId
+          # shape changed for this route, so upsert everything
+          route
+        else
+          # only number changed for this route, so only upsert that
+          _.pick route, ['routeId', 'number']
 
       Promise.all [
         @upsertByRow trip, {
@@ -293,7 +301,7 @@ class Trip extends Base
           stats: @_getStatsFromRoutes routes
         }
 
-        @upsertRoutesByTripId trip.id, changedRoutes
+        @upsertRoutesByTripId trip.id, upsertRoutes
       ]
 
   deleteStopByTripAndTripRoute: (trip, tripRoute, stopId) =>
@@ -324,6 +332,13 @@ class Trip extends Base
     .then (routes) =>
       changedRoutes = _.filter routes, (route) ->
         not _.find trip.routes, {routeId: route.routeId}
+      upsertRoutes = _.map routes, (route) ->
+        if not _.find trip.routes, {routeId: route.routeId}
+          # shape changed for this route, so upsert everything
+          route
+        else
+          # only number changed for this route, so only upsert that
+          _.pick route, ['routeId', 'number']
 
       deletedRoutes = _.filter trip.routes, (route) ->
         not _.find routes, {routeId: route.routeId}
@@ -336,7 +351,7 @@ class Trip extends Base
 
         }
 
-        @upsertRoutesByTripId trip.id, changedRoutes
+        @upsertRoutesByTripId trip.id, upsertRoutes
 
         @deleteRoutesByTripId trip.id, deletedRoutes
       ]

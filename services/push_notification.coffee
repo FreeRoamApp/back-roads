@@ -361,10 +361,6 @@ class PushNotificationService
         Promise.map pushTokens, (pushToken) =>
           {sourceType, userId, token, errorCount} = pushToken
 
-          unless fn
-            console.log 'no fn', sourceType
-            return
-
           @sendFcm token, message
           .then ->
             successfullyPushedToNative = true
