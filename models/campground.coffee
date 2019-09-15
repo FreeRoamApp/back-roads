@@ -58,13 +58,17 @@ scyllaFields =
   source: 'text' # empty (user), coe, rec.gov, usfs
   subType: {type: 'text', defaultFn: -> 'public'} # private, public
   # or... isPrivate: boolean for rvParks?
-  # affiliations: goodSam, passportAmerica, etc...
+  affiliations: 'json' # {goodSam: true, passportAmerica: true}, etc...
 
-  maxDays: 'int'
-  hasFreshWater: 'boolean'
-  hasSewage: 'boolean'
-  has30Amp: 'boolean'
-  has50Amp: 'boolean'
+  features: 'json'
+  nearbyActivities: 'json'
+
+  # maxDays: 'int'
+  # hasFreshWater: 'boolean'
+  # hasSewage: 'boolean'
+  # has30Amp: 'boolean'
+  # has50Amp: 'boolean'
+
   # minPrice: 'int'
   # maxPrice: 'int'
   # TODO: separate table for campground_prices_paid_by_id?
@@ -134,8 +138,22 @@ class Campground extends PlaceBase
 
           source: {type: 'keyword'} # empty (user), coe, rec.gov, usfs
           subType: {type: 'keyword'}
+          affiliations: {type: 'object'}
 
           maxDays: {type: 'integer'}
+
+          # TODO: features: anything that's a boolean
+          # TODO: figure out how user input is logged for this... do we need value,count?
+          features: {type: 'object'}
+          # waterHookup, sewerHookup, dumpStation, 30amp, 50amp, shower, ada, trash, picnicTable, flushToilet, toilet (auto-true when flushToilet true), petsAllowed, pullThrough, wifi, firesAllowed?, alcohol?, firePit
+
+          nearbyActivities: {type: 'object'}
+          # fishing, hiking, ohv, biking, horseBack, paddling, climbing, snow, swimming
+
+          # complex features: pets, restrooms, padSurface, entryType
+
+
+
           hasFreshWater: {type: 'boolean'}
           hasSewage: {type: 'boolean'}
           has30Amp: {type: 'boolean'}

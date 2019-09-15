@@ -50,7 +50,7 @@ class CronService
       EarnAction.batchUpsert _.cloneDeep allEarnActions
       Thread.updateScores 'time'
 
-    @addCron 'oneHour', '0 5 * * * *', ->
+    @addCron 'oneHour', '0 28 * * * *', ->
       CleanupService.trimLeaderboards()
       # Promise.map allGroups, (group) ->
       #   Group.upsert _.cloneDeep group

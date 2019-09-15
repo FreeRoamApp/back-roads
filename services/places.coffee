@@ -86,71 +86,81 @@ class PlacesService
     @getByTypeAndId type, id
     .then (place) =>
       console.log 'place', place.slug
-      Promise.all [
-        WeatherService.getForecastDiff place
-      ]
-      .then ([forecastDiff]) =>
-        @upsertByTypeAndRow place.type, place, forecastDiff
+
+      if place.type is 'campground'
+        features = {}
+        if place.has30Amp or true
+          features['30amp'] = true
+        if place.has50Amp or true
+          features['50amp'] = true
+        if place.hasSewage or true
+          features['sewerHookup'] = true
+        if place.hasFreshWater or true
+          features['waterHookup'] = true
+
+        Campground.upsertByRow place, {
+          features: features
+        }
+      # FIXME: re-enable
+      # Promise.all [
+      #   WeatherService.getForecastDiff place
+      # ]
+      # .then ([forecastDiff]) =>
+      #   @upsertByTypeAndRow place.type, place, forecastDiff
 
 
-  updateAllDailyInfo: ->
+  updateAllDailyInfo: =>
     console.log 'update places'
-    # TODO: need to go through every "place" somehow. problem is they're
-    # all in their own buckets. could do buckets by first letter of id?
-    # should probably just use elasticsearch
-    start = Date.now()
     newDailyUpdateMinPlaceSlug = null
+    CacheService.lock(
+      CacheService.LOCKS.DAILY_UPDATE
+      @_updateAllDailyInfoUncached
+      {expireSeconds: 120, unlockWhenCompleted: true}
+    )
+
+  _updateAllDailyInfoUncached: =>
+    console.log 'uncached'
     dailyUpdateIdCacheKey = CacheService.KEYS.DAILY_UPDATE_ID
-    CacheService.lock CacheService.LOCKS.DAILY_UPDATE, ->
-      CacheService.get dailyUpdateIdCacheKey
-      .then (dailyUpdateMinPlaceSlug) ->
-        # dailyUpdateMinPlaceSlug = placeType:id
-        dailyUpdateMinPlaceSlug ?= 'campground:0'
-        [type, minPlaceSlug] = dailyUpdateMinPlaceSlug.split ':'
-        console.log 'get by minId', type, minPlaceSlug
-        PLACE_TYPES[type].getAllByMinSlug minPlaceSlug
-        .then (places) ->
-          if _.isEmpty places
-            types = DAILY_UPDATE_TYPES
-            currentTypeIndex = types.indexOf(type)
-            if currentTypeIndex + 1 is types.length
-              console.log 'end'
-              return # just end it here, don't restart until next day
-            else
-              console.log 'bump'
-              newType = types[(currentTypeIndex + 1) % types.length]
-              newDailyUpdateMinPlaceSlug = "#{newType}:0"
+    CacheService.get dailyUpdateIdCacheKey
+    .then (dailyUpdateMinPlaceSlug) =>
+      # dailyUpdateMinPlaceSlug = placeType:id
+      dailyUpdateMinPlaceSlug ?= 'campground:0'
+      [type, minPlaceSlug] = dailyUpdateMinPlaceSlug.split ':'
+      console.log 'get by minId', type, minPlaceSlug
+      PLACE_TYPES[type].getAllByMinSlug minPlaceSlug
+      .then (places) =>
+        if _.isEmpty places
+          types = DAILY_UPDATE_TYPES
+          currentTypeIndex = types.indexOf(type)
+          if currentTypeIndex + 1 is types.length
+            console.log 'end'
+            return # just end it here, don't restart until next day
           else
-            newDailyUpdateMinPlaceSlug = "#{type}:#{_.last(places).slug}"
-          console.log 'new', newDailyUpdateMinPlaceSlug
-          console.log 'places', places.length
-          # add each place to kue
-          # once all processed, call update again with new dailyUpdateMinPlaceSlug
-          Promise.map places, ({id}) ->
-            KueCreateService.createJob {
-              job: {id, type}
-              type: KueCreateService.JOB_TYPES.DAILY_UPDATE_PLACE
-              ttlMs: DAILY_UPDATE_PLACE_TIMEOUT
-              priority: 'normal'
-              waitForCompletion: true
-            }
-            .catch (err) ->
-              console.log 'caught', id, err
-    , {expireSeconds: 120, unlockWhenCompleted: true}
-    .tap (responses) ->
-      CacheService.set dailyUpdateIdCacheKey, newDailyUpdateMinPlaceSlug, {
-        expireSeconds: ONE_MINUTE_SECONDS
-      }
-    .then (responses) =>
-      isLocked = not responses
-      if isLocked
-        console.log 'skip (locked)'
-      else
-        # always be truthy for cron-check
-        # successes = _.filter(responses).length or 1
-        # key = CacheService.KEYS.FORECAST_SUCCESS_COUNT
-        # CacheService.set key, successes, {expireSeconds: ONE_HOUR_SECONDS}
-        @updateAllDailyInfo()
-      null
+            console.log 'bump'
+            newType = types[(currentTypeIndex + 1) % types.length]
+            newDailyUpdateMinPlaceSlug = "#{newType}:0"
+        else
+          newDailyUpdateMinPlaceSlug = "#{type}:#{_.last(places).slug}"
+        console.log 'new', newDailyUpdateMinPlaceSlug
+        console.log 'places', places.length
+        # add each place to kue
+        # once all processed, call update again with new dailyUpdateMinPlaceSlug
+        _.map places, ({slug, id}) ->
+          KueCreateService.createJob {
+            job: {id, type}
+            type: KueCreateService.JOB_TYPES.DAILY_UPDATE_PLACE
+            ttlMs: DAILY_UPDATE_PLACE_TIMEOUT
+            priority: 'normal'
+            waitForCompletion: true
+          }
+          .catch (err) ->
+            console.log 'caught', id, err
+
+        CacheService.set dailyUpdateIdCacheKey, newDailyUpdateMinPlaceSlug, {
+          expireSeconds: ONE_MINUTE_SECONDS
+        }
+        .then =>
+          unless _.isEmpty places
+            @_updateAllDailyInfoUncached()
 
 module.exports = new PlacesService()

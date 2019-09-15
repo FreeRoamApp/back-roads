@@ -178,7 +178,9 @@ module.exports = class PlaceBaseCtrl
 
   upsert: (options, {user, headers, connection}) =>
     {id, name, details, location, subType, agencySlug, regionSlug,
-      officeSlug, slug, prices} = options
+      officeSlug, slug, features, prices} = options
+
+    console.log 'features', features
 
     isUpdate = Boolean id
 
@@ -228,6 +230,11 @@ module.exports = class PlaceBaseCtrl
     ]
     .then ([existingPlace, slug, address, weatherStation, cellSignal]) =>
       diff = {slug, name, details, location, address}
+      if features
+        diff.features = _.reduce features, (obj, feature) ->
+          obj[feature] = true
+          obj
+        , {}
       if weatherStation
         diff.weather = weatherStation.weather
       if subType
@@ -248,6 +255,8 @@ module.exports = class PlaceBaseCtrl
       # else if not isUpdate
       #   diff.prices ?= {all: {mode: 0}} # TODO
 
+      console.log 'diff', diff
+
       (if existingPlace
         @Model.upsertByRow existingPlace, diff
       else
@@ -262,6 +271,8 @@ module.exports = class PlaceBaseCtrl
             WeatherService.getForecastDiff place
             .then (diff) ->
               PlacesService.upsertByTypeAndRow place.type, place, diff
+            .catch ->
+              console.log 'forecast fetch failure'
         ]
 
   # TODO: heavily cache this

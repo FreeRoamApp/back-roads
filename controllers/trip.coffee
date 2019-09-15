@@ -16,11 +16,11 @@ statesGeoJson = require '../resources/data/states.json'
 config = require '../config'
 
 defaultEmbed = [
-  EmbedService.TYPES.TRIP.DESTINATIONS_INFO
   EmbedService.TYPES.TRIP.USER
   EmbedService.TYPES.TRIP.ROUTES
 ]
 extrasEmbed = [
+  EmbedService.TYPES.TRIP.DESTINATIONS_INFO
   EmbedService.TYPES.TRIP.ROUTES
 ]
 overviewEmbed = [

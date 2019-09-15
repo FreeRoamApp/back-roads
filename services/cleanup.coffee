@@ -30,6 +30,7 @@ class CleanupService
       console.log 'clean done', Date.now() - start
 
   cleanKue: ->
+    console.log 'cleankue'
     KueCreateService.clean {
       types: ['active', 'failed'], minStuckTimeMs: MIN_KUE_STUCK_TIME_MS
     }

@@ -101,7 +101,8 @@ class ConversationCtrl
         ]
 
   getAll: ({}, {user}) ->
-    Conversation.getAllByUserId user.id, {hasMessages: true}
+    limit = if user.username in ['austin', 'rachel'] then 200 else 25
+    Conversation.getAllByUserId user.id, {limit, hasMessages: true}
     .map EmbedService.embed {embed: lastMessageEmbed}
     .map Conversation.sanitize null
 

@@ -198,8 +198,8 @@ app.get '/cleanKueFailed', (req, res) ->
     console.log 'kue clean route fail'
   res.sendStatus 200
 
-# app.get '/gas', (req, res) ->
-#   sync = require './services/sync_gas/sync.coffee'
+# app.get '/rv', (req, res) ->
+#   sync = require './services/sync_rv.coffee'
 #   sync()
 #   res.sendStatus 200
 
