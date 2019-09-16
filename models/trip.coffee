@@ -15,7 +15,7 @@ scyllaFields =
   id: 'timeuuid'
   userId: 'uuid'
   name: 'text'
-  settings: {type: 'json', defaultFn: -> {privacy: 'public', rigHeightInches: 13.5 * 12, donut: {isVisible: true, min: 200, max: 300}}} # donut min max, avoidTolls, avoidHighways, privacy (public, private, friend)
+  settings: {type: 'json', defaultFn: -> {privacy: 'public', rigHeightInches: 13.5 * 12, avoidHighways: false, useTruckRoute: false, donut: {isVisible: true, min: 200, max: 300}}} # donut min max, avoidTolls, avoidHighways, privacy (public, private, friend)
   thumbnailPrefix: 'text'
   imagePrefix: 'text' # screenshot of map
   destinations: {type: 'json', defaultFn: -> []} # [{id, lat, lon}]
@@ -320,9 +320,14 @@ class Trip extends Base
     destinations = trip.destinations
     @_upsertDestinationsByTrip trip, destinations
 
-  upsertDestinationByRoutesEmbeddedTrip: (trip, checkIn, location) =>
+  upsertDestinationByRoutesEmbeddedTrip: (trip, checkIn, location, {emit} = {}) =>
     destinations = @_spliceDestination trip.destinations, checkIn, location
     @_upsertDestinationsByTrip trip, destinations
+    .tap ([trip]) =>
+      @updateMapByRow trip
+      .then =>
+        emit? {updatedTrip: trip}
+      null
 
   _upsertDestinationsByTrip: (trip, destinations) =>
     @_buildRoutes {

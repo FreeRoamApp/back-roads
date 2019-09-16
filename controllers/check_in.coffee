@@ -23,23 +23,17 @@ class CheckInCtrl
   upsert: (diff, {user}, {emit}) ->
     CheckInService.upsert diff, user, {emit}
 
-  getAll: ({includeDetails}, {user}) ->
+  getAll: ({includeDetails}, {user}) =>
     includeDetails ?= false
     prefix = CacheService.PREFIXES.CHECK_INS_GET_ALL
     key = "#{prefix}:#{user.id}:#{includeDetails}"
     category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
 
-    CacheService.preferCache key, ->
-      CheckIn.getAllByUserId user.id
-      .map (checkIn) ->
-        if includeDetails
-          PlacesService.getByTypeAndId checkIn.sourceType, checkIn.sourceId, {
-            userId: user.id
-          }
-          .then (place) ->
-            _.defaults place, checkIn
-        else
-          checkIn
+    CacheService.preferCache key, =>
+      checkIn = CheckIn.getAllByUserId user.id, {limit: 100}
+      if includeDetails
+        checkIn = checkIn.map EmbedService.embed {embed: @defaultEmbed}
+      checkIn
     , {category, expireSeconds: ONE_DAY_SECONDS}
 
 
@@ -54,7 +48,8 @@ class CheckInCtrl
           Trip.getById tripId
           .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTES]}
           .then (trip) ->
-            Trip.deleteDestinationByRoutesEmbeddedTrip trip, checkIn.id
+            if trip
+              Trip.deleteDestinationByRoutesEmbeddedTrip trip, checkIn.id
         CheckIn.deleteByRow _.defaults({userId: user.id}, checkIn)
       ]
     .tap ->

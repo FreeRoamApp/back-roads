@@ -314,6 +314,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
   authed TransactionCtrl.cancelSubscriptionByOrderId
 
 .on 'trips.getAll', authed TripCtrl.getAll
+.on 'trips.getAllByUserId', authed TripCtrl.getAllByUserId
 .on 'trips.getAllFollowingByUserId', authed TripCtrl.getAllFollowingByUserId
 .on 'trips.getById', authed TripCtrl.getById
 .on 'trips.getRoute', authed TripCtrl.getRoute

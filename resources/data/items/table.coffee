@@ -43,11 +43,11 @@ products =
     decisions: ['Aluminum', 'Folding', 'Small']
 
   "alps-mountaineering-camp-table":
-    id: '998e9ca0-bd7e-11e9-94a9-2cee60baef1b'
+    id: '9ef73ff0-d7e4-11e9-a35c-78d6566cefd2'
     name: 'ALPS Mountaineering Camp Table'
     description: "This all-aluminum table is good for 2 people and folds to the size of a normal camp chair"
     source: 'amazon'
-    sourceId: 'B001RU04XK'
+    sourceId: 'B000MN8D2M'
     decisions: ['Aluminum','Plank-style', 'Medium']
     videos: [
       # {sourceType: 'youtube', sourceId: 'fzry-To2his', name: 'Coleman Fold N Go Review'}

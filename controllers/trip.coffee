@@ -70,14 +70,20 @@ class TripCtrl
 
       Trip.deleteByRow trip
 
-  getAll: ({}, {user}) ->
+  getAll: ({}, {user}) =>
+    @getAllByUserId {userId: user.id}, {user}
+
+  getAllByUserId: ({userId}, {user}) ->
     prefix = CacheService.PREFIXES.TRIPS_GET_ALL_BY_USER_ID
-    key = "#{prefix}:#{user.id}"
+    key = "#{prefix}:#{userId}"
     CacheService.preferCache key, ->
-      Trip.getAllByUserId user.id
+      Trip.getAllByUserId userId
       .map EmbedService.embed {embed: defaultEmbed}
       .map EmbedService.embed {embed: overviewEmbed}
     , {expireSeconds: ONE_DAY_SECONDS}
+    .filter (trip) ->
+      trip?.settings?.privacy isnt 'private' or
+        "#{user.id}" is "#{trip.userId}" or user.username is 'austin'
 
   getAllFollowingByUserId: ({userId}, {user}) ->
     # TODO: clear whenever trip is updated
@@ -139,7 +145,7 @@ class TripCtrl
   FIXME FIXME: either allow route drag/drop, or use mapbox to find some alternate routes?
   problem with mapbox is avoiding low clearances...
   ###
-  getRoutesByTripIdAndRouteId: ({tripId, routeId}, {user}) ->
+  getRoutesByTripIdAndRouteId: ({tripId, routeId, settings}, {user}) ->
     Promise.all [
       Trip.getById tripId
       Trip.getRouteByTripIdAndRouteId tripId, routeId
@@ -153,24 +159,46 @@ class TripCtrl
       startCheckIn = _.find trip.destinations, {id: "#{route.startCheckInId}"}
       endCheckIn = _.find trip.destinations, {id: "#{route.endCheckInId}"}
       Promise.all [
-        RoutingService.getRoute({
-          locations: [
-            {lat: startCheckIn.lat, lon: startCheckIn.lon}
-            {lat: endCheckIn.lat, lon: endCheckIn.lon}
-          ]
-        }, {trip, includeShape: true})
+        route
+        # RoutingService.getRoute(
+        #   {
+        #     locations: [
+        #       {lat: startCheckIn.lat, lon: startCheckIn.lon}
+        #       {lat: endCheckIn.lat, lon: endCheckIn.lon}
+        #     ]
+        #   }
+        #   {
+        #     trip, includeShape: true
+        #   }
+        # )
 
-        # RoutingService.getRoute({
-        #   locations: [
-        #     {lat: startCheckIn.lat, lon: startCheckIn.lon}
-        #     {lat: endCheckIn.lat, lon: endCheckIn.lon}
-        #   ]
-        # }, {includeShape: true, costing: 'truck'})
+
+        # RoutingService.getRoute(
+        #   {
+        #     # TODO: stops....
+        #     locations: [
+        #       {lat: startCheckIn.lat, lon: startCheckIn.lon}
+        #       {lat: endCheckIn.lat, lon: endCheckIn.lon}
+        #     ]
+        #   }
+        #   {
+        #     includeShape: true
+        #     avoidHighways: false
+        #   }
+        # )
+        # .then (route) ->
+        #   {legs: [{route}]}
+
       ]
       .then (routes) ->
         Promise.map routes, (route) ->
+          points = _.flatten _.map route.legs, ({route}) ->
+            polyline.decode route.shape
+
+          shape = polyline.encode points
+
           points = polyline.encode(
-            RoutingService.distributedSample polyline.decode(route.shape), 100
+            RoutingService.distributedSample points, 100
           )
           RoutingService.getElevationsFromPolyline points
           .then (elevations) ->
@@ -191,10 +219,13 @@ class TripCtrl
 
             max = _.maxBy(elevations, ([x, elevation]) -> elevation)[1]
             min = _.minBy(elevations, ([x, elevation]) -> elevation)[1]
-            _.defaults {
+            {
+              shape
               elevations
+              time: route.legs[0].route.time
+              distance: route.legs[0].route.distance
               elevationStats: {gained, lost, min, max}
-            }, route
+            }
 
 
   upsertStopByIdAndRouteId: ({id, routeId, checkIn}, {user}) =>

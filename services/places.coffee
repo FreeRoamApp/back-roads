@@ -87,26 +87,22 @@ class PlacesService
     .then (place) =>
       console.log 'place', place.slug
 
-      if place.type is 'campground'
-        features = {}
-        if place.has30Amp or true
-          features['30amp'] = true
-        if place.has50Amp or true
-          features['50amp'] = true
-        if place.hasSewage or true
-          features['sewerHookup'] = true
-        if place.hasFreshWater or true
-          features['waterHookup'] = true
-
-        Campground.upsertByRow place, {
-          features: features
-        }
-      # FIXME: re-enable
-      # Promise.all [
-      #   WeatherService.getForecastDiff place
-      # ]
-      # .then ([forecastDiff]) =>
-      #   @upsertByTypeAndRow place.type, place, forecastDiff
+      # if place.type is 'campground'
+      #   features = {}
+      #   features['30amp'] = place.has30Amp or null
+      #   features['50amp'] = place.has50Amp or null
+      #   features['sewerHookup'] = place.hasSewage or null
+      #   features['waterHookup'] = place.hasFreshWater or null
+      #
+      #   console.log 'features', features
+      #   Campground.upsertByRow place, {
+      #     features: features
+      #   }
+      Promise.all [
+        WeatherService.getForecastDiff place
+      ]
+      .then ([forecastDiff]) =>
+        @upsertByTypeAndRow place.type, place, forecastDiff
 
 
   updateAllDailyInfo: =>

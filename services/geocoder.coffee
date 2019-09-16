@@ -15,7 +15,7 @@ class GeocoderService
     .then (response) ->
       data = response.features?[0]?.properties
       {
-        locality: data?.locality or data?.name
+        locality: data?.locality
         administrativeArea: data?.region_a
       }
 

@@ -91,10 +91,12 @@ class RoutingService
   _getRouteUncached: ({locations, avoidLocations}, options = {}) =>
     {
       preferCache, includeShape, attempts, costing, trip
+      avoidHighways
     } = options
     attempts ?= 0
-    costing ?= 'auto'
+    costing ?= if trip?.settings?.useTruckRoute then 'truck' else 'auto'
     rigHeightInches = trip?.settings?.rigHeightInches
+    avoidHighways ?= trip?.settings?.avoidHighways
 
     request 'https://valhalla.freeroam.app/route',
       json: true
@@ -108,7 +110,7 @@ class RoutingService
             costing_options:
               auto:
                 country_crossing_penalty: 2000
-                use_highways: if costing is 'truck' then 1 else 0
+                use_highways: not avoidHighways
             directions_options:
               units: 'miles'
           }

@@ -27,7 +27,7 @@ class CacheService
     CHAT_USER_BY_USERNAME: 'chat:user:byUsername3'
     CHAT_GROUP_USER: 'chat:group_user'
     CHAT_MESSAGE_DAILY_XP: 'chat_message:daily_xp'
-    CHECK_INS_GET_ALL: 'check_ins:getAll1'
+    CHECK_INS_GET_ALL: 'check_ins:getAll0'
     CHECK_INS_GET_ALL_CATEGORY: 'check_ins:getAll:category'
     COMMENTS_BY_TOP_ID: 'comments:topId'
     COMMENTS_BY_TOP_ID_CATEGORY: 'comments:topId:category'

@@ -56,22 +56,27 @@ class CheckInService
         else if trip and "#{trip.userId}" isnt "#{user.id}"
           router.throw {status: 401, info: 'Unauthorized'}
 
-        if not isUpdate and trip
+        # update if a new trip was added
+        isNewTrip = trip and (existingCheckIn?.tripIds or []).indexOf(trip.id) is -1
+
+        if (not isUpdate or isNewTrip) and trip
           diff.tripIds ?= [trip.id]
 
         CheckIn.upsertByRow existingCheckIn, diff
         .tap (checkIn) ->
-          # TODO: update if time/location changed
+          # update if time/location changed
           startTime = new Date(diff.startTime).getTime()
-          existingStartTime = existingCheckIn?.startTime.getTime()
+          existingStartTime = existingCheckIn?.startTime?.getTime()
           endTime = new Date(diff.endTime).getTime()
-          existingEndTime = existingCheckIn?.endTime.getTime()
+          existingEndTime = existingCheckIn?.endTime?.getTime()
           hasStartTimeChanged =  startTime isnt existingStartTime
           hasEndTimeChanged =  endTime isnt existingEndTime
           hasTimeChanged = hasStartTimeChanged or hasEndTimeChanged
 
-          if (not isUpdate or hasTimeChanged) and trip
-            Trip.upsertDestinationByRoutesEmbeddedTrip trip, checkIn, location
+          if (not isUpdate or hasTimeChanged or isNewTrip) and trip
+            Trip.upsertDestinationByRoutesEmbeddedTrip(
+              trip, checkIn, location, {emit}
+            )
     .tap ->
       category = "#{CacheService.PREFIXES.CHECK_INS_GET_ALL}:#{user.id}"
       CacheService.deleteByCategory category
