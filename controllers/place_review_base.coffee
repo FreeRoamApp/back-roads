@@ -173,8 +173,16 @@ module.exports = class PlaceReviewBaseCtrl
 
 
       # TODO: choose a good thumbnail for each campground instead of most recent
-      if attachments?[0]
-        parentUpsert.thumbnailPrefix = attachments[0].prefix
+      if attachment = _.find(attachments, {type: 'image'})
+        parentUpsert.thumbnailPrefix = attachment.prefix
+
+      videoAttachment = _.find(attachments, {type: 'video'})
+      if videoAttachment
+        if _.isEmpty(parent.videos) # legacy fix for videos: {}
+          parent.videos = []
+        parentUpsert.videos = parent.videos.concat {
+          sourceType: 'youtube', sourceId: videoAttachment.prefix
+        }
 
       (if user?.username is 'austin' and not rating
         Promise.all _.filter [

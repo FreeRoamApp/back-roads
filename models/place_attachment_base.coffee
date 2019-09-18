@@ -19,7 +19,7 @@ module.exports = class PlaceAttachment extends AttachmentBase
           userId: 'uuid'
           caption: 'text'
           tags: {type: 'set', subType: 'text'}
-          type: 'text'
+          type: 'text' # image/video
           prefix: 'text'
           aspectRatio: 'double'
 
@@ -55,6 +55,7 @@ module.exports = class PlaceAttachment extends AttachmentBase
       }
     ].concat super
 
-  defaultOutput: (place) ->
-    place = super place
-    _.defaults {@type}, place
+  # type is already in-use (image/video...)
+  # defaultOutput: (place) ->
+  #   place = super place
+  #   _.defaults {@type}, place

@@ -72,9 +72,7 @@ class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
             if value
               parentDiff[field][season] = {value, count: 0}
 
-      @ParentModel.upsert _.defaults {
-        id: parent.id, slug: parent.slug
-      }, parentDiff
+      @ParentModel.upsertByRow parent, parentDiff
 
       if id # id isnt there if just updating the parent w/o review
         CampgroundReview.upsertExtras _.defaults {id, userId: user.id}, extras

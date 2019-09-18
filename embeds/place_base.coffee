@@ -7,6 +7,7 @@ class PlaceBaseEmbed
       return null
     @AttachmentModel.getAllByParentId place.id
     .then (attachments) ->
+      attachments = _.filter attachments, {type: 'image'}
       {
         first: _.first attachments
         count: attachments?.length or 0

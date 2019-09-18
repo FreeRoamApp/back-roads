@@ -76,7 +76,7 @@ scyllaFields =
   prices: 'json' # json: {all: {min, max, avg, mode}, motorhome: {}}
   maxLength: 'int'
   restrooms: 'json'
-  videos: 'json' # json
+  videos: {type: 'json', defaultFn: -> []}
 
   agencySlug: 'text'
   regionSlug: 'text'

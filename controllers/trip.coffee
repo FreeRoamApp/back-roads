@@ -142,10 +142,11 @@ class TripCtrl
               checkIn
 
   ###
-  FIXME FIXME: either allow route drag/drop, or use mapbox to find some alternate routes?
-  problem with mapbox is avoiding low clearances...
+  TODO: https://github.com/mapbox/mapbox-navigation-android/issues/875
+  either use mapmatching -> directions, or silent waypoints to generate
+  directions that can be used by mapbox navigation sdk
   ###
-  getRoutesByTripIdAndRouteId: ({tripId, routeId, settings}, {user}) ->
+  getRoutesByTripIdAndRouteId: ({tripId, routeId, settings, waypoints}, {user}) ->
     Promise.all [
       Trip.getById tripId
       Trip.getRouteByTripIdAndRouteId tripId, routeId
@@ -158,6 +159,7 @@ class TripCtrl
       # get elevation for each route
       startCheckIn = _.find trip.destinations, {id: "#{route.startCheckInId}"}
       endCheckIn = _.find trip.destinations, {id: "#{route.endCheckInId}"}
+
       Promise.all [
         route
         # RoutingService.getRoute(
@@ -175,11 +177,11 @@ class TripCtrl
 
         # RoutingService.getRoute(
         #   {
-        #     # TODO: stops....
-        #     locations: [
+        #     locations: _.filter [
         #       {lat: startCheckIn.lat, lon: startCheckIn.lon}
-        #       {lat: endCheckIn.lat, lon: endCheckIn.lon}
-        #     ]
+        #     ].concat(
+        #       waypoints
+        #     ).concat [{lat: endCheckIn.lat, lon: endCheckIn.lon}]
         #   }
         #   {
         #     includeShape: true
@@ -192,6 +194,7 @@ class TripCtrl
       ]
       .then (routes) ->
         Promise.map routes, (route) ->
+          console.log 'route', route
           points = _.flatten _.map route.legs, ({route}) ->
             polyline.decode route.shape
 

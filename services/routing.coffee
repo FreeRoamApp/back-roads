@@ -85,8 +85,6 @@ class RoutingService
       {lat: lat / 10, lon: lon / 10}
     # locations =
     @getElevationsRanges {locations}
-    .tap (e) ->
-      console.log e
 
   _getRouteUncached: ({locations, avoidLocations}, options = {}) =>
     {
@@ -148,21 +146,21 @@ class RoutingService
     get = =>
       @_getRouteUncached {locations, avoidLocations, costing}, options
       .then (route) ->
-        leg = route.trip.legs?[0]
         response = {
           time: route.trip.summary.time
           distance: route.trip.summary.length
         }
-        if includeShape and leg
-          points = polyline.decode leg.shape
+        if includeShape and not _.isEmpty route.trip.legs
+          points = _.flatten _.map route.trip.legs, (leg) ->
+            polyline.decode leg.shape
           # ~ 10x reduction in size, but the routes it generates will be
           # off since the points might be on other roads
           response.shape = polyline.encode points # simplify(points, 0.01)
           response.bounds =
-            x1: leg.summary.min_lon
-            y1: leg.summary.min_lat
-            x2: leg.summary.max_lon
-            y2: leg.summary.max_lat
+            x1: route.trip.summary.min_lon
+            y1: route.trip.summary.min_lat
+            x2: route.trip.summary.max_lon
+            y2: route.trip.summary.max_lat
         response
 
     if preferCache
