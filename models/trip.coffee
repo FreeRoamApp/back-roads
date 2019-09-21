@@ -53,6 +53,7 @@ class Trip extends Base
           startCheckInId: 'uuid'
           endCheckInId: 'uuid'
           bounds: 'json'
+          settings: 'json'
           legs: {type: 'json', defaultFn: -> []} # {id, startCheckInId, endCheckInId, route: {time, distance, shape}}
         primaryKey:
           partitionKey: ['tripId']
@@ -130,6 +131,10 @@ class Trip extends Base
       JSON.parse route.bounds
     catch
       {}
+    route.settings = try
+      JSON.parse route.settings
+    catch
+      {}
     route.legs = try
       JSON.parse route.legs
     catch
@@ -186,15 +191,17 @@ class Trip extends Base
       stops.splice index, 0, shortCheckIn
       stops
 
-  _buildRoutes: ({destinations, stops, trip}) =>
+  _buildRoutes: ({destinations, stops, trip, tripRouteId}) =>
     destinations ?= trip.destinations
     stops ?= trip.stops
     existingRoutes = trip.routes
     destinations = _.clone destinations
     stops = _.clone stops
     pairs = RoutingService.pairwise destinations
-    routes = _.map pairs, ([startCheckIn, endCheckIn], i) =>
+    routes = _.filter _.map pairs, ([startCheckIn, endCheckIn], i) =>
       routeId = @_getRouteIdFromDestinations startCheckIn, endCheckIn
+      if tripRouteId and tripRouteId isnt routeId
+        return
       routeStops = [startCheckIn]
       if stops[routeId]
         routeStops = routeStops.concat stops[routeId]
@@ -216,6 +223,7 @@ class Trip extends Base
         startCheckInId: startCheckIn.id
         endCheckInId: endCheckIn.id
         legs: legs
+        settings: existingRoute?.settings or {}
       }
 
     allCheckIns = destinations.concat _.flatten _.values(stops)
@@ -226,7 +234,7 @@ class Trip extends Base
           leg.route = @_getRoute(
             _.find allCheckIns, {id: leg.startCheckInId}
             _.find allCheckIns, {id: leg.endCheckInId}
-            {trip}
+            {trip, route}
           )
         Promise.props leg
       Promise.props route
@@ -234,13 +242,23 @@ class Trip extends Base
       route.bounds = @_getBoundsFromLegs route.legs
       route
 
-  _getRoute: (startCheckIn, endCheckIn, {trip} = {}) ->
-    RoutingService.getRoute({
-      locations: [
+  _getRoute: (startCheckIn, endCheckIn, {trip, route} = {}) ->
+    settings = _.defaults route?.settings, trip?.settings
+    waypoints = settings?.waypoints or []
+
+    slug = RoutingService.generateRouteSlug {
+      locations: _.filter [
         {lat: startCheckIn.lat, lon: startCheckIn.lon}
-        {lat: endCheckIn.lat, lon: endCheckIn.lon}
-      ]
-    }, {trip, includeShape: true})
+      ].concat waypoints, [{lat: endCheckIn.lat, lon: endCheckIn.lon}]
+      settings:
+        costing: if settings?.useTruckRoute then 'truck' else 'auto'
+        avoidHighways: settings?.avoidHighways
+        rigHeightInches: settings?.rigHeightInches
+    }
+
+    console.log 'GET ROUTE', slug
+
+    RoutingService.getRouteByRouteSlug slug, {includeShape: true}
 
   # gives route legs {lon, lat}
   embedTripRouteLegLocationsByTrip: (trip, tripRoute) ->
@@ -261,6 +279,8 @@ class Trip extends Base
       route.tripId = tripId
       if route.legs
         route.legs = JSON.stringify route.legs
+      if route.settings
+        route.settings = JSON.stringify route.settings
       if route.bounds
         route.bounds = JSON.stringify route.bounds
       @_upsertScyllaRowByTableAndRow @getScyllaTables()[2], route
@@ -277,13 +297,16 @@ class Trip extends Base
     @_spliceStop tripRoute, stops[routeId], checkIn, location
     .then (newStops) =>
       stops[routeId] = newStops
-      @_upsertStopsByTripAndRouteId trip, routeId, stops
+      @upsertStopsByTripAndTripRoute trip, tripRoute, stops
 
 
-  _upsertStopsByTripAndRouteId: (trip, routeId, stops) =>
+  upsertStopsByTripAndTripRoute: (trip, tripRoute, stops) =>
+    trip.routes = [tripRoute]
+    routeId = tripRoute.routeId
     @_buildRoutes {
       stops
       trip
+      tripRouteId: routeId
     }
     .then (routes) =>
       upsertRoutes = _.map routes, (route) ->
@@ -308,7 +331,7 @@ class Trip extends Base
     index = _.findIndex trip.stops[tripRoute.routeId], {id: stopId}
     trip.stops[tripRoute.routeId].splice index, 1
     stops = trip.stops
-    @_upsertStopsByTripAndRouteId trip, tripRoute.routeId, stops
+    @upsertStopsByTripAndTripRoute trip, tripRoute, stops
 
   deleteDestinationByRoutesEmbeddedTrip: (trip, destinationId) =>
     index = _.findIndex trip.destinations, {id: destinationId}

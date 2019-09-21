@@ -75,6 +75,10 @@ class PushNotificationService
           image: if icon then icon else ''
           # data: JSON.stringify data
           payload: JSON.stringify data # android
+          # 'force-start': '1'
+          # get push notifications to work when app is force-closed
+          'content-available': '1'
+          foreground: 'false'
 
           # https://github.com/phonegap/phonegap-plugin-push/issues/158
           # unfortunately causes flash as app opens and closes.

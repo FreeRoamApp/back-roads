@@ -88,13 +88,12 @@ class RoutingService
 
   _getRouteUncached: ({locations, avoidLocations}, options = {}) =>
     {
-      preferCache, includeShape, attempts, costing, trip
-      avoidHighways
+      includeShape, attempts, settings
     } = options
     attempts ?= 0
-    costing ?= if trip?.settings?.useTruckRoute then 'truck' else 'auto'
-    rigHeightInches = trip?.settings?.rigHeightInches
-    avoidHighways ?= trip?.settings?.avoidHighways
+
+    costing = settings?.costing or 'auto'
+    rigHeightInches = settings?.rigHeightInches
 
     request 'https://valhalla.freeroam.app/route',
       json: true
@@ -108,7 +107,7 @@ class RoutingService
             costing_options:
               auto:
                 country_crossing_penalty: 2000
-                use_highways: not avoidHighways
+                use_highways: not settings?.avoidHighways
             directions_options:
               units: 'miles'
           }
@@ -120,7 +119,7 @@ class RoutingService
         return null
       routePromise = Promise.resolve route
       if includeShape
-        if attempts < 3
+        if attempts < 3 and rigHeightInches
           console.log 'check low clearances'
           routePoints = _.flatten _.map route.trip.legs, (leg) ->
             points = polyline.decode leg.shape
@@ -139,12 +138,11 @@ class RoutingService
 
   # only works w/ 2 locations since it doesn't return legs
   getRoute: ({locations, avoidLocations}, options = {}) =>
-    {preferCache, includeShape, attempts, costing} = options
+    {preferCache, includeShape, attempts, settings} = options
     preferCache ?= true
-    costing ?= 'auto'
 
     get = =>
-      @_getRouteUncached {locations, avoidLocations, costing}, options
+      @_getRouteUncached {locations, avoidLocations}, options
       .then (route) ->
         response = {
           time: route.trip.summary.time
@@ -164,13 +162,22 @@ class RoutingService
         response
 
     if preferCache
-      key = CacheService.PREFIXES.ROUTING_ROUTE + JSON.stringify(locations)
-      key += "-#{costing}"
+      key = CacheService.PREFIXES.ROUTING_ROUTE
+      key += @generateRouteSlug {locations, avoidLocations, settings}
       if includeShape
         key += '-withshape'
       CacheService.preferCache key, get, {expireSeconds: ONE_HOUR_S}
     else
       get()
+
+  generateRouteSlug: ({locations, avoidLocations, settings}) ->
+    locations ?= []
+    avoidLocations ?= []
+    JSON.stringify {locations, avoidLocations, settings}
+
+  getRouteByRouteSlug: (slug, {includeShape}) =>
+    {locations, avoidLocations, settings} = JSON.parse slug
+    @getRoute {locations, avoidLocations}, {settings, includeShape}
 
   _checkForLowClearances: (points, {rigHeightInches}) ->
     rigHeightInches ?= 13.5 * 12 # inches

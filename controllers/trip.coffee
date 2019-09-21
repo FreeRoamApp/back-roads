@@ -146,10 +146,13 @@ class TripCtrl
   either use mapmatching -> directions, or silent waypoints to generate
   directions that can be used by mapbox navigation sdk
   ###
-  getRoutesByTripIdAndRouteId: ({tripId, routeId, settings, waypoints}, {user}) ->
+  getRoutesByIdAndRouteId: (options, {user}) ->
+    {id, routeId, waypoints, avoidHighways, useTruckRoute,
+      isEditingRoute} = options
+
     Promise.all [
-      Trip.getById tripId
-      Trip.getRouteByTripIdAndRouteId tripId, routeId
+      Trip.getById id
+      Trip.getRouteByTripIdAndRouteId id, routeId
     ]
     .then ([trip, route]) ->
       if trip?.settings?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
@@ -160,7 +163,22 @@ class TripCtrl
       startCheckIn = _.find trip.destinations, {id: "#{route.startCheckInId}"}
       endCheckIn = _.find trip.destinations, {id: "#{route.endCheckInId}"}
 
+      altSlug = RoutingService.generateRouteSlug {
+        locations: _.filter [
+          {lat: startCheckIn.lat, lon: startCheckIn.lon}
+        ].concat waypoints, [{lat: endCheckIn.lat, lon: endCheckIn.lon}]
+        settings:
+          avoidHighways: avoidHighways
+          costing: if useTruckRoute then 'truck' else 'auto'
+      }
+
       Promise.all [
+        if isEditingRoute
+          # TODO: make an id for this, cache on server for a day or so
+          RoutingService.getRouteByRouteSlug altSlug, {includeShape: true}
+          .then (route) ->
+            {routeSlug: altSlug, legs: [{route}]}
+
         route
         # RoutingService.getRoute(
         #   {
@@ -174,27 +192,14 @@ class TripCtrl
         #   }
         # )
 
-
-        # RoutingService.getRoute(
-        #   {
-        #     locations: _.filter [
-        #       {lat: startCheckIn.lat, lon: startCheckIn.lon}
-        #     ].concat(
-        #       waypoints
-        #     ).concat [{lat: endCheckIn.lat, lon: endCheckIn.lon}]
-        #   }
-        #   {
-        #     includeShape: true
-        #     avoidHighways: false
-        #   }
-        # )
-        # .then (route) ->
-        #   {legs: [{route}]}
-
       ]
       .then (routes) ->
+        routes = _.filter routes
         Promise.map routes, (route) ->
           console.log 'route', route
+          time = _.sumBy route.legs, ({route}) -> route.time
+          distance = _.sumBy route.legs, ({route}) -> route.distance
+
           points = _.flatten _.map route.legs, ({route}) ->
             polyline.decode route.shape
 
@@ -222,14 +227,41 @@ class TripCtrl
 
             max = _.maxBy(elevations, ([x, elevation]) -> elevation)[1]
             min = _.minBy(elevations, ([x, elevation]) -> elevation)[1]
+
+            console.log 'done', route.routeSlug
+
             {
+              routeSlug: route.routeSlug
               shape
               elevations
-              time: route.legs[0].route.time
-              distance: route.legs[0].route.distance
+              time
+              distance
               elevationStats: {gained, lost, min, max}
             }
 
+  setRouteByIdAndRouteId: (options, {user}) ->
+    {id, routeId, waypoints, avoidHighways, useTruckRoute,
+      isEditingRoute} = options
+
+    Promise.all [
+      Trip.getById id
+      Trip.getRouteByTripIdAndRouteId id, routeId
+    ]
+    .then ([trip, route]) ->
+      if trip?.settings?.privacy is 'private' and "#{user.id}" isnt "#{trip.userId}"
+        router.throw status: 401, info: 'Unauthorized'
+
+      # stops = _.defaults {"#{routeId}": []}, trip.stops
+      stops = trip.stops # don't actually need to delete old stops, just reroute
+      tripRoute = _.defaults {
+        legs: false # force re-fetch w/ new settings
+        settings:
+          waypoints: waypoints
+          avoidHighways: avoidHighways
+          useTruckRoute: useTruckRoute
+      }, route
+
+      Trip.upsertStopsByTripAndTripRoute trip, tripRoute, stops
 
   upsertStopByIdAndRouteId: ({id, routeId, checkIn}, {user}) =>
     Promise.all [

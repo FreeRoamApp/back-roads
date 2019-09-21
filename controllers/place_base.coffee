@@ -38,10 +38,10 @@ module.exports = class PlaceBaseCtrl
         router.throw {status: 404, info: 'Place not found'}
     .then EmbedService.embed {embed: @defaultEmbed}
 
-  search: ({query, tripId, tripRouteId, sort, limit, includeId}, {user}) =>
+  search: ({query, tripId, tripRouteId, tripAltRouteSlug, sort, limit, includeId}, {user}) =>
     (if tripId and tripRouteId
       # limit = 2000 # show them all
-      @_updateESQueryFromTripIdAndTripRouteId tripId, tripRouteId, query
+      @_updateESQueryFromTrip tripId, tripRouteId, tripAltRouteSlug, query
     else
       Promise.resolve query
     ).then (query) =>
@@ -54,9 +54,17 @@ module.exports = class PlaceBaseCtrl
             place
       }
 
-  _updateESQueryFromTripIdAndTripRouteId: (tripId, tripRouteId, query) ->
-    Trip.getRouteByTripIdAndRouteId tripId, tripRouteId
-    .then (route) ->
+  _updateESQueryFromTrip: (tripId, tripRouteId, tripAltRouteSlug, query) ->
+    Promise.all [
+      Trip.getRouteByTripIdAndRouteId tripId, tripRouteId
+      if tripAltRouteSlug
+        RoutingService.getRouteByRouteSlug tripAltRouteSlug, {
+          includeShape: true
+        }
+    ]
+    .then ([route, altRoute]) ->
+      should = []
+
       points = _.flatten _.map route.legs, ({route}) ->
         simplify polyline.decode(route.shape), 0.1
 
@@ -65,7 +73,18 @@ module.exports = class PlaceBaseCtrl
         line = turf.lineString points
         turfPolygon = turfBuffer line, '10', {units: 'miles'}
         polygon = _.flatten(turfPolygon.geometry.coordinates)
-        query.bool.filter.push {geo_polygon: {location: points: polygon}}
+        should.push {geo_polygon: {location: points: polygon}}
+
+      if altRoute
+        points = simplify polyline.decode(altRoute.shape), 0.1
+        points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
+        if points?.length >= 2
+          line = turf.lineString points
+          turfPolygon = turfBuffer line, '10', {units: 'miles'}
+          polygon = _.flatten(turfPolygon.geometry.coordinates)
+          should.push {geo_polygon: {location: points: polygon}}
+
+      query.bool.filter.push {bool: {should}}
       query
 
   getUniqueSlug: (baseSlug, suffix, attempts = 0) =>
@@ -256,6 +275,19 @@ module.exports = class PlaceBaseCtrl
       #   diff.prices ?= {all: {mode: 0}} # TODO
 
       console.log 'diff', diff
+
+      if id
+        EmailService.send {
+          to: EmailService.EMAILS.EVERYONE
+          subject: "Place updated by #{user.username}"
+          text: """
+#{JSON.stringify existingPlace}
+
+---
+
+#{JSON.stringify diff}
+"""
+        }
 
       (if existingPlace
         @Model.upsertByRow existingPlace, diff
