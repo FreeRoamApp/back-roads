@@ -66,9 +66,9 @@ module.exports = class PlaceBaseCtrl
       should = []
 
       points = _.flatten _.map route.legs, ({route}) ->
-        simplify polyline.decode(route.shape), 0.1
+        simplify polyline.decode(route.shape, 6), 0.1
 
-      points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
+      points = _.map points, ([lon, lat]) -> [lat, lon]
       if points.length >= 2
         line = turf.lineString points
         turfPolygon = turfBuffer line, '10', {units: 'miles'}
@@ -76,8 +76,8 @@ module.exports = class PlaceBaseCtrl
         should.push {geo_polygon: {location: points: polygon}}
 
       if altRoute
-        points = simplify polyline.decode(altRoute.shape), 0.1
-        points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
+        points = simplify polyline.decode(altRoute.shape, 6), 0.1
+        points = _.map points, ([lon, lat]) -> [lat, lon]
         if points?.length >= 2
           line = turf.lineString points
           turfPolygon = turfBuffer line, '10', {units: 'miles'}

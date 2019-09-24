@@ -32,7 +32,7 @@ class PushTokensCtrl
         Promise.map pushTokens, (pushToken) ->
           unless token is 'none'
             Subscription.getAllByToken pushToken.token
-            .map Subscription.unsubscribeBySubscriptionAndToken
+            .map Subscription.unsubscribeBySubscriptionToken
         .catch (err) ->
           console.log 'push token subscribe error', err
       ]

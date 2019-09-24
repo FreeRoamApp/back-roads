@@ -319,6 +319,8 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'trips.getById', authed TripCtrl.getById
 .on 'trips.getRoute', authed TripCtrl.getRoute
 .on 'trips.getStats', authed TripCtrl.getStats
+.on 'trips.getMapboxDirectionsByIdAndRouteId',
+  authed TripCtrl.getMapboxDirectionsByIdAndRouteId
 .on 'trips.getRouteStopsByTripIdAndRouteIds',
   authed TripCtrl.getRouteStopsByTripIdAndRouteIds
 .on 'trips.getRoutesByIdAndRouteId',

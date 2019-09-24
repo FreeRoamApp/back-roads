@@ -15,7 +15,10 @@ scyllaFields =
   id: 'timeuuid'
   userId: 'uuid'
   name: 'text'
-  settings: {type: 'json', defaultFn: -> {privacy: 'public', rigHeightInches: 13.5 * 12, avoidHighways: false, useTruckRoute: false, donut: {isVisible: true, min: 200, max: 300}}} # donut min max, avoidTolls, avoidHighways, privacy (public, private, friend)
+  settings: {type: 'json', defaultFn: ->
+    console.log {privacy: 'public', rigHeightInches: 13.5 * 12, avoidHighways: false, useTruckRoute: false, donut: {isVisible: true, min: 200, max: 300}}
+    {privacy: 'public', rigHeightInches: 13.5 * 12, avoidHighways: false, useTruckRoute: false, donut: {isVisible: true, min: 200, max: 300}}
+  }
   thumbnailPrefix: 'text'
   imagePrefix: 'text' # screenshot of map
   destinations: {type: 'json', defaultFn: -> []} # [{id, lat, lon}]
@@ -109,24 +112,26 @@ class Trip extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
-  getAllRoutesByTripId: (tripId) =>
+  getAllRoutesByTripId: (tripId, {includeManeuevers} = {}) =>
     cknex().select '*'
     .from @getScyllaTables()[2].name
     .where 'tripId', '=', tripId
     .run()
     .then (routes) ->
       _.orderBy routes, 'number'
-    .map @defaultRouteOutput
+    .map (route) =>
+      @defaultRouteOutput route, {includeManeuevers}
 
-  getRouteByTripIdAndRouteId: (tripId, routeId) =>
+  getRouteByTripIdAndRouteId: (tripId, routeId, {includeManeuevers} = {}) =>
     cknex().select '*'
     .from @getScyllaTables()[2].name
     .where 'tripId', '=', tripId
     .andWhere 'routeId', '=', routeId
     .run {isSingle: true}
-    .then @defaultRouteOutput
+    .then (route) =>
+      @defaultRouteOutput route, {includeManeuevers}
 
-  defaultRouteOutput: (route) ->
+  defaultRouteOutput: (route, {includeManeuevers} = {}) ->
     route.bounds = try
       JSON.parse route.bounds
     catch
@@ -139,6 +144,11 @@ class Trip extends Base
       JSON.parse route.legs
     catch
       {}
+    unless includeManeuevers
+      route.legs = _.map route.legs, (leg) ->
+        leg.route = _.omit leg.route, ['maneuvers']
+        leg
+
     route
 
   _getRouteIdFromDestinations: (startCheckIn, endCheckIn) ->
@@ -149,7 +159,7 @@ class Trip extends Base
     [
       geohash.encode(startCheckIn.lat, startCheckIn.lon)
       geohash.encode(endCheckIn.lat, endCheckIn.lon)
-    ].join ':'
+    ].join(':')
 
   _spliceDestination: (checkIns, checkIn, location) ->
     checkIns = _.clone(checkIns) or []
@@ -242,6 +252,7 @@ class Trip extends Base
       route.bounds = @_getBoundsFromLegs route.legs
       route
 
+  # this code is sort of similar to TripCtrl.getMapboxDirectionsByIdAndRouteId
   _getRoute: (startCheckIn, endCheckIn, {trip, route} = {}) ->
     settings = _.defaults route?.settings, trip?.settings
     waypoints = settings?.waypoints or []
@@ -343,6 +354,19 @@ class Trip extends Base
     destinations = trip.destinations
     @_upsertDestinationsByTrip trip, destinations
 
+  resetRoutesByRoutesEmbeddedTrip: (trip) =>
+    unless trip.routes
+      return Promise.resolve null
+    trip.routes = _.map trip.routes, (route) ->
+      route.legs = false
+      route
+
+    @_buildRoutes {
+      trip
+    }
+    .then (routes) =>
+      @upsertRoutesByTripId trip.id, routes
+
   upsertDestinationByRoutesEmbeddedTrip: (trip, checkIn, location, {emit} = {}) =>
     destinations = @_spliceDestination trip.destinations, checkIn, location
     @_upsertDestinationsByTrip trip, destinations
@@ -358,8 +382,6 @@ class Trip extends Base
       trip
     }
     .then (routes) =>
-      changedRoutes = _.filter routes, (route) ->
-        not _.find trip.routes, {routeId: route.routeId}
       upsertRoutes = _.map routes, (route) ->
         if not _.find trip.routes, {routeId: route.routeId}
           # shape changed for this route, so upsert everything

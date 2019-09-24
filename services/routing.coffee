@@ -4,8 +4,10 @@ polyline = require '@mapbox/polyline'
 simplify = require 'simplify-path'
 geohash = require 'ngeohash'
 turf = require '@turf/turf'
+# turfBearing = require '@turf/bearing'
 turfBuffer = require '@turf/buffer'
 _ = require 'lodash'
+geodist = require 'geodist'
 
 CacheService = require './cache'
 Hazard = require '../models/hazard'
@@ -44,10 +46,28 @@ class RoutingService
     if points.length < count
       return points
 
-    frequency = Math.floor points.length / (count - 1)
+    frequency = Math.ceil points.length / (count - 1)
 
     _.reduce points, (arr, point, i) ->
       if i is 0 or i is points.length - 1 or not (i % frequency)
+        arr.push point
+      arr
+    , []
+
+  distributedSampleByDistance: (points, distance, unit = 'mi') ->
+    dist = 0
+    _.reduce points, (arr, point, i) ->
+      if points[i - 1]
+        dist += geodist points[i - 1], point, {unit, exact: true}
+      if dist > distance or i is 0 or i is points.length - 1
+        dist = 0
+        # if includeBearings
+        #   if points[i - 1]
+        #     bearing = (360 + 270 + (turf.bearing point, points[i - 1])) % 360
+        #   else
+        #     bearing = ''
+        #   arr.push {point, bearing}
+        # else
         arr.push point
       arr
     , []
@@ -81,8 +101,8 @@ class RoutingService
         ]
 
   getElevationsFromPolyline: (shape) =>
-    locations = polyline.decode(shape).map ([lat, lon]) ->
-      {lat: lat / 10, lon: lon / 10}
+    locations = polyline.decode(shape, 6).map ([lat, lon]) ->
+      {lat: lat, lon: lon}
     # locations =
     @getElevationsRanges {locations}
 
@@ -100,7 +120,7 @@ class RoutingService
       qs:
         json:
           JSON.stringify {
-            narrative: false
+            directions_type: if includeShape then 'maneuvers' else 'none'
             locations: locations
             avoid_locations: avoidLocations
             costing: costing
@@ -122,7 +142,7 @@ class RoutingService
         if attempts < 3 and rigHeightInches
           console.log 'check low clearances'
           routePoints = _.flatten _.map route.trip.legs, (leg) ->
-            points = polyline.decode leg.shape
+            points = polyline.decode leg.shape, 6
           routePromise = @_checkForLowClearances routePoints, {rigHeightInches}
           .then (lowClearances) =>
             if lowClearances?.total
@@ -150,10 +170,18 @@ class RoutingService
         }
         if includeShape and not _.isEmpty route.trip.legs
           points = _.flatten _.map route.trip.legs, (leg) ->
-            polyline.decode leg.shape
-          # ~ 10x reduction in size, but the routes it generates will be
-          # off since the points might be on other roads
-          response.shape = polyline.encode points # simplify(points, 0.01)
+            polyline.decode leg.shape, 6
+          response.shape = polyline.encode points, 6
+          shapeIndex = 0
+          # since we're combining maneuvers we need to update the shape indexes
+          response.maneuvers = _.flatten _.map route.trip.legs, (leg) ->
+            maneuvers = _.map leg.maneuvers, (maneuver) ->
+              maneuver.begin_shape_index += shapeIndex
+              maneuver.end_shape_index += shapeIndex
+              maneuver
+            points = polyline.decode leg.shape, 6
+            shapeIndex += points.length
+            maneuvers
           response.bounds =
             x1: route.trip.summary.min_lon
             y1: route.trip.summary.min_lat
@@ -181,7 +209,7 @@ class RoutingService
 
   _checkForLowClearances: (points, {rigHeightInches}) ->
     rigHeightInches ?= 13.5 * 12 # inches
-    points = _.map points, ([lon, lat]) -> [lat / 10, lon / 10]
+    points = _.map points, ([lon, lat]) -> [lat, lon]
     if points.length >= 2
       line = turf.lineString points
       turfPolygon = turfBuffer line, '0.005', {units: 'miles'}

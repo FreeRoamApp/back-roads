@@ -1,6 +1,7 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 router = require 'exoid-router'
+request = require 'request-promise'
 polyline = require '@mapbox/polyline'
 simplify = require 'simplify-path'
 
@@ -47,6 +48,7 @@ class TripCtrl
 
       Trip.upsertByRow trip, diff
       .then (trip) =>
+        console.log 'tripp', trip
         if file
           console.log 'uploading file'
           @_uploadThumbnail trip.id, file
@@ -196,19 +198,22 @@ class TripCtrl
       .then (routes) ->
         routes = _.filter routes
         Promise.map routes, (route) ->
-          console.log 'route', route
           time = _.sumBy route.legs, ({route}) -> route.time
           distance = _.sumBy route.legs, ({route}) -> route.distance
 
           points = _.flatten _.map route.legs, ({route}) ->
-            polyline.decode route.shape
+            polyline.decode route.shape, 6
 
-          shape = polyline.encode points
+          shape = polyline.encode points, 6
 
-          points = polyline.encode(
-            RoutingService.distributedSample points, 100
-          )
-          RoutingService.getElevationsFromPolyline points
+          poly = polyline.encode(
+            RoutingService.distributedSample(
+              RoutingService.distributedSampleByDistance(points, 1, 'mi')
+              100
+            )
+          , 6)
+
+          RoutingService.getElevationsFromPolyline poly
           .then (elevations) ->
             lastElevation = null
             gained = _.reduce elevations, (gained, [x, elevation]) ->
@@ -227,8 +232,6 @@ class TripCtrl
 
             max = _.maxBy(elevations, ([x, elevation]) -> elevation)[1]
             min = _.minBy(elevations, ([x, elevation]) -> elevation)[1]
-
-            console.log 'done', route.routeSlug
 
             {
               routeSlug: route.routeSlug
@@ -253,6 +256,7 @@ class TripCtrl
 
       # stops = _.defaults {"#{routeId}": []}, trip.stops
       stops = trip.stops # don't actually need to delete old stops, just reroute
+      console.log 'set route'
       tripRoute = _.defaults {
         legs: false # force re-fetch w/ new settings
         settings:
@@ -297,6 +301,128 @@ class TripCtrl
       unless trip.userId is user.id
         router.throw {status: 401, info: 'Unauthorized'}
       Trip.deleteDestinationByRoutesEmbeddedTrip trip, destinationId
+
+  _addManeueversToLegacyId: (id) ->
+    console.log 'RESET TRIP MANEUVERS'
+    # FIXME: remove in jan 2020. legacy routes didn't include maneuvers
+    Trip.getById id
+    .then EmbedService.embed {embed: [EmbedService.TYPES.TRIP.ROUTES]}
+    .then (trip) ->
+      Trip.resetRoutesByRoutesEmbeddedTrip trip
+
+  # for native turn-by-turn
+  ###
+  This isn't always 100% accurate. Sometimes mapbox take a point near an exit
+  and decides to take that exit, then get back on :/ Unsure how to get
+  to be more accurate
+  ###
+  # this code is sort of similar to Trip_getRoute
+  getMapboxDirectionsByIdAndRouteId: ({id, routeId}) =>
+    # Promise.all [
+    #   Trip.getById id
+    #   Trip.getRouteByTripIdAndRouteId id, routeId
+    # ]
+    # .then ([trip, route]) ->
+    #   settings = _.defaults route?.settings, trip?.settings
+    #   waypoints = settings?.waypoints or []
+    #
+    #   route = Trip.embedTripRouteLegLocationsByTrip trip, route
+    #
+    #   slug = RoutingService.generateRouteSlug {
+    #     locations: _.filter [
+    #       {lat: startCheckIn.lat, lon: startCheckIn.lon}
+    #       {lat: endCheckIn.lat, lon: endCheckIn.lon}
+    #     ]
+    #     settings:
+    #       costing: if settings?.useTruckRoute then 'truck' else 'auto'
+    #       avoidHighways: settings?.avoidHighways
+    #       rigHeightInches: settings?.rigHeightInches
+    #   }
+    #
+    #   console.log 'GET ROUTE', slug
+    #
+    #   RoutingService.getRouteByRouteSlug slug, {includeShape: true}
+    #   .then (route) ->
+    #     console.log 'route', route
+    #   return
+    Trip.getRouteByTripIdAndRouteId id, routeId, {includeManeuevers: true}
+    .tap (route) =>
+      # FIXME: rm jan 2020
+      if _.some(route.legs, ({route}) -> route.shape and not route.maneuvers)
+        @_addManeueversToLegacyId id
+    .then (route) ->
+      allPoints = _.flatten _.map route.legs, ({route}) ->
+        polyline.decode route.shape, 6
+      console.log allPoints.length
+      # console.log 'route', route
+      # if we distribute only by count, they tend to be at curves
+      # which are more likely to screw mapbox up
+      # distance = _.sumBy route.legs, ({route}) -> route.distance
+      # maxPoints = 25
+      # sampleDistance = Math.ceil(distance / maxPoints)
+      # points = RoutingService.distributedSampleByDistance points, sampleDistance, 'km' #, {includeBearings: true}
+      # points = RoutingService.distributedSample points, maxPoints
+
+      points = [_.first allPoints]
+      # FIXME: <= 25. choose maneuvers close to low clearances?
+      points = points.concat _.flatten _.map route.legs, (leg) ->
+        console.log leg
+        _.filter _.map leg.route.maneuvers, (maneuver) ->
+          allPoints[maneuver.end_shape_index + 1]
+
+      points = points.concat [_.last allPoints]
+      # return console.log points
+
+      points = _.map points, ([lat, lon]) -> [lon, lat]
+      # bearings = _.map points, ({bearing}) ->
+      #   if bearing
+      #     [Math.round(bearing), 10]
+      #   else
+      #     ''
+      # points = _.map points, ({point}) -> [point[1], point[0]]
+      console.log points
+      console.log '------------'
+      console.log points.length
+
+
+      routeOptions =
+        steps: true
+        # waypoint_names: []
+        waypoints: [0, points.length - 1].join ';' # FIXME stops
+        # bearings: bearings.join ';'
+        annotations: 'duration,congestion'
+        language: 'en'
+        overview: 'full'
+        continue_straight: true
+        roundabout_exits: true
+        geometries: 'polyline6'
+        voice_instructions: true
+        banner_instructions: true
+        voice_units: 'imperial'
+        access_token: config.MAPBOX_ACCESS_TOKEN
+
+      console.log routeOptions
+      # return
+
+
+      # max 100 coords
+      url = "https://api.mapbox.com/directions/v5/mapbox/driving/#{points.join(';')}"
+      Promise.resolve request url, {
+        json: true
+        qs: routeOptions
+      }
+      .then (response) ->
+        _.defaults {
+          "voiceLocale": "en-US"
+          routeOptions: _.defaults {
+            baseUrl: 'https://api.mapbox.com',
+            user: '',
+            profile: "driving-traffic"
+            coordinates: [_.first(points), _.last(points)] # FIXME
+            uuid: response.uuid
+          }, routeOptions
+        }, response.routes[0]
+
 
   uploadImage: ({}, {user, file}) ->
     ImageService.uploadImageByUserIdAndFile(
