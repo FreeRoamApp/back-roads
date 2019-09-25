@@ -202,12 +202,10 @@ module.exports = class Base
         console.log 'elastic err', err
 
   defaultInput: (row, {skipAdditions} = {}) =>
-    console.log 'default', skipAdditions, row, @fieldsWithDefaultFn
     unless skipAdditions
       _.map @fieldsWithDefaultFn, (field, key) ->
         value = row[key]
         if not value and not skipAdditions and field.defaultFn
-          console.log 'get', key
           row[key] = field.defaultFn()
         else if not value and not skipAdditions and field.type is 'uuid'
           row[key] = cknex.getUuid()

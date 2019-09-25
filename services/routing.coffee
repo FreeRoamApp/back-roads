@@ -3,9 +3,11 @@ Promise = require 'bluebird'
 polyline = require '@mapbox/polyline'
 simplify = require 'simplify-path'
 geohash = require 'ngeohash'
+stringSimilarity = require 'string-similarity'
 turf = require '@turf/turf'
 # turfBearing = require '@turf/bearing'
 turfBuffer = require '@turf/buffer'
+require '@turf/nearest-point-on-line'
 _ = require 'lodash'
 geodist = require 'geodist'
 
@@ -143,11 +145,14 @@ class RoutingService
           console.log 'check low clearances'
           routePoints = _.flatten _.map route.trip.legs, (leg) ->
             points = polyline.decode leg.shape, 6
-          routePromise = @_checkForLowClearances routePoints, {rigHeightInches}
+          routePromise = @_checkForLowClearances routePoints, {
+            rigHeightInches, route
+          }
           .then (lowClearances) =>
-            if lowClearances?.total
+            console.log lowClearances
+            if not _.isEmpty lowClearances
               console.log 'retry'
-              avoidLocations = _.map lowClearances.places, 'location'
+              avoidLocations = _.map lowClearances, 'location'
               @_getRouteUncached {locations, avoidLocations}, _.defaults({
                 attempts: attempts + 1
               }, options)
@@ -207,7 +212,7 @@ class RoutingService
     {locations, avoidLocations, settings} = JSON.parse slug
     @getRoute {locations, avoidLocations}, {settings, includeShape}
 
-  _checkForLowClearances: (points, {rigHeightInches}) ->
+  _checkForLowClearances: (points, {rigHeightInches, route}) ->
     rigHeightInches ?= 13.5 * 12 # inches
     points = _.map points, ([lon, lat]) -> [lat, lon]
     if points.length >= 2
@@ -222,7 +227,32 @@ class RoutingService
             {range: 'data.heightInches': lte: rigHeightInches}
           ]
       }
-      Hazard.search {query}
+      Hazard.search {query}, {outputFn: (hazard) -> hazard}
+      .then (lowClearances) ->
+        # try to filter out if it's the road below the road we're on or not
+        maneuvers = _.flatten _.map route.trip.legs, (leg) ->
+          leg.maneuvers
+        _.filter lowClearances.places, (lowClearance) ->
+          nearestPoint = turf.nearestPointOnLine line, [lowClearance.location.lon, lowClearance.location.lat]
+          nearestIndex = nearestPoint.properties.index
+          nearestManeuver = _.find maneuvers, (maneuver) ->
+            nearestIndex >= maneuver.begin_shape_index and
+              nearestIndex < maneuver.end_shape_index
+          nearestManeuverStreets = nearestManeuver.street_names
+          road = lowClearance.data.road
+          roadLC = road.replace(/(\s|-)/g,'').toLowerCase()
+          isRoadMatch = not road or _.some nearestManeuverStreets, (nearestStreet) ->
+            nearestStreetLC = nearestStreet.replace(/(\s|-)/g,'').toLowerCase()
+            isGhettoMatch = nearestStreetLC.indexOf(roadLC) isnt -1 or
+              roadLC.indexOf(nearestStreetLC) isnt -1
+            similarity = stringSimilarity.compareTwoStrings(
+              nearestStreetLC, roadLC
+            )
+            isGhettoMatch or similarity > 0.7
+
+          isValid = lowClearance.data.isUnderNonRoad or
+                      lowClearance.data.type is 'tunnel' or isRoadMatch
+          isValid
 
   determineStopIndexAndDetourTimeByTripRoute: (route, stop) =>
     prefix = CacheService.PREFIXES.ROUTE_STOP_INDEX

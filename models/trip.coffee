@@ -16,7 +16,6 @@ scyllaFields =
   userId: 'uuid'
   name: 'text'
   settings: {type: 'json', defaultFn: ->
-    console.log {privacy: 'public', rigHeightInches: 13.5 * 12, avoidHighways: false, useTruckRoute: false, donut: {isVisible: true, min: 200, max: 300}}
     {privacy: 'public', rigHeightInches: 13.5 * 12, avoidHighways: false, useTruckRoute: false, donut: {isVisible: true, min: 200, max: 300}}
   }
   thumbnailPrefix: 'text'

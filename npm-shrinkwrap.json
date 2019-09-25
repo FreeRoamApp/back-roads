@@ -860,6 +860,22 @@
         "@turf/meta": "^5.1.5",
         "@turf/nearest-point-on-line": "^5.1.5",
         "geojson-rbush": "2.1.0"
+      },
+      "dependencies": {
+        "@turf/nearest-point-on-line": {
+          "version": "5.1.5",
+          "resolved": "https://registry.npmjs.org/@turf/nearest-point-on-line/-/nearest-point-on-line-5.1.5.tgz",
+          "integrity": "sha1-VgauKX8VlHUkvqUaKp71HsG/nDY=",
+          "requires": {
+            "@turf/bearing": "^5.1.5",
+            "@turf/destination": "^5.1.5",
+            "@turf/distance": "^5.1.5",
+            "@turf/helpers": "^5.1.5",
+            "@turf/invariant": "^5.1.5",
+            "@turf/line-intersect": "^5.1.5",
+            "@turf/meta": "^5.1.5"
+          }
+        }
       }
     },
     "@turf/line-segment": {
@@ -880,6 +896,22 @@
         "@turf/helpers": "^5.1.5",
         "@turf/invariant": "^5.1.5",
         "@turf/nearest-point-on-line": "^5.1.5"
+      },
+      "dependencies": {
+        "@turf/nearest-point-on-line": {
+          "version": "5.1.5",
+          "resolved": "https://registry.npmjs.org/@turf/nearest-point-on-line/-/nearest-point-on-line-5.1.5.tgz",
+          "integrity": "sha1-VgauKX8VlHUkvqUaKp71HsG/nDY=",
+          "requires": {
+            "@turf/bearing": "^5.1.5",
+            "@turf/destination": "^5.1.5",
+            "@turf/distance": "^5.1.5",
+            "@turf/helpers": "^5.1.5",
+            "@turf/invariant": "^5.1.5",
+            "@turf/line-intersect": "^5.1.5",
+            "@turf/meta": "^5.1.5"
+          }
+        }
       }
     },
     "@turf/line-slice-along": {
@@ -908,6 +940,22 @@
         "@turf/square": "^5.1.5",
         "@turf/truncate": "^5.1.5",
         "geojson-rbush": "2.1.0"
+      },
+      "dependencies": {
+        "@turf/nearest-point-on-line": {
+          "version": "5.1.5",
+          "resolved": "https://registry.npmjs.org/@turf/nearest-point-on-line/-/nearest-point-on-line-5.1.5.tgz",
+          "integrity": "sha1-VgauKX8VlHUkvqUaKp71HsG/nDY=",
+          "requires": {
+            "@turf/bearing": "^5.1.5",
+            "@turf/destination": "^5.1.5",
+            "@turf/distance": "^5.1.5",
+            "@turf/helpers": "^5.1.5",
+            "@turf/invariant": "^5.1.5",
+            "@turf/line-intersect": "^5.1.5",
+            "@turf/meta": "^5.1.5"
+          }
+        }
       }
     },
     "@turf/line-to-polygon": {
@@ -963,17 +1011,100 @@
       }
     },
     "@turf/nearest-point-on-line": {
-      "version": "5.1.5",
-      "resolved": "https://registry.npmjs.org/@turf/nearest-point-on-line/-/nearest-point-on-line-5.1.5.tgz",
-      "integrity": "sha1-VgauKX8VlHUkvqUaKp71HsG/nDY=",
+      "version": "6.0.2",
+      "resolved": "https://registry.npmjs.org/@turf/nearest-point-on-line/-/nearest-point-on-line-6.0.2.tgz",
+      "integrity": "sha512-re9tSEwYyG1EMo4ObXXAKYVhkMVANPIIJQ1V/J1lKcNfHVc1pYmd3D5jkTNBh+oriI9VL4PVML3eqYE+Zcg0mg==",
       "requires": {
-        "@turf/bearing": "^5.1.5",
-        "@turf/destination": "^5.1.5",
-        "@turf/distance": "^5.1.5",
-        "@turf/helpers": "^5.1.5",
-        "@turf/invariant": "^5.1.5",
-        "@turf/line-intersect": "^5.1.5",
-        "@turf/meta": "^5.1.5"
+        "@turf/bearing": "6.x",
+        "@turf/destination": "6.x",
+        "@turf/distance": "6.x",
+        "@turf/helpers": "6.x",
+        "@turf/invariant": "6.x",
+        "@turf/line-intersect": "6.x",
+        "@turf/meta": "6.x"
+      },
+      "dependencies": {
+        "@turf/bearing": {
+          "version": "6.0.1",
+          "resolved": "https://registry.npmjs.org/@turf/bearing/-/bearing-6.0.1.tgz",
+          "integrity": "sha512-mXY1NozqV9EFfBTbUItujwfqfQF0G/Xe2fzvnZle90ekPEUfhi4Dgf5JswJTd96J9LiT8kcd6Jonp5khnx0wIg==",
+          "requires": {
+            "@turf/helpers": "6.x",
+            "@turf/invariant": "6.x"
+          }
+        },
+        "@turf/destination": {
+          "version": "6.0.1",
+          "resolved": "https://registry.npmjs.org/@turf/destination/-/destination-6.0.1.tgz",
+          "integrity": "sha512-MroK4nRdp7as174miCAugp8Uvorhe6rZ7MJiC9Hb4+hZR7gNFJyVKmkdDDXIoCYs6MJQsx0buI+gsCpKwgww0Q==",
+          "requires": {
+            "@turf/helpers": "6.x",
+            "@turf/invariant": "6.x"
+          }
+        },
+        "@turf/distance": {
+          "version": "6.0.1",
+          "resolved": "https://registry.npmjs.org/@turf/distance/-/distance-6.0.1.tgz",
+          "integrity": "sha512-q7t7rWIWfkg7MP1Vt4uLjSEhe5rPfCO2JjpKmk7JC+QZKEQkuvHEqy3ejW1iC7Kw5ZcZNR3qdMGGz+6HnVwqvg==",
+          "requires": {
+            "@turf/helpers": "6.x",
+            "@turf/invariant": "6.x"
+          }
+        },
+        "@turf/helpers": {
+          "version": "6.1.4",
+          "resolved": "https://registry.npmjs.org/@turf/helpers/-/helpers-6.1.4.tgz",
+          "integrity": "sha512-vJvrdOZy1ngC7r3MDA7zIGSoIgyrkWcGnNIEaqn/APmw+bVLF2gAW7HIsdTxd12s5wQMqEpqIQrmrbRRZ0xC7g=="
+        },
+        "@turf/invariant": {
+          "version": "6.1.2",
+          "resolved": "https://registry.npmjs.org/@turf/invariant/-/invariant-6.1.2.tgz",
+          "integrity": "sha512-WU08Ph8j0J2jVGlQCKChXoCtI50BB3yEH21V++V0T4cR1T27HKCxkehV2sYMwTierfMBgjwSwDIsxnR4/2mWXg==",
+          "requires": {
+            "@turf/helpers": "6.x"
+          }
+        },
+        "@turf/line-intersect": {
+          "version": "6.0.2",
+          "resolved": "https://registry.npmjs.org/@turf/line-intersect/-/line-intersect-6.0.2.tgz",
+          "integrity": "sha512-pfL/lBu7ukBPdTjvSCmcNUzZ83V4R95htwqs5NqU8zeS4R+5KTwacbrOYKztjpmHBwUmPEIIpSbqkUoD0Fp7kg==",
+          "requires": {
+            "@turf/helpers": "6.x",
+            "@turf/invariant": "6.x",
+            "@turf/line-segment": "6.x",
+            "@turf/meta": "6.x",
+            "geojson-rbush": "3.x"
+          }
+        },
+        "@turf/line-segment": {
+          "version": "6.0.2",
+          "resolved": "https://registry.npmjs.org/@turf/line-segment/-/line-segment-6.0.2.tgz",
+          "integrity": "sha512-8AkzDHoNw3X68y115josal+lvdAi4b2P1K0YNTKGyLRBaUhPXVSuMBpMd53FRF1hYEb9UJgMbugF9ZE7m5L6zg==",
+          "requires": {
+            "@turf/helpers": "6.x",
+            "@turf/invariant": "6.x",
+            "@turf/meta": "6.x"
+          }
+        },
+        "@turf/meta": {
+          "version": "6.0.2",
+          "resolved": "https://registry.npmjs.org/@turf/meta/-/meta-6.0.2.tgz",
+          "integrity": "sha512-VA7HJkx7qF1l3+GNGkDVn2oXy4+QoLP6LktXAaZKjuT1JI0YESat7quUkbCMy4zP9lAUuvS4YMslLyTtr919FA==",
+          "requires": {
+            "@turf/helpers": "6.x"
+          }
+        },
+        "geojson-rbush": {
+          "version": "3.1.2",
+          "resolved": "https://registry.npmjs.org/geojson-rbush/-/geojson-rbush-3.1.2.tgz",
+          "integrity": "sha512-grkfdg3HIeTjwTfiJe5FT8+fGU3fABCc+vRJDBwdQz9kkLF0Sbif2gs2JUzjewwgmnvLGy9fInySDeADoNuk7w==",
+          "requires": {
+            "@turf/bbox": "*",
+            "@turf/helpers": "6.x",
+            "@turf/meta": "6.x",
+            "rbush": "^2.0.0"
+          }
+        }
       }
     },
     "@turf/nearest-point-to-line": {
@@ -1519,6 +1650,20 @@
           "integrity": "sha1-wgqGPt7Qhp+yhUje6Ik0G8y0akY=",
           "requires": {
             "@turf/helpers": "^5.1.5"
+          }
+        },
+        "@turf/nearest-point-on-line": {
+          "version": "5.1.5",
+          "resolved": "https://registry.npmjs.org/@turf/nearest-point-on-line/-/nearest-point-on-line-5.1.5.tgz",
+          "integrity": "sha1-VgauKX8VlHUkvqUaKp71HsG/nDY=",
+          "requires": {
+            "@turf/bearing": "^5.1.5",
+            "@turf/destination": "^5.1.5",
+            "@turf/distance": "^5.1.5",
+            "@turf/helpers": "^5.1.5",
+            "@turf/invariant": "^5.1.5",
+            "@turf/line-intersect": "^5.1.5",
+            "@turf/meta": "^5.1.5"
           }
         }
       }
@@ -9928,6 +10073,11 @@
       "version": "1.1.0",
       "resolved": "https://registry.npmjs.org/strict-uri-encode/-/strict-uri-encode-1.1.0.tgz",
       "integrity": "sha1-J5siXfHVgrH1TmWt3UNS4Y+qBxM="
+    },
+    "string-similarity": {
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/string-similarity/-/string-similarity-3.0.0.tgz",
+      "integrity": "sha512-7kS7LyTp56OqOI2BDWQNVnLX/rCxIQn+/5M0op1WV6P8Xx6TZNdajpuqQdiJ7Xx+p1C5CsWMvdiBp9ApMhxzEQ=="
     },
     "string-template": {
       "version": "1.0.0",
