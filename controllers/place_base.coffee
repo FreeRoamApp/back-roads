@@ -290,9 +290,9 @@ module.exports = class PlaceBaseCtrl
         }
 
       (if existingPlace
-        @Model.upsertByRow existingPlace, diff
+        @Model.upsertByRow existingPlace, diff, {userId: user.id}
       else
-        @Model.upsert diff
+        @Model.upsert diff, {userId: user.id, isCreate: true}
       )
       .tap (place) =>
         Promise.all _.filter [

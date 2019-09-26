@@ -60,6 +60,7 @@
     "cuint": "^0.2.2",
     "dark-sky": "^1.1.5",
     "deck": "0.0.4",
+    "deep-object-diff": "^1.1.0",
     "elasticsearch": "^15.2.0",
     "emailjs": "^1.0.11",
     "exoid-router": "git://github.com/claydotio/exoid-router.git",

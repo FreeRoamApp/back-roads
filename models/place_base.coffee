@@ -1,7 +1,9 @@
 _ = require 'lodash'
 Promise = require 'bluebird'
+deepObjectDiff = require('deep-object-diff').diff
 
 Base = require './base'
+PlaceRevision = require './place_revision'
 cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 
@@ -174,6 +176,22 @@ module.exports = class PlaceBase extends Base
     .run()
     .then =>
       @upsert _.defaults {slug: newSlug}, place
+
+  upsert: (row, options) =>
+    super row, options
+    .tap =>
+      if options?.userId
+        @getByRow row
+        .then @defaultOutput
+        .then (place) ->
+          PlaceRevision.upsert {
+            placeId: row.id
+            userId: options?.userId
+            action: if options.isCreate then 'create' else 'update'
+            diff: deepObjectDiff place, _.defaultsDeep(row, place)
+            current: _.omit place, ['forecast', 'weather', 'fireWeather']
+          }
+      null
 
   defaultESInput: (place) ->
     if place.id
