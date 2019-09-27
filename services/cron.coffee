@@ -36,15 +36,15 @@ class CronService
       console.log 'qmin'
       CleanupService.clean()
       Thread.updateScores 'stale'
-      if config.ENV is config.ENVS.DEV and config.SCYLLA.CONTACT_POINTS[0] is 'localhost' and config.ELASTICSEARCH.HOST is 'localhost'
-        # Promise.map allGroups, (group) ->
-        #   Group.upsert _.cloneDeep group
-        Campground.batchUpsert _.cloneDeep allCampgrounds
-        Event.batchUpsert _.cloneDeep allEvents
-        Item.batchUpsert _.cloneDeep allItems
-        Product.batchUpsert _.cloneDeep allProducts
-        Amenity.batchUpsert _.cloneDeep allAmenities
-        Category.batchUpsert _.cloneDeep allCategories
+      # if config.ENV is config.ENVS.DEV and config.SCYLLA.CONTACT_POINTS[0] is 'localhost' and config.ELASTICSEARCH.HOST is 'localhost'
+      #   # Promise.map allGroups, (group) ->
+      #   #   Group.upsert _.cloneDeep group
+      #   Campground.batchUpsert _.cloneDeep allCampgrounds
+      #   Event.batchUpsert _.cloneDeep allEvents
+      #   Item.batchUpsert _.cloneDeep allItems
+      #   Product.batchUpsert _.cloneDeep allProducts
+      #   Amenity.batchUpsert _.cloneDeep allAmenities
+      #   Category.batchUpsert _.cloneDeep allCategories
 
     @addCron 'tenMin', '0 */10 * * * *', ->
       EarnAction.batchUpsert _.cloneDeep allEarnActions

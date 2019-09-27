@@ -88,7 +88,7 @@ module.exports = class PlaceReviewBaseCtrl
         existingReview, userRig
       }
       Promise.all [
-        @ParentModel.upsert parentUpsert
+        @ParentModel.upsertByRow parent, parentUpsert
         @Model.upsert
           id: id
           userId: user.id
@@ -187,13 +187,13 @@ module.exports = class PlaceReviewBaseCtrl
       (if user?.username is 'austin' and not rating
         Promise.all _.filter [
           if parentUpsert.thumbnailPrefix
-            @ParentModel.upsert _.omit parentUpsert, ['rating', 'ratingCount']
+            @ParentModel.upsertByRow parent, _.omit parentUpsert, ['rating', 'ratingCount']
 
           Promise.resolve {id: null}
         ]
       else
         Promise.all [
-          @ParentModel.upsert parentUpsert
+          @ParentModel.upsertByRow parent, parentUpsert
           @Model.upsert
             id: id
             userId: existingReview?.userId or user.id
@@ -268,12 +268,11 @@ module.exports = class PlaceReviewBaseCtrl
         newRating = totalStars / newRatingCount
 
         parentUpsert = {
-          id: parent.id, slug: parent.slug
           rating: newRating, ratingCount: newRatingCount
         }
 
         Promise.all _.filter [
-          @ParentModel.upsert parentUpsert
+          @ParentModel.upsertByRow parent, parentUpsert
 
           @Model.deleteByRow review
 

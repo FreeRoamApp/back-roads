@@ -7,7 +7,8 @@ class PlaceBaseEmbed
       return null
     @AttachmentModel.getAllByParentId place.id
     .then (attachments) ->
-      attachments = _.filter attachments, {type: 'image'}
+      # there are some images where type is empty instead of 'image'
+      attachments = _.filter attachments, ({type}) -> type isnt 'video'
       {
         first: _.first attachments
         count: attachments?.length or 0

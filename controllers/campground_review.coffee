@@ -86,9 +86,7 @@ class CampgroundReviewCtrl extends PlaceReviewBaseCtrl
       parent, extras, operator: 'sub'
     }
     Promise.all [
-      @ParentModel.upsert _.defaults {
-        id: parent.id, slug: parent.slug
-      }, parentDiff
+      @ParentModel.upsertByRow parent, parentDiff
 
       CampgroundReview.deleteExtrasById id
     ]

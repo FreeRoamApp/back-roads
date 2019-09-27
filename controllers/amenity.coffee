@@ -75,6 +75,12 @@ class AmenityCtrl extends PlaceBaseCtrl
     }
 
     Promise.all [
+      (if id
+        @Model.getById id
+      else
+        Promise.resolve null
+      )
+
       (if slug
         Promise.resolve slug
       else
@@ -84,8 +90,15 @@ class AmenityCtrl extends PlaceBaseCtrl
       GeocoderService.reverse location
       .catch -> null
     ]
-    .then ([slug, address]) =>
-      @Model.upsert {slug, name, location, address, amenities, prices}
+    .then ([existingPlace, slug, address]) =>
+      diff = {
+        slug, name, location, address, amenities, prices
+      }
+      if existingPlace
+        @Model.upsertByRow existingPlace, diff, {userId: user.id}
+      else
+        diff.userId = user.id
+        @Model.upsert diff, {userId: user.id, isCreate: true}
     .tap (amenity) =>
       unless id
         @_updateNearbyCampgrounds amenity

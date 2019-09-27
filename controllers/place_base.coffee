@@ -199,8 +199,6 @@ module.exports = class PlaceBaseCtrl
     {id, name, details, location, subType, agencySlug, regionSlug,
       officeSlug, slug, features, prices} = options
 
-    console.log 'features', features
-
     isUpdate = Boolean id
 
     matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec location
@@ -292,6 +290,7 @@ module.exports = class PlaceBaseCtrl
       (if existingPlace
         @Model.upsertByRow existingPlace, diff, {userId: user.id}
       else
+        diff.userId = user.id
         @Model.upsert diff, {userId: user.id, isCreate: true}
       )
       .tap (place) =>
@@ -374,6 +373,9 @@ module.exports = class PlaceBaseCtrl
       # FeatureLookupService.getFeaturesByLocation _.defaults {file}, location
 
       PlacesService.getAttachmentsByTypeAndId place.type, place.id
+      .then (attachments) ->
+        # there are some images where type is empty instead of 'image'
+        _.filter attachments, ({type}) -> type isnt 'video'
 
       if tripId
         Trip.getById tripId

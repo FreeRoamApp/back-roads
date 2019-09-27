@@ -54,7 +54,6 @@ class PlaceReviewService
     newRating = totalStars / newRatingCount
 
     parentUpsert = {
-      id: parent.id, slug: parent.slug
       rating: newRating, ratingCount: newRatingCount
     }
 

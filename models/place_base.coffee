@@ -178,9 +178,13 @@ module.exports = class PlaceBase extends Base
       @upsert _.defaults {slug: newSlug}, place
 
   upsert: (row, options) =>
-    super row, options
-    .tap =>
-      if options?.userId
+    if not options?.userId
+      super row, options
+    else
+      Promise.all [
+        super row, options
+      ]
+      .tap =>
         @getByRow row
         .then @defaultOutput
         .then (place) ->
@@ -188,10 +192,15 @@ module.exports = class PlaceBase extends Base
             placeId: row.id
             userId: options?.userId
             action: if options.isCreate then 'create' else 'update'
-            diff: deepObjectDiff place, _.defaultsDeep(row, place)
+            diff: if options.isCreate
+              {}
+            else
+              row
+              # TODO: need to compare to previous place, not current...
+              # deepObjectDiff place, _.defaultsDeep(row, place)
             current: _.omit place, ['forecast', 'weather', 'fireWeather']
           }
-      null
+        null
 
   defaultESInput: (place) ->
     if place.id

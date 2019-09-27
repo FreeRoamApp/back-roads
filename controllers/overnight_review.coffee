@@ -47,9 +47,7 @@ class OvernightReviewCtrl extends PlaceReviewBaseCtrl
         parent, extras, operator: 'add'
       }
 
-      @ParentModel.upsert _.defaults {
-        id: parent.id, slug: parent.slug
-      }, parentDiff
+      @ParentModel.upsertByRow parent, parentDiff
 
       if id # id isnt there if just updating the parent w/o review
         OvernightReview.upsertExtras _.defaults {id, userId: user.id}, extras
@@ -63,9 +61,7 @@ class OvernightReviewCtrl extends PlaceReviewBaseCtrl
       parent, extras, operator: 'sub'
     }
     Promise.all [
-      @ParentModel.upsert _.defaults {
-        id: parent.id, slug: parent.slug
-      }, parentDiff
+      @ParentModel.upsertByRow parent, parentDiff
 
       OvernightReview.deleteExtrasById id
     ]

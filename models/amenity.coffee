@@ -10,6 +10,7 @@ scyllaFields =
   # common between all places
   slug: 'text' # eg: old-settlers-rv-park
   id: 'timeuuid'
+  userId: {type: 'uuid', defaultFn: -> null} # creator id
   name: 'text'
   location: {type: 'map', subType: 'text', subType2: 'double'} # {lat, lon}
   rating: 'double'
