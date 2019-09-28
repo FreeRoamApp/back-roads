@@ -19,10 +19,4 @@ class AmenityReviewCtrl extends PlaceReviewBaseCtrl
   ParentModel: Amenity
   AttachmentModel: AmenityAttachment
 
-  upsertExtras: ({id, parent, extras, existingReview}, {user}) ->
-    Promise.resolve null
-
-  deleteExtras: ({id, parent, extras}) ->
-    Promise.resolve null
-
 module.exports = new AmenityReviewCtrl()

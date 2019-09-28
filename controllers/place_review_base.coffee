@@ -63,15 +63,6 @@ module.exports = class PlaceReviewBaseCtrl
   getCountByUserId: ({userId}) =>
     @Model.getCountByUserId userId
 
-  upsertAttachments: (attachments, {parentId, userId}) =>
-    @AttachmentModel.batchUpsert _.map attachments, (attachment) =>
-      attachment.parentType = @parentType
-      attachment = _.pick attachment, [
-        'id', 'caption', 'tags', 'type', 'aspectRatio', 'location'
-        'prefix', 'parentType'
-      ]
-      _.defaults attachment, {parentId, userId}
-
   upsertRatingOnly: ({id, parentId, rating}, {user}) =>
     isUpdate = Boolean id
     Promise.all [
@@ -99,10 +90,19 @@ module.exports = class PlaceReviewBaseCtrl
           rigLength: userRig?.length
       ]
 
-  upsert: (options, {user, headers, connection}) =>
-    {id, type, title, body, rating, attachments, extras, parentId} = options
+  upsert: (options, {user}) =>
+    if not options?.body and user.username isnt 'austin'
+      router.throw {
+        status: 400
+        info:
+          langKey: 'error.emptyReview'
+          step: 'review'
+          field: 'body'
+      }
 
-    console.log 'upsert review', options
+    if user.flags.isChatBanned
+      router.throw status: 400, info: 'unable to post...'
+
     EmailService.send {
       to: EmailService.EMAILS.EVERYONE
       subject: "New review by #{user.username}"
@@ -113,178 +113,14 @@ module.exports = class PlaceReviewBaseCtrl
       """
     }
 
-    # assign every attachment an id
-    attachments = _.map attachments, (attachment) ->
-      _.defaults attachment, {id: cknex.getTimeUuid()}
-
-    userAgent = headers['user-agent']
-    ip = headers['x-forwarded-for'] or
-          connection.remoteAddress
-
-    body = body.trim()
-
-    if user.flags.isChatBanned
-      router.throw status: 400, info: 'unable to post...'
-
-    if not body and user.username isnt 'austin'
-      router.throw {
-        status: 400
-        info:
-          langKey: 'error.emptyReview'
-          step: 'review'
-          field: 'body'
-      }
-
-    isUpdate = Boolean id
-
-    Promise.all [
-      if isUpdate
-        @Model.getById id
-        .then EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
-      else
-        Promise.resolve null
-
-      @ParentModel.getById parentId
-
-      UserRig.getByUserId user.id
-
-      if isUpdate
-        Promise.resolve null
-      else
-        EarnAction.completeActionByUserId(
-          user.id
-          'review'
-        ).catch -> null
-    ]
-    .then ([existingReview, parent, userRig]) =>
-      if existingReview and (
-        "#{existingReview.userId}" isnt "#{user.id}" and
-          user.username isnt 'austin'
-      )
-        router.throw status: 401, info: 'unauthorized'
-
-      parentUpsert = PlaceReviewService.getParentDiff parent, rating, {
-        existingReview, userRig
-      }
-      newAttachmentCount = (parent.attachmentCount or 0) +
-                            (attachments?.length or 0)
-
-      parentUpsert.attachmentCount = newAttachmentCount
-
-
-      # TODO: choose a good thumbnail for each campground instead of most recent
-      if attachment = _.find(attachments, {type: 'image'})
-        parentUpsert.thumbnailPrefix = attachment.prefix
-
-      videoAttachment = _.find(attachments, {type: 'video'})
-      if videoAttachment
-        if _.isEmpty(parent.videos) # legacy fix for videos: {}
-          parent.videos = []
-        parentUpsert.videos = parent.videos.concat {
-          sourceType: 'youtube', sourceId: videoAttachment.prefix
-        }
-
-      (if user?.username is 'austin' and not rating
-        Promise.all _.filter [
-          if parentUpsert.thumbnailPrefix
-            @ParentModel.upsertByRow parent, _.omit parentUpsert, ['rating', 'ratingCount']
-
-          Promise.resolve {id: null}
-        ]
-      else
-        Promise.all [
-          @ParentModel.upsertByRow parent, parentUpsert
-          @Model.upsert
-            id: id
-            userId: existingReview?.userId or user.id
-            title: title
-            body: body
-            parentId: parentId
-            parentType: @parentType
-            rating: rating
-            attachments: attachments
-            rigType: userRig?.type
-            rigLength: userRig?.length
-        ]
-      ).tap ([parentUpsert, review]) =>
-        Promise.all _.filter [
-          unless id # TODO handle photo updates on review edits?
-            @upsertAttachments attachments, {parentId, userId: user.id}
-
-          if extras
-            console.log 'up extras', extras
-            @upsertExtras {
-              id: review?.id, parent, extras, existingReview
-            }, {user}
-        ]
-      # TODO: let people set default trip to auto-add to?
-      # .tap ([parentUpsert, review]) ->
-      #   if parent.type in ['campground', 'overnight']
-      #     Trip.getByUserIdAndType user.id, 'past', {createIfNotExists: true}
-      #     .then (trip) ->
-      #       CheckIn.getByUserIdAndSourceId user.id, parent.id
-      #       .then (existingCheckIn) ->
-      #         if existingCheckIn
-      #           CheckIn.upsertByRow existingCheckIn, {
-      #             reviewId: review.id
-      #           }
-      #         else
-      #           CheckInService.upsert {
-      #             tripIds: [trip.id]
-      #             attachments: attachments
-      #             sourceId: parent.id
-      #             sourceType: parent.type
-      #             name: parent.name
-      #             reviewId: review.id
-      #           }, user
-
-        null # don't block
+    PlaceReviewService.upsertByParentType(
+      @parentType, options, {userId: user.id}
+    )
 
   uploadImage: ({}, {user, file}) =>
     ImageService.uploadImageByUserIdAndFile(
       user.id, file, {folder: @imageFolder}
     )
 
-  deleteAttachments: (attachments) =>
-    Promise.map attachments, @AttachmentModel.deleteByRow
-
   deleteById: ({id}, {user}) =>
-    Promise.all _.filter [
-      @Model.getById id
-      @Model.getExtrasById? id
-    ]
-    .then ([review, extras]) =>
-      hasPermission = "#{review.userId}" is "#{user.id}" or
-                        user.username is 'austin'
-      unless hasPermission
-        router.throw
-          status: 400, info: 'You don\'t have permission to do that'
-
-      @ParentModel.getById review.parentId
-      .then (parent) =>
-        totalStars = parent.rating * parent.ratingCount
-        totalStars -= review.rating
-        newRatingCount = parent.ratingCount - 1
-        newRating = totalStars / newRatingCount
-
-        parentUpsert = {
-          rating: newRating, ratingCount: newRatingCount
-        }
-
-        Promise.all _.filter [
-          @ParentModel.upsertByRow parent, parentUpsert
-
-          @Model.deleteByRow review
-
-          @deleteAttachments _.map review.attachments, (attachment) ->
-            _.defaults attachment, {
-              parentId: review.parentId, userId: review.userId
-            }
-          .catch (err) ->
-            console.log 'delete attachments err'
-
-          if extras
-            Promise.delay 100 # HACK: below upserts parentModel, which can't be done simultaneously with above
-            .then =>
-              @deleteExtras {parent, extras, id: review.id}
-        ]
+    PlaceReviewService.deleteByParentTypeAndId @parentType, id, {user}

@@ -156,14 +156,45 @@ module.exports = class PlaceBaseCtrl
         distanceTo
       }
 
-  dedupe: (options, {user}) =>
-    unless user.username is 'austin'
+  changeType: ({sourceSlug, sourceType, destinationType}, {user}) =>
+    unless user.username in ['austin', 'roadpickle', 'big_boxtruck', 'vanwldr']
       router.throw {
         status: 401
         info: 'Unauthorized'
       }
-    {sourceSlug, sourceType, destinationSlug, destinationType} = options
-    console.log destinationSlug
+
+    if sourceType is destinationType
+      router.throw {
+        status: 400
+        info: 'Must be different type'
+      }
+
+    PlacesService.getByTypeAndSlug(
+      sourceType, sourceSlug
+    )
+    .then (source) =>
+      unless source?.slug
+        router.throw status: 404, info: 'slug not found'
+      # recreate w/ new type, then @dedupe
+      newDestination = _.defaults {type: destinationType}, source
+      PlacesService.upsertByTypeAndRow destinationType, null, newDestination
+      .then (destination) =>
+        @dedupe {
+          sourceSlug, sourceType
+          destinationType, destinationSlug: destination.slug
+          preserveCounts: true
+        }, {user}
+
+  dedupe: (options, {user}) =>
+    unless user.username in ['austin', 'roadpickle', 'big_boxtruck', 'vanwldr']
+      router.throw {
+        status: 401
+        info: 'Unauthorized'
+      }
+
+    {sourceSlug, sourceType, destinationSlug,
+      destinationType, preserveCounts} = options
+
     Promise.all [
       PlacesService.getByTypeAndSlug(
         sourceType, sourceSlug
@@ -173,26 +204,75 @@ module.exports = class PlaceBaseCtrl
       )
     ]
     .then ([source, destination]) =>
-      console.log Boolean source
-      console.log '------------------------'
-      console.log destination
       unless source and destination
         router.throw status: 404, info: 'slug not found'
 
       @ReviewModel.getAllByParentId source.id
       .map EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
-      .map (sourceReview) ->
-        console.log sourceReview
-        parentDiff = PlaceReviewService.getParentDiff destination, sourceReview.rating
-        parentDiffFromExtras = PlaceReviewService.getParentDiffFromExtras {
-          parent: destination, extras: sourceReview.extras, operator: 'add'
+      .then (sourceReviews) ->
+        EmailService.send {
+          to: EmailService.EMAILS.EVERYONE
+          subject: "Place dedupe by #{user.username}"
+          text: """
+#{JSON.stringify source}
+
+---
+
+#{JSON.stringify destination}
+
+---
+
+#{JSON.stringify sourceReviews}
+"""
         }
-        console.log parentDiffFromExtras
-        parentDiff = _.defaults parentDiff, parentDiffFromExtras
-        console.log parentDiff
-        # TODO: iterate over sourceReviews, upsert to change parentId
-        # PlaceReviewService.getParentDiff
-        # PlaceReviewService.getParentDiff
+        .then ->
+          Promise.each sourceReviews, (sourceReview) ->
+            newReview = _.defaults {
+              type: "#{destinationType}Review"
+              parentId: destination.id
+            }, sourceReview
+            return PlaceReviewService.deleteByParentTypeAndId(
+              source.type, sourceReview.id, {hasPermission: true, preserveCounts: true}
+            )
+            .then ->
+              PlaceReviewService.upsertByParentType destination.type, newReview, {
+                userId: sourceReview.userId, preserveCounts
+              }
+          .then ->
+            PlacesService.deleteByTypeAndRow source.type, source
+
+
+
+          # console.log '-------'
+          # console.log 'source review', sourceReview
+          # sourceReview.extras?.id = "#{sourceReview.extras.id}"
+          # parentDiff = PlaceReviewService.getParentDiff destination, sourceReview.rating
+          # parentDiffFromExtras = PlaceReviewService.getParentDiffFromExtras {
+          #   parent: destination, extras: sourceReview.extras, operator: 'add'
+          # }
+          # console.log '-------'
+          # # console.log 'parentdiffextras', parentDiffFromExtras
+          # parentDiff = _.defaults parentDiff, parentDiffFromExtras
+          # console.log '-------'
+          # console.log 'parentdiff', parentDiff
+          # newReview = _.defaults {
+          #   type: "#{destinationType}Review"
+          #   parentId: destination.id
+          # }, sourceReview
+          # # TODO: attachments, reviewExtras, delete old attachments/extras
+          # PlaceReviewService.upsertByTypeAndRow(
+          #   "#{destinationType}Review", null, newReview
+          # )
+          # .then ->
+          #   Promise.all [
+          #     PlacesService.upsertByTypeAndRow(
+          #       destinationType, destination, parentDiff
+          #     )
+          #     PlacesService.deleteByTypeAndRow sourceType, source
+          #     PlaceReviewService.deleteByTypeAndRow(
+          #       "#{sourceType}Review", sourceReview
+          #     )
+          #   ]
 
 
   upsert: (options, {user, headers, connection}) =>
@@ -311,6 +391,7 @@ module.exports = class PlaceBaseCtrl
     # get closest dump, water, groceries
     @Model.getById id
     .then (place) ->
+      console.log 'place', place
       Amenity.searchNearby place.location
       .then ({places}) ->
         amenities = places

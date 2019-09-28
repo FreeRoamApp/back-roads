@@ -190,13 +190,13 @@ class Campground extends PlaceBase
       fullness: if campground.fullness
         _.mapValues campground.fullness, ({value}, season) -> value
       shade: if campground.shade
-        campground.shade?.value
+        campground.shade?.value or null
       safety: if campground.safety
-        campground.safety?.value
+        campground.safety?.value or null
       cleanliness: if campground.cleanliness
-        campground.cleanliness?.value
+        campground.cleanliness?.value or null
       roadDifficulty: if campground.roadDifficulty
-        campground.roadDifficulty?.value
+        campground.roadDifficulty?.value or null
       noise: if campground.noise
         _.mapValues campground.noise, ({value}, time) -> value
       forecast: _.omit campground.forecast, ['daily']

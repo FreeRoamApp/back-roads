@@ -48,6 +48,9 @@ class PlacesService
   upsertByTypeAndRow: (type, row, diff) ->
     PLACE_TYPES[type].upsertByRow row, diff
 
+  deleteByTypeAndRow: (type, row) ->
+    PLACE_TYPES[type].deleteByRow row
+
   getByTypeAndSlug: (type, slug) ->
     unless slug
       return Promise.resolve null

@@ -14,7 +14,8 @@ class ReviewEmbed
       }
 
   extras: (review) ->
-    CampgroundReview.getExtrasById review.id
+    if review.id
+      CampgroundReview.getExtrasById review.id
 
   time: (review) ->
     cknex.getDateFromTimeUuid review.id

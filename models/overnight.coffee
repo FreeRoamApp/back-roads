@@ -139,7 +139,7 @@ class Overnight extends PlaceBase
     _.defaults {
       id: "#{overnight.id}"
       safety: if overnight.safety
-        overnight.safety?.value
+        overnight.safety?.value or null
       noise: if overnight.noise
         _.mapValues overnight.noise, ({value}, time) -> value
       forecast: _.omit overnight.forecast, ['daily']

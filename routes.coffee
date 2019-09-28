@@ -272,6 +272,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'payments.resetStripeInfo', authed PaymentCtrl.resetStripeInfo
 .on 'payments.purchase', authed PaymentCtrl.purchase
 
+.on 'places.changeType', authed PlaceCtrl.changeType
 .on 'places.dedupe', authed PlaceCtrl.dedupe
 .on 'places.getSheetInfo', authed PlaceCtrl.getSheetInfo
 
