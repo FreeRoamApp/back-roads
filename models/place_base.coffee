@@ -181,9 +181,7 @@ module.exports = class PlaceBase extends Base
     if not options?.userId
       super row, options
     else
-      Promise.all [
-        super row, options
-      ]
+      super row, options
       .tap =>
         @getByRow row
         .then @defaultOutput

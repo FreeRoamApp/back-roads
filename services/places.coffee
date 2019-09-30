@@ -3,11 +3,14 @@ _ = require 'lodash'
 
 Amenity = require '../models/amenity'
 AmenityAttachment = require '../models/amenity_attachment'
+AmenityReview = require '../models/amenity_review'
 Campground = require '../models/campground'
 CampgroundAttachment = require '../models/campground_attachment'
+CampgroundReview = require '../models/campground_review'
 Coordinate = require '../models/coordinate'
 Overnight = require '../models/overnight'
 OvernightAttachment = require '../models/overnight_attachment'
+OvernightReview = require '../models/overnight_review'
 CacheService = require './cache'
 WeatherService = require './weather'
 KueCreateService = require './kue_create'
@@ -26,6 +29,11 @@ PLACE_ATTACHMENT_TYPES =
   overnight: OvernightAttachment
   amenity: AmenityAttachment
 
+PLACE_REVIEW_TYPES =
+  campground: CampgroundReview
+  overnight: OvernightReview
+  amenity: AmenityReview
+
 
 DAILY_UPDATE_TYPES = ['campground', 'overnight']
 
@@ -39,10 +47,16 @@ class PlacesService
       Model = PLACE_TYPES[type] or Campground
       Model.getById id
 
-  getAttachmentsByTypeAndId: (type, id, {userId} = {}) ->
+  getAttachmentsByTypeAndId: (type, id) ->
     unless id
-      return Promise.resolve null
+      return Promise.resolve []
     Model = PLACE_ATTACHMENT_TYPES[type] or CampgroundAttachment
+    Model.getAllByParentId id
+
+  getReviewsByTypeAndId: (type, id) ->
+    unless id
+      return Promise.resolve []
+    Model = PLACE_REVIEW_TYPES[type] or CampgroundReview
     Model.getAllByParentId id
 
   upsertByTypeAndRow: (type, row, diff) ->

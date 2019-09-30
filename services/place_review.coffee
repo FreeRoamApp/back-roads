@@ -108,10 +108,6 @@ class PlaceReviewService
           sourceType: 'youtube', sourceId: videoAttachment.prefix
         }
 
-      console.log 'gogogo'
-      console.log '---'
-      console.log 'parent up', parentUpsert
-
       (if user?.username is 'austin' and not rating
         Promise.all _.filter [
           if parentUpsert.thumbnailPrefix and not preserveCounts

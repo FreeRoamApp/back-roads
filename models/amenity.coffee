@@ -84,7 +84,8 @@ class Amenity extends PlaceBase
       type: 'amenity'
       hasAttachments: hasAttachments
     }, _.pick amenity, [
-      'id', 'slug', 'name', 'location', 'rating', 'amenities', 'hasAttachments'
+      'id', 'slug', 'name', 'location', 'rating', 'ratingCount'
+      'amenities', 'hasAttachments'
     ]
 
 module.exports = new Amenity()

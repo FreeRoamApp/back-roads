@@ -179,7 +179,7 @@ class Trip extends Base
     checkIns.splice insertIndex, 0, shortCheckIn
     checkIns
 
-  _spliceStop: (tripRoute, stops, checkIn, location) ->
+  _spliceStop: (trip, tripRoute, stops, checkIn, location) ->
     stops = _.clone(stops) or []
     # check if checkIn is already in this trip (eg updating time, location, ...)
     existingIndex = _.findIndex stops, {id: checkIn.id}
@@ -190,7 +190,12 @@ class Trip extends Base
 
     checkIn = _.defaults location, checkIn
 
-    RoutingService.determineStopIndexAndDetourTimeByTripRoute tripRoute, checkIn
+    settings = _.defaults route?.settings, trip?.settings
+    settings =
+      costing: if settings?.useTruckRoute then 'truck' else 'auto'
+      avoidHighways: settings?.avoidHighways
+      rigHeightInches: settings?.rigHeightInches
+    RoutingService.determineStopIndexAndDetourTimeByTripRoute tripRoute, checkIn, {settings}
     .then ({index}) ->
 
       shortCheckIn = {
@@ -304,7 +309,7 @@ class Trip extends Base
     stops = trip.stops
     routeId = tripRoute.routeId
     tripRoute = @embedTripRouteLegLocationsByTrip trip, tripRoute
-    @_spliceStop tripRoute, stops[routeId], checkIn, location
+    @_spliceStop trip, tripRoute, stops[routeId], checkIn, location
     .then (newStops) =>
       stops[routeId] = newStops
       @upsertStopsByTripAndTripRoute trip, tripRoute, stops

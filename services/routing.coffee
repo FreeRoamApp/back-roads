@@ -208,7 +208,7 @@ class RoutingService
     avoidLocations ?= []
     JSON.stringify {locations, avoidLocations, settings}
 
-  getRouteByRouteSlug: (slug, {includeShape}) =>
+  getRouteByRouteSlug: (slug, {includeShape} = {}) =>
     {locations, avoidLocations, settings} = JSON.parse slug
     @getRoute {locations, avoidLocations}, {settings, includeShape}
 
@@ -254,32 +254,36 @@ class RoutingService
                       lowClearance.data.type is 'tunnel' or isRoadMatch
           isValid
 
-  determineStopIndexAndDetourTimeByTripRoute: (route, stop) =>
+  determineStopIndexAndDetourTimeByTripRoute: (route, stop, options = {}) =>
     prefix = CacheService.PREFIXES.ROUTE_STOP_INDEX
     hash = geohash.encode stop.lat, stop.lon
-    key = "#{prefix}:#{_.map(route.legs, 'legId').join(',')}:#{hash}"
+    key = "#{prefix}:#{_.map(route.legs, 'legId').join(',')}:#{hash}:#{options.getRoute}"
     CacheService.preferCache key, =>
       # TODO: use turf (nearest-point-on-line?) to reduce number of
       # legs we iterate over (just use ones nearby)
       Promise.map route.legs, (leg, index) =>
-        @getDetourTimeByTripRouteAndStop leg, stop
-        .then (detourTime) ->
-          {index, detourTime}
+        @getDetourTimeByTripRouteAndStop leg, stop, options
+        .then ({detourTime, route}) ->
+          {index, detourTime, route}
       .then (detourTimes) ->
         _.minBy detourTimes, 'detourTime'
     , {expireSeconds: ONE_HOUR_S}
 
-  getDetourTimeByTripRouteAndStop: (leg, stop) ->
+  getDetourTimeByTripRouteAndStop: (leg, stop, options = {}) ->
+    {getRoute, avoidLocations, settings} = options
     # TODO: get distance from route line, and compare against other stops'
     # distance from route line to find where in
-    @getRoute {
-      locations: [
-        {lat: leg.startCheckIn.lat, lon: leg.startCheckIn.lon}
-        {lat: stop.lat, lon: stop.lon}
-        {lat: leg.endCheckIn.lat, lon: leg.endCheckIn.lon}
-      ]
-    }
-    .then ({time}) ->
-      time - leg.route.time
+    locations = [
+      {lat: leg.startCheckIn.lat, lon: leg.startCheckIn.lon}
+      {lat: stop.lat, lon: stop.lon}
+      {lat: leg.endCheckIn.lat, lon: leg.endCheckIn.lon}
+    ]
+    slug = @generateRouteSlug {locations, avoidLocations, settings}
+    @getRouteByRouteSlug slug, {includeShape: getRoute}
+    .then (route) ->
+      obj = {detourTime: route.time - leg.route.time}
+      if getRoute
+        obj.route = route
+      obj
 
 module.exports = new RoutingService()

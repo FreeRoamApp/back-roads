@@ -207,7 +207,7 @@ module.exports = class PlaceBaseCtrl
       unless source and destination
         router.throw status: 404, info: 'slug not found'
 
-      @ReviewModel.getAllByParentId source.id
+      PlacesService.getReviewsByTypeAndId sourceType, source.id
       .map EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
       .then (sourceReviews) ->
         EmailService.send {
@@ -231,8 +231,11 @@ module.exports = class PlaceBaseCtrl
               type: "#{destinationType}Review"
               parentId: destination.id
             }, sourceReview
-            return PlaceReviewService.deleteByParentTypeAndId(
-              source.type, sourceReview.id, {hasPermission: true, preserveCounts: true}
+
+            console.log 'newreview', newReview
+
+            PlaceReviewService.deleteByParentTypeAndId(
+              source.type, sourceReview.id, {hasPermission: true, preserveCounts}
             )
             .then ->
               PlaceReviewService.upsertByParentType destination.type, newReview, {
@@ -391,7 +394,6 @@ module.exports = class PlaceBaseCtrl
     # get closest dump, water, groceries
     @Model.getById id
     .then (place) ->
-      console.log 'place', place
       Amenity.searchNearby place.location
       .then ({places}) ->
         amenities = places
@@ -400,11 +402,16 @@ module.exports = class PlaceBaseCtrl
             amenities.indexOf(amenityType) isnt -1
         _.uniqBy commonAmenities, 'id'
 
-  _getAddStopInfo: (tripRoute, place) ->
+  _getAddStopInfo: (trip, tripRoute, place) ->
     unless tripRoute?.legs?[0]
       return Promise.resolve null
+    settings = _.defaults route?.settings, trip?.settings
+    settings =
+      costing: if settings?.useTruckRoute then 'truck' else 'auto'
+      avoidHighways: settings?.avoidHighways
+      rigHeightInches: settings?.rigHeightInches
     RoutingService.determineStopIndexAndDetourTimeByTripRoute(
-      tripRoute, place.location
+      tripRoute, place.location, {settings}
     )
     .then ({index, detourTime}) ->
       RoutingService.getRoute {
@@ -474,7 +481,7 @@ module.exports = class PlaceBaseCtrl
       tripRoute = Trip.embedTripRouteLegLocationsByTrip trip, tripRoute
       (if trip and tripRoute
         # FIXME FIXME: cap amount of stops we look at
-        @_getAddStopInfo tripRoute, place
+        @_getAddStopInfo trip, tripRoute, place
       else if not _.isEmpty trip
         @_getAddDestinationInfo trip, place
       else

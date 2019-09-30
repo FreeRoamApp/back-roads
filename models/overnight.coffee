@@ -133,7 +133,8 @@ class Overnight extends PlaceBase
       return null
 
     overnight = super overnight
-    _.defaults {type: 'overnight'}, overnight
+    overnight = _.defaults {type: 'overnight'}, overnight
+    overnight = _.defaults overnight, {ratingCount: 0, attachmentCount: 0}
 
   defaultESInput: (overnight) ->
     _.defaults {
@@ -151,7 +152,8 @@ class Overnight extends PlaceBase
       type: 'overnight'
       hasAttachments: hasAttachments
     }, _.pick overnight, [
-      'id', 'slug', 'name', 'location', 'rating', 'subType', 'hasAttachments'
+      'id', 'slug', 'name', 'location', 'rating', 'ratingCount',
+      'subType', 'hasAttachments'
     ]
 
 module.exports = new Overnight()

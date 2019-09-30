@@ -316,111 +316,118 @@ class TripCtrl
   to be more accurate
   ###
   # this code is sort of similar to Trip_getRoute
-  getMapboxDirectionsByIdAndRouteId: ({id, routeId}) =>
-    # Promise.all [
-    #   Trip.getById id
-    #   Trip.getRouteByTripIdAndRouteId id, routeId
-    # ]
-    # .then ([trip, route]) ->
-    #   settings = _.defaults route?.settings, trip?.settings
-    #   waypoints = settings?.waypoints or []
-    #
-    #   route = Trip.embedTripRouteLegLocationsByTrip trip, route
-    #
-    #   slug = RoutingService.generateRouteSlug {
-    #     locations: _.filter [
-    #       {lat: startCheckIn.lat, lon: startCheckIn.lon}
-    #       {lat: endCheckIn.lat, lon: endCheckIn.lon}
-    #     ]
-    #     settings:
-    #       costing: if settings?.useTruckRoute then 'truck' else 'auto'
-    #       avoidHighways: settings?.avoidHighways
-    #       rigHeightInches: settings?.rigHeightInches
-    #   }
-    #
-    #   console.log 'GET ROUTE', slug
-    #
-    #   RoutingService.getRouteByRouteSlug slug, {includeShape: true}
-    #   .then (route) ->
-    #     console.log 'route', route
-    #   return
-    Trip.getRouteByTripIdAndRouteId id, routeId, {includeManeuevers: true}
-    .tap (route) =>
+  getMapboxDirectionsByIdAndRouteId: ({id, routeId, location}) =>
+    Promise.all [
+      Trip.getById id
+      Trip.getRouteByTripIdAndRouteId id, routeId, {includeManeuevers: true}
+    ]
+    .tap ([trip, route]) =>
       # FIXME: rm jan 2020
       if _.some(route.legs, ({route}) -> route.shape and not route.maneuvers)
         @_addManeueversToLegacyId id
-    .then (route) ->
-      allPoints = _.flatten _.map route.legs, ({route}) ->
-        polyline.decode route.shape, 6
-      console.log allPoints.length
-      # console.log 'route', route
-      # if we distribute only by count, they tend to be at curves
-      # which are more likely to screw mapbox up
-      # distance = _.sumBy route.legs, ({route}) -> route.distance
-      # maxPoints = 25
-      # sampleDistance = Math.ceil(distance / maxPoints)
-      # points = RoutingService.distributedSampleByDistance points, sampleDistance, 'km' #, {includeBearings: true}
-      # points = RoutingService.distributedSample points, maxPoints
+    .then ([trip, tripRoute]) ->
+      tripRoute = Trip.embedTripRouteLegLocationsByTrip trip, tripRoute
+      (if location?.lat
+        # need to route through current location
+        settings = _.defaults tripRoute?.settings, trip?.settings
+        settings =
+          costing: if settings?.useTruckRoute then 'truck' else 'auto'
+          avoidHighways: settings?.avoidHighways
+          rigHeightInches: settings?.rigHeightInches
+        RoutingService.determineStopIndexAndDetourTimeByTripRoute(
+          tripRoute, location, {settings, getRoute: true}
+        )
+      else
+        Promise.resolve null
+      ).then ({index, route} = {}) ->
+        # location index (already enroute)
+        if index?
+          console.log 'enroute at index', index
+          # use newly generated leg that goes through their location
+          tripRoute.legs = tripRoute.legs.slice(index + 1)
+          tripRoute.legs.unshift {route}
 
-      points = [_.first allPoints]
-      # FIXME: <= 25. choose maneuvers close to low clearances?
-      points = points.concat _.flatten _.map route.legs, (leg) ->
-        console.log leg
-        _.filter _.map leg.route.maneuvers, (maneuver) ->
-          allPoints[maneuver.end_shape_index + 1]
+        allPoints = _.flatten _.map tripRoute.legs, ({route}) ->
+          polyline.decode route.shape, 6
+        console.log 'all', allPoints.length
+        maxPoints = 25
+        # console.log 'tripRoute', tripRoute
+        # if we distribute only by count, they tend to be at curves
+        # which are more likely to screw mapbox up
+        # distance = _.sumBy tripRoute.legs, ({tripRoute}) -> tripRoute.distance
+        # sampleDistance = Math.ceil(distance / maxPoints)
+        # points = RoutingService.distributedSampleByDistance points, sampleDistance, 'km' #, {includeBearings: true}
+        # points = RoutingService.distributedSample points, maxPoints
 
-      points = points.concat [_.last allPoints]
-      # return console.log points
-
-      points = _.map points, ([lat, lon]) -> [lon, lat]
-      # bearings = _.map points, ({bearing}) ->
-      #   if bearing
-      #     [Math.round(bearing), 10]
-      #   else
-      #     ''
-      # points = _.map points, ({point}) -> [point[1], point[0]]
-      console.log points
-      console.log '------------'
-      console.log points.length
-
-
-      routeOptions =
-        steps: true
-        # waypoint_names: []
-        waypoints: [0, points.length - 1].join ';' # FIXME stops
-        # bearings: bearings.join ';'
-        annotations: 'duration,congestion'
-        language: 'en'
-        overview: 'full'
-        continue_straight: true
-        roundabout_exits: true
-        geometries: 'polyline6'
-        voice_instructions: true
-        banner_instructions: true
-        voice_units: 'imperial'
-        access_token: config.MAPBOX_ACCESS_TOKEN
-
-      console.log routeOptions
-      # return
+        # TODO: determine where point is along tripRoute and fit into there...
+        # maybe use the addStop code?
+        points = [_.first allPoints]
 
 
-      # max 100 coords
-      url = "https://api.mapbox.com/directions/v5/mapbox/driving/#{points.join(';')}"
-      Promise.resolve request url, {
-        json: true
-        qs: routeOptions
-      }
-      .then (response) ->
-        _.defaults {
-          "voiceLocale": "en-US"
-          routeOptions: _.defaults {
-            baseUrl: 'https://api.mapbox.com',
-            user: '',
-            profile: "driving-traffic"
-            coordinates: [_.first(points), _.last(points)] # FIXME
-            uuid: response.uuid
-          }, routeOptions
-        }, response.routes[0]
+        # TODO: <= 25. choose maneuvers close to low clearances?
+        points = points.concat _.flatten _.map tripRoute.legs, (leg) ->
+          _.filter _.map leg.route.maneuvers, (maneuver) ->
+            allPoints[maneuver.end_shape_index + 1]
+
+        points = points.concat [_.last allPoints]
+
+
+        points = RoutingService.distributedSample points, maxPoints
+
+        points = _.map points, ([lat, lon]) -> [lon, lat]
+        # bearings = _.map points, ({bearing}) ->
+        #   if bearing
+        #     [Math.round(bearing), 10]
+        #   else
+        #     ''
+        # points = _.map points, ({point}) -> [point[1], point[0]]
+        # console.log points
+        # console.log '------------'
+        # console.log points.length
+
+
+        routeOptions =
+          steps: true
+          # waypoint_names: []
+          waypoints: [0, points.length - 1].join ';' # FIXME stops
+          # bearings: bearings.join ';'
+          annotations: 'duration,congestion'
+          language: 'en'
+          overview: 'full'
+          continue_straight: true
+          roundabout_exits: true
+          geometries: 'polyline6'
+          voice_instructions: true
+          banner_instructions: true
+          voice_units: 'imperial'
+          access_token: config.MAPBOX_ACCESS_TOKEN
+
+        # console.log routeOptions
+        # console.log "https://api.mapbox.com/directions/v5/mapbox/driving/#{points.join(';')}"
+        # return
+
+
+        # max 100 coords
+        url = "https://api.mapbox.com/directions/v5/mapbox/driving/#{points.join(';')}"
+        Promise.resolve request url, {
+          json: true
+          qs: routeOptions
+        }
+        .then (response) ->
+          _.defaults {
+            "voiceLocale": "en-US"
+            routeOptions: _.defaults {
+              baseUrl: 'https://api.mapbox.com'
+              user: ''
+              profile: "driving-traffic"
+              waypoints: null # [0, 1] # FIXME: stops
+              coordinates: [_.first(points), _.last(points)] # FIXME: stops, is it best to use all points from before?
+              # coordinates: points
+              uuid: response.uuid
+            }, routeOptions
+          }, response.routes[0]
+        .tap ->
+          console.log 'got'
 
 
   uploadImage: ({}, {user, file}) ->
