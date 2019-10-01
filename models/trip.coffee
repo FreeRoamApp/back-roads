@@ -190,6 +190,7 @@ class Trip extends Base
 
     checkIn = _.defaults location, checkIn
 
+    # TODO: these settings are set in a bunch of places, should keep it DRY
     settings = _.defaults route?.settings, trip?.settings
     settings =
       costing: if settings?.useTruckRoute then 'truck' else 'auto'
@@ -258,6 +259,7 @@ class Trip extends Base
 
   # this code is sort of similar to TripCtrl.getMapboxDirectionsByIdAndRouteId
   _getRoute: (startCheckIn, endCheckIn, {trip, route} = {}) ->
+    # TODO: these settings are set in a bunch of places, should keep it DRY
     settings = _.defaults route?.settings, trip?.settings
     waypoints = settings?.waypoints or []
 

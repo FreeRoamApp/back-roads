@@ -405,15 +405,16 @@ module.exports = class PlaceBaseCtrl
   _getAddStopInfo: (trip, tripRoute, place) ->
     unless tripRoute?.legs?[0]
       return Promise.resolve null
-    settings = _.defaults route?.settings, trip?.settings
-    settings =
+    # TODO: these settings are set in a bunch of places, should keep it DRY
+    console.log 'triproute', tripRoute?.settings
+    settings = _.defaults tripRoute?.settings, trip?.settings
+    settings = _.defaults {
       costing: if settings?.useTruckRoute then 'truck' else 'auto'
-      avoidHighways: settings?.avoidHighways
-      rigHeightInches: settings?.rigHeightInches
+    }, settings
     RoutingService.determineStopIndexAndDetourTimeByTripRoute(
       tripRoute, place.location, {settings}
     )
-    .then ({index, detourTime}) ->
+    .then ({index, detour}) ->
       RoutingService.getRoute {
         locations: [
           {
@@ -424,7 +425,7 @@ module.exports = class PlaceBaseCtrl
         ]
       }
       .then (fromLastStop) ->
-        {fromLastStop, detourTime}
+        {fromLastStop, detour}
 
   _getAddDestinationInfo: (trip, place) ->
     lastDestination = _.last trip.destinations

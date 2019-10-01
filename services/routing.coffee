@@ -166,27 +166,22 @@ class RoutingService
     {preferCache, includeShape, attempts, settings} = options
     preferCache ?= true
 
+    if settings?.waypoints
+      # inject at index 1
+      locations.splice.apply locations, [1, 0].concat settings.waypoints
+
     get = =>
       @_getRouteUncached {locations, avoidLocations}, options
-      .then (route) ->
+      .then (route) =>
         response = {
           time: route.trip.summary.time
           distance: route.trip.summary.length
         }
         if includeShape and not _.isEmpty route.trip.legs
-          points = _.flatten _.map route.trip.legs, (leg) ->
+          points = _.flatten _.map route.trip.legs, (leg) =>
             polyline.decode leg.shape, 6
           response.shape = polyline.encode points, 6
-          shapeIndex = 0
-          # since we're combining maneuvers we need to update the shape indexes
-          response.maneuvers = _.flatten _.map route.trip.legs, (leg) ->
-            maneuvers = _.map leg.maneuvers, (maneuver) ->
-              maneuver.begin_shape_index += shapeIndex
-              maneuver.end_shape_index += shapeIndex
-              maneuver
-            points = polyline.decode leg.shape, 6
-            shapeIndex += points.length
-            maneuvers
+          response.maneuvers = @_getManeuversFromRoute route
           response.bounds =
             x1: route.trip.summary.min_lon
             y1: route.trip.summary.min_lat
@@ -212,7 +207,19 @@ class RoutingService
     {locations, avoidLocations, settings} = JSON.parse slug
     @getRoute {locations, avoidLocations}, {settings, includeShape}
 
-  _checkForLowClearances: (points, {rigHeightInches, route}) ->
+  _getManeuversFromRoute: (route) ->
+    shapeIndex = 0
+    # since we're combining maneuvers we need to update the shape indexes
+    _.flatten _.map route.trip.legs, (leg) ->
+      maneuvers = _.map leg.maneuvers, (maneuver) ->
+        maneuver.begin_shape_index += shapeIndex
+        maneuver.end_shape_index += shapeIndex
+        maneuver
+      points = polyline.decode leg.shape, 6
+      shapeIndex += points.length
+      maneuvers
+
+  _checkForLowClearances: (points, {rigHeightInches, route}) =>
     rigHeightInches ?= 13.5 * 12 # inches
     points = _.map points, ([lon, lat]) -> [lat, lon]
     if points.length >= 2
@@ -228,16 +235,19 @@ class RoutingService
           ]
       }
       Hazard.search {query}, {outputFn: (hazard) -> hazard}
-      .then (lowClearances) ->
-        # try to filter out if it's the road below the road we're on or not
-        maneuvers = _.flatten _.map route.trip.legs, (leg) ->
-          leg.maneuvers
+      .then (lowClearances) =>
+        # try to filter out if it's the road below the road we're on or no
+        # since we're combining maneuvers we need to update the shape indexes
+        maneuvers = @_getManeuversFromRoute route
         _.filter lowClearances.places, (lowClearance) ->
           nearestPoint = turf.nearestPointOnLine line, [lowClearance.location.lon, lowClearance.location.lat]
           nearestIndex = nearestPoint.properties.index
           nearestManeuver = _.find maneuvers, (maneuver) ->
             nearestIndex >= maneuver.begin_shape_index and
               nearestIndex < maneuver.end_shape_index
+          unless nearestManeuver
+            # FIXME: nearestIndex too high...
+            console.log 'no maneuver', nearestIndex, JSON.stringify maneuvers, null, 2
           nearestManeuverStreets = nearestManeuver.street_names
           road = lowClearance.data.road
           roadLC = road.replace(/(\s|-)/g,'').toLowerCase()
@@ -263,10 +273,10 @@ class RoutingService
       # legs we iterate over (just use ones nearby)
       Promise.map route.legs, (leg, index) =>
         @getDetourTimeByTripRouteAndStop leg, stop, options
-        .then ({detourTime, route}) ->
-          {index, detourTime, route}
-      .then (detourTimes) ->
-        _.minBy detourTimes, 'detourTime'
+        .then ({detour, route}) ->
+          {index, detour, route}
+      .then (detours) ->
+        _.minBy detours, ({detour}) -> detour.time
     , {expireSeconds: ONE_HOUR_S}
 
   getDetourTimeByTripRouteAndStop: (leg, stop, options = {}) ->
@@ -278,10 +288,20 @@ class RoutingService
       {lat: stop.lat, lon: stop.lon}
       {lat: leg.endCheckIn.lat, lon: leg.endCheckIn.lon}
     ]
+    console.log 'settttttings', settings
     slug = @generateRouteSlug {locations, avoidLocations, settings}
     @getRouteByRouteSlug slug, {includeShape: getRoute}
     .then (route) ->
-      obj = {detourTime: route.time - leg.route.time}
+      # FIXME: for some reason leg.route is slower.
+      # maybe because it goes through a custom point? and the detourTime doesn't (it needs to)
+      # console.log route
+      # console.log 'vs'
+      # console.log leg.route
+      obj = {
+        detour:
+          time: route.time - leg.route.time
+          distance: route.distance - leg.route.distance
+      }
       if getRoute
         obj.route = route
       obj

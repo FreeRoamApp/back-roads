@@ -165,10 +165,12 @@ class TripCtrl
       endCheckIn = _.find trip.destinations, {id: "#{route.endCheckInId}"}
 
       altSlug = RoutingService.generateRouteSlug {
-        locations: _.filter [
+        locations: [
           {lat: startCheckIn.lat, lon: startCheckIn.lon}
-        ].concat waypoints, [{lat: endCheckIn.lat, lon: endCheckIn.lon}]
+          {lat: endCheckIn.lat, lon: endCheckIn.lon}
+        ]
         settings:
+          waypoints: waypoints
           avoidHighways: avoidHighways
           costing: if useTruckRoute then 'truck' else 'auto'
       }
@@ -329,6 +331,7 @@ class TripCtrl
       tripRoute = Trip.embedTripRouteLegLocationsByTrip trip, tripRoute
       (if location?.lat
         # need to route through current location
+        # TODO: these settings are set in a bunch of places, should keep it DRY
         settings = _.defaults tripRoute?.settings, trip?.settings
         settings =
           costing: if settings?.useTruckRoute then 'truck' else 'auto'
@@ -343,8 +346,9 @@ class TripCtrl
         # location index (already enroute)
         if index?
           console.log 'enroute at index', index
-          # use newly generated leg that goes through their location
+          # get rid of all stops before this one
           tripRoute.legs = tripRoute.legs.slice(index + 1)
+          # use newly generated leg that goes through their location
           tripRoute.legs.unshift {route}
 
         allPoints = _.flatten _.map tripRoute.legs, ({route}) ->
