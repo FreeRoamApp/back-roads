@@ -44,7 +44,7 @@ ScyllaSetupService = require './services/scylla_setup'
 ElasticsearchSetupService = require './services/elasticsearch_setup'
 AuthService = require './services/auth'
 CronService = require './services/cron'
-KueRunnerService = require './services/kue_runner'
+JobRunnerService = require './services/job_runner'
 ConversationMessageCtrl = require './controllers/conversation_message'
 HealthCtrl = require './controllers/health'
 PaymentCtrl = require './controllers/payment'
@@ -91,11 +91,11 @@ setup = ->
     cknex.enableErrors()
     CronService.start()
     console.log 'cron started'
-    KueRunnerService.listen() # TODO: child instance too
+    JobRunnerService.listen() # TODO: child instance too
     null # don't block
 
 childSetup = ->
-  # KueRunnerService.listen()
+  # JobRunnerService.listen()
   cknex.enableErrors()
   return Promise.resolve null # don't block
 
@@ -191,11 +191,11 @@ app.post '/log', (req, res) ->
   log.warn req.body
   res.status(204).send()
 
-app.get '/cleanKueFailed', (req, res) ->
-  KueCreateService = require './services/kue_create'
-  KueCreateService.clean()
+app.get '/cleanJobFailed', (req, res) ->
+  JobCreateService = require './services/job_create'
+  JobCreateService.clean()
   .catch ->
-    console.log 'kue clean route fail'
+    console.log 'job clean route fail'
   res.sendStatus 200
 
 # app.get '/rv', (req, res) ->

@@ -23,7 +23,7 @@ class AmenityCtrl extends PlaceBaseCtrl
       outputFn: (campground) -> campground
     }
     .then (campgrounds) ->
-      campgroundsIsClosestAmenity = _.filter campgrounds, (campground) ->
+      campgroundsIsClosestAmenity = _.filter campgrounds.places, (campground) ->
         _.some _.map amenity.amenities, (amenityType) ->
           distance = geodist amenity.location, campground.location
           if campground.distanceTo?[amenityType]?.distance < distance
@@ -34,7 +34,8 @@ class AmenityCtrl extends PlaceBaseCtrl
         RoutingService.getRoute {
           locations: [amenity.location, campground.location]
         }
-        .then (distance) ->
+        .then (route) ->
+          distance = {distance: route.distance, time: route.time}
           {campground, distance}
       .filter ({campground, distance}) ->
         _.some _.map amenity.amenities, (amenityType) ->
@@ -48,12 +49,6 @@ class AmenityCtrl extends PlaceBaseCtrl
             obj[amenityType] = _.defaults distance, {id: amenity.id}
           obj
         , oldDistanceTo
-
-        console.log 'upsert', {
-          id: campground.id
-          slug: campground.slug
-          distanceTo: newDistanceTo
-        }
 
         Campground.upsert {
           id: campground.id

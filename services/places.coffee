@@ -13,7 +13,7 @@ OvernightAttachment = require '../models/overnight_attachment'
 OvernightReview = require '../models/overnight_review'
 CacheService = require './cache'
 WeatherService = require './weather'
-KueCreateService = require './kue_create'
+JobCreateService = require './job_create'
 
 ONE_MINUTE_SECONDS = 60
 DAILY_UPDATE_PLACE_TIMEOUT = 20000
@@ -100,6 +100,7 @@ class PlacesService
     , {expireSeconds: ONE_WEEK_S}
 
   updateDailyInfo: ({id, type}) =>
+    console.log 'place1', id, type
     @getByTypeAndId type, id
     .then (place) =>
       console.log 'place', place.slug
@@ -156,14 +157,15 @@ class PlacesService
           newDailyUpdateMinPlaceSlug = "#{type}:#{_.last(places).slug}"
         console.log 'new', newDailyUpdateMinPlaceSlug
         console.log 'places', places.length
-        # add each place to kue
+        # add each place to job
         # once all processed, call update again with new dailyUpdateMinPlaceSlug
         _.map places, ({slug, id}) ->
-          KueCreateService.createJob {
+          JobCreateService.createJob {
+            queueKey: 'DEFAULT'
             job: {id, type}
-            type: KueCreateService.JOB_TYPES.DAILY_UPDATE_PLACE
+            type: JobCreateService.JOB_TYPES.DEFAULT.DAILY_UPDATE_PLACE
             ttlMs: DAILY_UPDATE_PLACE_TIMEOUT
-            priority: 'normal'
+            priority: JobCreateService.PRIORITIES.NORMAL
             waitForCompletion: true
           }
           .catch (err) ->

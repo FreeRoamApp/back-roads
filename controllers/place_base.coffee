@@ -108,7 +108,7 @@ module.exports = class PlaceBaseCtrl
 
     @Model.getById row.id
     .then (place) =>
-      EmailService.send {
+      EmailService.queueSend {
         to: EmailService.EMAILS.EVERYONE
         subject: "Place deleted by #{user.username}"
         text: JSON.stringify place
@@ -139,6 +139,8 @@ module.exports = class PlaceBaseCtrl
           obj[closestAmenity.id] = RoutingService.getRoute(
             {locations: [place.location, closestAmenity.location]}
           )
+          .then (route) ->
+            {distance: route.distance, time: route.time}
         obj
       , {}
       .then (distances) ->
@@ -210,7 +212,7 @@ module.exports = class PlaceBaseCtrl
       PlacesService.getReviewsByTypeAndId sourceType, source.id
       .map EmbedService.embed {embed: [EmbedService.TYPES.REVIEW.EXTRAS]}
       .then (sourceReviews) ->
-        EmailService.send {
+        EmailService.queueSend {
           to: EmailService.EMAILS.EVERYONE
           subject: "Place dedupe by #{user.username}"
           text: """
@@ -358,7 +360,7 @@ module.exports = class PlaceBaseCtrl
       console.log 'diff', diff
 
       if id
-        EmailService.send {
+        EmailService.queueSend {
           to: EmailService.EMAILS.EVERYONE
           subject: "Place updated by #{user.username}"
           text: """

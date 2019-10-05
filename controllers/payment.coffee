@@ -169,7 +169,7 @@ class PaymentCtrl
                 else if subscriptionInterval
                 then subscriptionInterval
                 else 'One-time'
-    EmailService.send {
+    EmailService.queueSend {
       to: user.email
       subject: "FreeRoam Donation Receipt"
       text: """

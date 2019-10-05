@@ -8,9 +8,11 @@ Promise = require 'bluebird'
 
 User = require '../models/user'
 Partner = require '../models/partner'
+SubscribedEmail = require '../models/subscribed_email'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
 CacheService = require '../services/cache'
+EmailService = require '../services/email'
 config = require '../config'
 
 AVATAR_SMALL_IMAGE_WIDTH = 96
@@ -86,20 +88,23 @@ class UserCtrl
       users
 
   verifyEmail: ({userId, token}, {user}) ->
-    unless token is md5 "#{config.EMAIL_VERIFY_SALT}#{userId}"
-      router.throw {
-        status: 401
-        info:
-          langKey: 'error.invalidEmailToken'
-          field: 'email'
-      }
     User.getById userId
     .then (user) ->
-      User.upsertByRow user, {
-        flags: _.defaults {
-          isEmailVerified: true
-        }, user.flags
-      }
+      unless token is md5 "#{config.EMAIL_VERIFY_SALT}#{userId}#{user.email}"
+        router.throw {
+          status: 401
+          info:
+            langKey: 'error.invalidEmailToken'
+            field: 'email'
+        }
+      Promise.all [
+        User.upsertByRow user, {
+          flags: _.defaults {
+            isEmailVerified: true
+          }, user.flags
+        }
+        SubscribedEmail.upsert {id: user.id, email: user.email}
+      ]
 
   upsert: ({userDiff}, {user, file}) =>
     currentInsecurePassword = userDiff.currentPassword
@@ -109,7 +114,7 @@ class UserCtrl
       userDiff.username = userDiff.username.toLowerCase()
     username = userDiff.username
     email = userDiff.email
-    userDiff = _.pick userDiff, ['username', 'links', 'bio', 'name']
+    userDiff = _.pick userDiff, ['username', 'email', 'links', 'bio', 'name']
 
     if userDiff.links?.instagram and userDiff.links.instagram.indexOf('instagram.com') is -1
       if userDiff.links.instagram.indexOf('@') isnt -1
@@ -199,7 +204,7 @@ class UserCtrl
 
       if email and email isnt user.email
         User.getByEmail email
-        .then (existingUser) ->
+        .then (existingUser) =>
           if existingUser
             router.throw {
               status: 401
@@ -208,6 +213,10 @@ class UserCtrl
                 field: 'email'
               ignoreLog: true
             }
+          SubscribedEmail.deleteByRow {id: user.id}
+          @_sendVerificationEmailByUser _.defaults {email}, user
+          null # don't need to block...
+
       else
         Promise.resolve null
     ]
@@ -226,5 +235,19 @@ class UserCtrl
       .then ->
         User.getById user.id
 
-  #
+  _sendVerificationEmailByUser: (user) ->
+    {id, email, username, language} = user
+    link = User.getEmailVerificationLinkByIdAndEmail id, email
+    EmailService.queueSend {
+      to: email
+      subject: "Verify your email" # TODO: lang
+      # TODO: Lang
+      text: """
+Looks like you changed your email. Click the link below to verify this email:
+
+#{link}
+
+Austin & Rachel
+"""
+    }
 module.exports = new UserCtrl()

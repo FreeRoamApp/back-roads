@@ -104,7 +104,7 @@ module.exports = class PlaceReviewBaseCtrl
     if user.flags.isChatBanned
       router.throw status: 400, info: 'unable to post...'
 
-    EmailService.send {
+    EmailService.queueSend {
       to: EmailService.EMAILS.EVERYONE
       subject: "New review by #{user.username}"
       text: """

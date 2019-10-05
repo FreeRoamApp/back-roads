@@ -1,5 +1,5 @@
 _ = require 'lodash'
-uuid = require 'uuid'
+uuid = require 'node-uuid'
 
 Base = require './base'
 cknex = require '../services/cknex'

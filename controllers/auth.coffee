@@ -46,7 +46,7 @@ class AuthCtrl
               passwordReset: md5 "#{config.PASSWORD_RESET_SALT}#{user.password}"
       }
       .then ({userId, token}) ->
-        EmailService.send {
+        EmailService.queueSend {
           to: email
           subject: "Password reset request"
           text: """
@@ -161,8 +161,8 @@ class AuthCtrl
         Auth.fromUserId user.id
 
   _sendWelcomeEmail: ({id, username, email, language}) ->
-    token = md5 "#{config.EMAIL_VERIFY_SALT}#{id}"
-    EmailService.send {
+    link = User.getEmailVerificationLinkByIdAndEmail id, email
+    EmailService.queueSend {
       to: email
       subject: Language.get 'welcomeEmail.subject', {
         replacements:
@@ -175,7 +175,7 @@ Welcome to FreeRoam!
 
 First things, first... if you want to receive future emails from us (we don't send many), please go ahead and click the link below to verify your email:
 
-https://#{config.FREE_ROAM_HOST}/verify-email/#{id}/#{token}
+#{link}
 
 Next up, we just want to thank you for using FreeRoam! As you probably know by now, FreeRoam is a non-profit and we have big plans for it. To achieve our mission, the entire community within the app needs to grow, so you joining is another step toward that :)
 

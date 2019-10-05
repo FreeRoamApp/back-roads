@@ -2,7 +2,7 @@ _ = require 'lodash'
 router = require 'exoid-router'
 Promise = require 'bluebird'
 request = require 'request-promise'
-uuid = require 'uuid'
+uuid = require 'node-uuid'
 
 User = require '../models/user'
 Group = require '../models/group'

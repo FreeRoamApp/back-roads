@@ -15,13 +15,11 @@ PREFER_CACHE_PUB_SUB_TIMEOUT_MS = 30 * 1000
 
 class CacheService
   KEYS:
-    KUE_WATCH_STUCK: 'kue:watch_stuck'
     STALE_THREAD_IDS: 'threads:stale_ids'
     DAILY_UPDATE_ID: 'dailyUpdate:id4'
-  LOCK_PREFIXES:
-    KUE_PROCESS: 'kue:process'
+  LOCK_PREFIXES: {}
   LOCKS:
-    DAILY_UPDATE: 'dailyUpdate4'
+    DAILY_UPDATE: 'dailyUpdate5'
   PREFIXES:
     CHAT_USER: 'chat:user3'
     CHAT_USER_BY_USERNAME: 'chat:user:byUsername3'

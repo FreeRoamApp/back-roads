@@ -1,4 +1,5 @@
 _ = require 'lodash'
+md5 = require 'md5'
 
 Base = require './base'
 CacheService = require '../services/cache'
@@ -105,6 +106,10 @@ class UserModel extends Base
 
   getAllByUsername: (username, {limit} = {}) ->
     null # TODO: search using >= operator on username?
+
+  getEmailVerificationLinkByIdAndEmail: (id, email) ->
+    token = md5 "#{config.EMAIL_VERIFY_SALT}#{id}#{email}"
+    "https://#{config.FREE_ROAM_HOST}/verify-email/#{id}/#{token}"
 
   setPartner: (userId, partnerSlug) =>
     console.log 'set partner', userId, partnerSlug

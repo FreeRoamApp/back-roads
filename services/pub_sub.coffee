@@ -1,5 +1,5 @@
 Promise = require 'bluebird'
-uuid = require 'uuid'
+uuid = require 'node-uuid'
 _ = require 'lodash'
 Redis = require 'ioredis'
 
