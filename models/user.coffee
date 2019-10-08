@@ -111,6 +111,10 @@ class UserModel extends Base
     token = md5 "#{config.EMAIL_VERIFY_SALT}#{id}#{email}"
     "https://#{config.FREE_ROAM_HOST}/verify-email/#{id}/#{token}"
 
+  getEmailUnsubscribeLinkByUser: ({id, email}) ->
+    token = md5 "#{config.EMAIL_VERIFY_SALT}#{id}#{email}"
+    "https://freeroam.app/unsubscribe-email/#{id}/#{token}"
+
   setPartner: (userId, partnerSlug) =>
     console.log 'set partner', userId, partnerSlug
     @getPartnerSlugByUserId userId

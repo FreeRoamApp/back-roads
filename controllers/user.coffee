@@ -106,6 +106,25 @@ class UserCtrl
         SubscribedEmail.upsert {id: user.id, email: user.email}
       ]
 
+  unsubscribeEmail: ({userId, token}, {user}) ->
+    User.getById userId
+    .then (user) ->
+      unless token is md5 "#{config.EMAIL_VERIFY_SALT}#{userId}#{user.email}"
+        router.throw {
+          status: 401
+          info:
+            langKey: 'error.invalidEmailToken'
+            field: 'email'
+        }
+      Promise.all [
+        User.upsertByRow user, {
+          flags: _.defaults {
+            isEmailVerified: false
+          }, user.flags
+        }
+        SubscribedEmail.deleteByRow {id: user.id, email: user.email}
+      ]
+
   upsert: ({userDiff}, {user, file}) =>
     currentInsecurePassword = userDiff.currentPassword
     passwordReset = userDiff.passwordReset
@@ -235,11 +254,16 @@ class UserCtrl
       .then ->
         User.getById user.id
 
+  resendVerficationEmail: ({}, {user}) =>
+    unless user.flags.isEmailVerified
+      @_sendVerificationEmailByUser user
+
   _sendVerificationEmailByUser: (user) ->
     {id, email, username, language} = user
     link = User.getEmailVerificationLinkByIdAndEmail id, email
     EmailService.queueSend {
-      to: email
+      userId: user.id
+      skipUnsubscribe: true
       subject: "Verify your email" # TODO: lang
       # TODO: Lang
       text: """

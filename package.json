@@ -92,6 +92,8 @@
     "node-geocoder": "^3.22.0",
     "node-uuid": "^1.4.7",
     "nodemailer": "^6.3.0",
+    "nodemailer-markdown": "^1.0.3",
+    "nodemailer-smtp-transport": "^2.7.4",
     "ogr2ogr": "^1.4.0",
     "pcg-random": "^1.0.0",
     "pg": "^6.1.5",

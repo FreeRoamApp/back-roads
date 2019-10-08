@@ -44,6 +44,8 @@ class TripEmbed
     stops = trip.stops
     Promise.props _.mapValues stops, (routeStops, routeId) ->
       Promise.map routeStops, (stop) ->
+        if stop.isWaypoint
+          return
         CheckIn.getById stop.id
         .then (checkIn) ->
           unless checkIn

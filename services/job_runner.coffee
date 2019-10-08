@@ -12,7 +12,7 @@ class JobRunnerService
       SES:
         types:
           "#{JobCreateService.JOB_TYPES.SES.SEND_EMAIL}":
-            {fn: EmailService.sendEmail, concurrencyPerCpu: 1}
+            {fn: EmailService.sendEmail, concurrencyPerCpu: 5}
         queue: jobQueues.SES
       DEFAULT:
         types:

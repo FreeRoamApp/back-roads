@@ -170,7 +170,7 @@ class PaymentCtrl
                 then subscriptionInterval
                 else 'One-time'
     EmailService.queueSend {
-      to: user.email
+      userId: user.id
       subject: "FreeRoam Donation Receipt"
       text: """
 Hi #{name}, thank you so much for donating to FreeRoam! Your donation helps a lot toward our mission of helping connect campers with nature in a respectful, sustainable way.

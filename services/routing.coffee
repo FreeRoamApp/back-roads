@@ -166,9 +166,9 @@ class RoutingService
     {preferCache, includeShape, attempts, settings} = options
     preferCache ?= true
 
-    if settings?.waypoints
-      # inject at index 1
-      locations.splice.apply locations, [1, 0].concat settings.waypoints
+    # if settings?.waypoints
+    #   # inject at index 1
+    #   locations.splice.apply locations, [1, 0].concat settings.waypoints
 
     get = =>
       @_getRouteUncached {locations, avoidLocations}, options
@@ -288,7 +288,6 @@ class RoutingService
       {lat: stop.lat, lon: stop.lon}
       {lat: leg.endCheckIn.lat, lon: leg.endCheckIn.lon}
     ]
-    console.log 'settttttings', settings
     slug = @generateRouteSlug {locations, avoidLocations, settings}
     @getRouteByRouteSlug slug, {includeShape: getRoute}
     .then (route) ->

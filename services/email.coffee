@@ -1,9 +1,11 @@
 nodemailer = require 'nodemailer'
+smtpTransport = require 'nodemailer-smtp-transport'
+markdown = require('nodemailer-markdown').markdown
 aws = require 'aws-sdk'
 Promise = require 'bluebird'
-log = require 'loga'
 
 JobCreateService = require './job_create'
+User = require '../models/user'
 config = require '../config'
 
 aws.config.update
@@ -12,7 +14,6 @@ aws.config.update
   accessKeyId: config.AWS.SES_ACCESS_KEY_ID
   secretAccessKey: config.AWS.SES_SECRET_ACCESS_KEY
 
-FROM_EMAIL = 'FreeRoam <austin@freeroam.app>'
 SEND_EMAIL_TIMEOUT = 60 * 1000 # 60s
 
 transporter = nodemailer.createTransport({
@@ -23,14 +24,20 @@ transporter = nodemailer.createTransport({
     # sendingRate: 10
 })
 
+transporter.use('compile', markdown({}))
+
 class EmailService
   EMAILS:
     EVERYONE: 'Everyone <austin@freeroam.app>'
 
-  queueSend: ({to, subject, text}) ->
+  # from, to optional. to overrides userId->email
+  queueSend: (options) ->
+    {from, to, userId, subject, text, markdown, skipUnsubscribe,
+      waitForCompletion} = options
     JobCreateService.createJob {
       queueKey: 'SES'
-      job: {to, subject, text}
+      waitForCompletion: waitForCompletion
+      job: {from, to, userId, subject, text, markdown, skipUnsubscribe}
       type: JobCreateService.JOB_TYPES.SES.SEND_EMAIL
       ttlMs: SEND_EMAIL_TIMEOUT
       priority: JobCreateService.PRIORITIES.NORMAL
@@ -38,25 +45,49 @@ class EmailService
 
 
   # don't call this directly, use queueSend
-  sendEmail: ({to, subject, text}) ->
-    # if config.ENV is config.ENVS.TEST
-    #   log.info "[TEST] Sending email to #{to}, subject:", subject
-    #   return Promise.resolve(null)
-    #
-    # if config.ENV is config.ENVS.DEV
-    #   log.info "[DEV] Sending email to #{to} ops: ", subject, text
-    #   return Promise.resolve(null)
-    #
-    # if config.IS_STAGING
-    #   log.info "[STAGING] Sending email to #{to} ops: ", subject, text
-    #   return Promise.resolve(null)
+  sendEmail: ({from, to, userId, subject, text, markdown, skipUnsubscribe}) ->
+    from ?= 'FreeRoam <team@freeroam.app>'
 
-    transporter.sendMail {
-      from: 'FreeRoam <austin@freeroam.app>'
-      to: to
-      subject: subject
-      text: text
-      # html: html
-    }
+    console.log 'email', userId, to
+
+    (if userId
+      User.getById userId
+    else
+      Promise.resolve null
+    )
+    .then (user) ->
+      if user
+        unsubscribeUrl = User.getEmailUnsubscribeLinkByUser user
+      else
+        unsubscribeUrl = null
+
+      mailOptions = {
+        from: from
+        to: to or user.email
+        subject: subject
+        text: text
+        markdown: markdown
+      }
+
+      if markdown and not skipUnsubscribe and unsubscribeUrl
+        mailOptions.markdown = """
+#{markdown}
+
+---
+<sub>[Unsubscribe](#{unsubscribeUrl})</sub>
+"""
+      if text and not skipUnsubscribe and unsubscribeUrl
+        mailOptions.text = """
+#{text}
+
+---
+Unsubscribe: #{unsubscribeUrl}
+"""
+
+      # if config.ENV is config.ENVS.DEV
+      #   console.log JSON.stringify mailOptions
+      #   return Promise.resolve(null)
+
+      transporter.sendMail mailOptions
 
 module.exports = new EmailService()

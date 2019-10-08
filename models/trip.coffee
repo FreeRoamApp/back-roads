@@ -206,74 +206,78 @@ class Trip extends Base
       stops.splice index, 0, shortCheckIn
       stops
 
+  buildRoute: ({trip, tripRoute}) =>
+    tripRoute = @embedTripRouteLegLocationsByTrip trip, tripRoute
+    allCheckIns = (trip.destinations or []).concat _.flatten _.values(trip.stops)
+
+    routeStops = [_.find allCheckIns, {id: "#{tripRoute.startCheckInId}"}]
+    if trip.stops[tripRoute.routeId]
+      routeStops = routeStops.concat trip.stops[tripRoute.routeId]
+    routeStops = routeStops.concat _.find(
+      allCheckIns, {id: "#{tripRoute.endCheckInId}"}
+    )
+
+    legPairs = RoutingService.pairwise routeStops
+    legs = _.map legPairs, ([legStartCheckIn, legEndCheckIn]) =>
+      legId = @_getRouteIdFromDestinations legStartCheckIn, legEndCheckIn
+      existingLeg = _.find(tripRoute?.legs, {legId})
+      _.defaults {
+        legId, startCheckInId: legStartCheckIn.id
+        endCheckInId: legEndCheckIn.id
+      }, existingLeg
+
+    tripRoute.legs = Promise.map legs, (leg) =>
+      unless leg.route
+        leg.route = @_getRoute(
+          _.find allCheckIns, {id: leg.startCheckInId}
+          _.find allCheckIns, {id: leg.endCheckInId}
+          {trip, route: tripRoute}
+        )
+      Promise.props leg
+    Promise.props tripRoute
+    .then (route) =>
+      route.bounds = @_getBoundsFromLegs route.legs
+      route
+
   _buildRoutes: ({destinations, stops, trip, tripRouteId}) =>
-    destinations ?= trip.destinations
-    stops ?= trip.stops
-    existingRoutes = trip.routes
-    destinations = _.clone destinations
-    stops = _.clone stops
-    pairs = RoutingService.pairwise destinations
-    routes = _.filter _.map pairs, ([startCheckIn, endCheckIn], i) =>
+    if destinations
+      trip.destinations = destinations
+    if stops
+      trip.stops = stops
+    pairs = RoutingService.pairwise trip.destinations
+    routes = Promise.all _.filter _.map pairs, ([startCheckIn, endCheckIn], i) =>
+      tripRoute = _.find trip.routes, {routeId: tripRouteId}
       routeId = @_getRouteIdFromDestinations startCheckIn, endCheckIn
-      if tripRouteId and tripRouteId isnt routeId
+      if tripRoute?.id and tripRoute.id isnt routeId
         return
-      routeStops = [startCheckIn]
-      if stops[routeId]
-        routeStops = routeStops.concat stops[routeId]
-      routeStops = routeStops.concat endCheckIn
-
-      legPairs = RoutingService.pairwise routeStops
-      existingRoute = _.find existingRoutes, {routeId}
-      legs = _.map legPairs, ([legStartCheckIn, legEndCheckIn]) =>
-        legId = @_getRouteIdFromDestinations legStartCheckIn, legEndCheckIn
-        existingLeg = _.find(existingRoute?.legs, {legId})
-        _.defaults {
-          legId, startCheckInId: legStartCheckIn.id
-          endCheckInId: legEndCheckIn.id
-        }, existingLeg
-
-      {
+      tripRoute = _.defaults {
         routeId: routeId
         number: i + 1
         startCheckInId: startCheckIn.id
         endCheckInId: endCheckIn.id
-        legs: legs
-        settings: existingRoute?.settings or {}
-      }
-
-    allCheckIns = destinations.concat _.flatten _.values(stops)
-
-    Promise.map routes, (route) =>
-      route.legs = Promise.map route.legs, (leg) =>
-        unless leg.route
-          leg.route = @_getRoute(
-            _.find allCheckIns, {id: leg.startCheckInId}
-            _.find allCheckIns, {id: leg.endCheckInId}
-            {trip, route}
-          )
-        Promise.props leg
-      Promise.props route
-    .map (route) =>
-      route.bounds = @_getBoundsFromLegs route.legs
-      route
+        settings: tripRoute?.settings or {}
+      }, tripRoute
+      @buildRoute {trip, tripRoute}
 
   # this code is sort of similar to TripCtrl.getMapboxDirectionsByIdAndRouteId
   _getRoute: (startCheckIn, endCheckIn, {trip, route} = {}) ->
     # TODO: these settings are set in a bunch of places, should keep it DRY
     settings = _.defaults route?.settings, trip?.settings
-    waypoints = settings?.waypoints or []
+    # waypoints = settings?.waypoints or []
 
     slug = RoutingService.generateRouteSlug {
-      locations: _.filter [
+      locations: [
         {lat: startCheckIn.lat, lon: startCheckIn.lon}
-      ].concat waypoints, [{lat: endCheckIn.lat, lon: endCheckIn.lon}]
+        {lat: endCheckIn.lat, lon: endCheckIn.lon}
+      ]
+        # locations: _.filter [
+        #   {lat: startCheckIn.lat, lon: startCheckIn.lon}
+        # ].concat waypoints, [{lat: endCheckIn.lat, lon: endCheckIn.lon}]
       settings:
         costing: if settings?.useTruckRoute then 'truck' else 'auto'
         avoidHighways: settings?.avoidHighways
         rigHeightInches: settings?.rigHeightInches
     }
-
-    console.log 'GET ROUTE', slug
 
     RoutingService.getRouteByRouteSlug slug, {includeShape: true}
 
