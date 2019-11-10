@@ -258,6 +258,11 @@ class GroupCtrl
 
   getBySlug: ({slug, autoJoin}, {user}) =>
     slug = slug.toLowerCase()
+
+    # FIXME: legacy, rm after 1/1/2020
+    if slug is 'boondocking'
+      slug = 'freeroam'
+
     Group.getBySlug slug
     .then (group) =>
       unless group

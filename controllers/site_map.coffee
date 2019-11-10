@@ -58,7 +58,7 @@ class SiteMapCtrl
     groupPaths = _.filter paths, (path) ->
       path.indexOf('/g/') isnt -1 and path.indexOf('/admin/') is -1 and
         (path.match(/:/g) or []).length is 1
-    groups = ['boondocking']
+    groups = ['freeroam']
     _.flatten _.map groups, (group) ->
       _.map groupPaths, (path) ->
         getRoute null, {groupId: group}, {route: path}

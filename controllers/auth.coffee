@@ -45,14 +45,14 @@ class AuthCtrl
               # be seeing it anyways
               passwordReset: md5 "#{config.PASSWORD_RESET_SALT}#{user.password}"
       }
-      .then ({userId: user.id, token}) ->
+      .then ({userId, token}) ->
         EmailService.queueSend {
-          userId: userId
+          userId: user.id
           skipUnsubscribe: true
           subject: "Password reset request"
           text: """
   Click the link below to login to FreeRoam to change your password:
-  https://#{config.FREE_ROAM_HOST}/login-link/#{userId}/#{token}
+  https://#{config.FREE_ROAM_HOST}/login-link/#{user.id}/#{token}
 
   This link will only work once. Do NOT share it with anyone else.
 

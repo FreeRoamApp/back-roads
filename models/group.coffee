@@ -73,8 +73,9 @@ class GroupModel extends Base
 
   getAll: ({filter, language, limit} = {}) ->
     Promise.all [
-      @getBySlug 'boondocking'
+      @getBySlug 'freeroam'
       @getBySlug 'vanlife'
+      @getBySlug 'fulltimerv'
     ]
     # TODO
     # limit ?= 10

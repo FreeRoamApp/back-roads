@@ -250,7 +250,7 @@ class RoutingService
             console.log 'no maneuver', nearestIndex, JSON.stringify maneuvers, null, 2
           nearestManeuverStreets = nearestManeuver.street_names
           road = lowClearance.data.road
-          roadLC = road.replace(/(\s|-)/g,'').toLowerCase()
+          roadLC = road?.replace(/(\s|-)/g,'').toLowerCase()
           isRoadMatch = not road or _.some nearestManeuverStreets, (nearestStreet) ->
             nearestStreetLC = nearestStreet.replace(/(\s|-)/g,'').toLowerCase()
             isGhettoMatch = nearestStreetLC.indexOf(roadLC) isnt -1 or

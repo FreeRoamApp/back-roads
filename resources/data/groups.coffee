@@ -10,8 +10,8 @@ groups =
   #   name: 'Free Roam'
   #   id: 'e49d82d0-a0db-11e8-9db6-4e284e268fd1'
   #   description: ''
-  'boondocking':
-    name: 'Boondocking'
+  'freeroam':
+    name: 'FreeRoam'
     id: 'e49d82d0-a0db-11e8-9db6-4e284e268fd1'
     description: ''
     data:
