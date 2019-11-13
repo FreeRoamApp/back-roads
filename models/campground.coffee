@@ -149,7 +149,7 @@ class Campground extends PlaceBase
           # waterHookup, sewerHookup, dumpStation, 30amp, 50amp, shower, ada, trash, picnicTable, flushToilet, toilet (auto-true when flushToilet true), petsAllowed, pullThrough, wifi, firesAllowed?, alcohol?, firePit
 
           nearbyActivities: {type: 'object'}
-          # fishing, hiking, ohv, biking, horseBack, paddling, climbing, snow, swimming
+          # fishing, hiking, ohv, biking, horseBackRiding, paddling, climbing, snow, swimming
 
           # complex features: pets, restrooms, padSurface, entryType
 

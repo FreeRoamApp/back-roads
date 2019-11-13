@@ -18,6 +18,7 @@ config = require '../config'
 defaultEmbed = [
   EmbedService.TYPES.THREAD.USER
   EmbedService.TYPES.THREAD.COMMENT_COUNT
+  EmbedService.TYPES.THREAD.TIME
 ]
 
 MAX_LENGTH = 100000

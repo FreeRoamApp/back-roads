@@ -41,6 +41,13 @@ class CommentModel extends Base
           clusteringColumns: [ 'parentType', 'parentId', 'id']
       }
       {
+        name: 'comments_by_id'
+        keyspace: 'free_roam'
+        fields: scyllaFields
+        primaryKey:
+          partitionKey: ['id']
+      }
+      {
         name: 'comments_counter_by_topId'
         keyspace: 'free_roam'
         ignoreUpsert: true
@@ -156,12 +163,11 @@ class CommentModel extends Base
       moment().subtract(1, 'month')
     )
 
-  # would need another table to grab by id
-  # getById: (id) ->
-  #   cknex().select '*'
-  #   .from 'comments_by_topId'
-  #   .where 'id', '=', id
-  #   .run {isSingle: true}
+  getById: (id) ->
+    cknex().select '*'
+    .from 'comments_by_id'
+    .where 'id', '=', id
+    .run {isSingle: true}
 
 
 module.exports = new CommentModel()

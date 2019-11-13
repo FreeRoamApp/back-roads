@@ -90,6 +90,7 @@ TYPES =
   THREAD:
     USER: 'thread:user'
     COMMENT_COUNT: 'thread:commentCount'
+    TIME: 'thread:time'
   TRIP:
     DESTINATIONS_INFO: 'trip:destinationsInfo'
     STOPS_INFO: 'trip:stopsInfo'

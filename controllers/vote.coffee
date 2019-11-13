@@ -26,9 +26,11 @@ Tops =
 
 class VoteCtrl
   _notifyByParent: (parent, parentRow, user) ->
+    console.log parent, parentRow
     Promise.all [
       User.getById parentRow.userId
-      Tops[parent.topType].getById parent.topId
+      if parent.topType
+        Tops[parent.topType].getById parent.topId
     ]
     .then ([otherUser, top]) ->
       PushNotificationService.send otherUser, {
@@ -39,15 +41,25 @@ class VoteCtrl
           key: "#{parentRow.type}Liked.text"
           replacements:
             name: User.getDisplayName(user)
-            place: top.name
+            subject: top?.name or parentRow?.title
         data:
           path:
-            key: "#{top.type}WithTab"
-            params:
-              slug: top.slug
-              tab: 'reviews'
+            if top
+              {
+                key: "#{top.type}WithTab"
+                params:
+                  slug: top.slug
+                  tab: 'reviews'
+              }
+            else
+              {
+                key: parentRow.type
+                params:
+                  slug: parentRow.slug
+              }
       }
   upsertByParent: ({parent, vote}, {user}) =>
+    console.log 'parent', parent.type, Parents[parent.type]
     Parents[parent.type].getById parent.id
     .then (parentRow) =>
       unless parentRow

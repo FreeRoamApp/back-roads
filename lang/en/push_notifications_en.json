@@ -6,11 +6,13 @@
   "newConnection.friendRequestSentTitle": "New friend request",
   "newConnection.friendRequestSentText": "{name} requested to be your friend",
   "amenityReviewLiked.title": "Review liked",
-  "amenityReviewLiked.text": "{name} liked your review on {place}",
+  "amenityReviewLiked.text": "{name} liked your review on {subject}",
   "campgroundReviewLiked.title": "Review liked",
-  "campgroundReviewLiked.text": "{name} liked your review on {place}",
+  "campgroundReviewLiked.text": "{name} liked your review on {subject}",
   "overnightReviewLiked.title": "Review liked",
-  "overnightReviewLiked.text": "{name} liked your review on {place}",
+  "overnightReviewLiked.text": "{name} liked your review on {subject}",
+  "threadLiked.title": "Thread liked",
+  "threadLiked.text": "{name} liked your thread, {subject}",
   "newTripFollower.title": "New trip follower",
   "newTripFollower.text": "{name} is following your trip, {tripName}"
 }

@@ -228,6 +228,10 @@ class ThreadModel extends Base
     .from 'threads_counter_by_id'
     .where 'id', '=', id
     .run {isSingle: true}
+    .then (row) ->
+      if row
+        row.time = cknex.getDateFromTimeUuid row.id
+      row
 
   getAllPinnedThreadIds: ->
     # TODO: this may get very large. when that happens, probably should
@@ -273,7 +277,7 @@ class ThreadModel extends Base
         rawScore = Math.abs(thread.upvotes * 1.5 - thread.downvotes)
         order = Math.log10(Math.max(Math.abs(rawScore), 1))
         sign = if rawScore > 0 then 1 else if rawScore < 0 then -1 else 0
-        postAgeHours = (Date.now() - thread.addTime.getTime()) / (3600 * 1000)
+        postAgeHours = (Date.now() - thread.time.getTime()) / (3600 * 1000)
         if "#{thread.id}" in pinnedThreadIds
           postAgeHours = 1
           sign = 1
@@ -367,7 +371,7 @@ class ThreadModel extends Base
       else
         results
 
-  voteByParent: (parent, diff, userId) =>
+  voteByParent: (parent, values, userId) =>
     @getById parent.id, {preferCache: true, omitCounter: true}
     .then @setStaleByThread
 
@@ -382,7 +386,6 @@ class ThreadModel extends Base
     _.forEach values, (value, key) ->
       qByTopId = qByTopId.increment key, value
     qByTopId = qByTopId.where 'id', '=', parent.id
-    .andWhere 'id', '=', parent.id
     .run()
 
     Promise.all [
@@ -497,5 +500,12 @@ class ThreadModel extends Base
       'time'
       'embedded'
     ]
+
+  defaultOutput: (thread) ->
+    unless thread?
+      return null
+
+    thread = super thread
+    thread = _.defaults {type: 'thread'}, thread
 
 module.exports = new ThreadModel()

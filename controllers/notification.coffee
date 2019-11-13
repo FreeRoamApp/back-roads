@@ -8,7 +8,7 @@ class NotificationCtrl
   getUnreadCount: ({}, {user}) ->
     Notification.getAllByUserId user.id, {limit: 20}
     .then (notifications) ->
-      count = _.filter(notifications, {isRead: false}).length
+      count = _.filter(notifications, ({isRead}) -> not isRead).length
       return count
 
   getAll: ({markRead}, {user}) ->

@@ -4,6 +4,7 @@ GroupUserEmbed = require './group_user'
 BaseMessage = require './base_message'
 Comment = require '../models/comment'
 CacheService = require '../services/cache'
+cknex = require '../services/cknex'
 
 FIVE_MINUTES_SECONDS = 60 * 5
 
@@ -29,6 +30,9 @@ class ThreadEmbed
       }
     else
       thread.user = null
+
+  time: (thread) ->
+    cknex.getDateFromTimeUuid thread.id
 
 
 module.exports = new ThreadEmbed()
