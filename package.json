@@ -94,6 +94,7 @@
     "nodemailer": "^6.3.0",
     "nodemailer-markdown": "^1.0.3",
     "nodemailer-smtp-transport": "^2.7.4",
+    "normalize-url": "^4.5.0",
     "ogr2ogr": "^1.4.0",
     "pcg-random": "^1.0.0",
     "pg": "^6.1.5",

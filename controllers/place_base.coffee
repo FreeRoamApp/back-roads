@@ -5,6 +5,7 @@ turf = require '@turf/turf'
 turfBuffer = require '@turf/buffer'
 polyline = require '@mapbox/polyline'
 simplify = require 'simplify-path'
+normalizeUrl = require 'normalize-url'
 
 Amenity = require '../models/amenity'
 LocalMap = require '../models/local_map'
@@ -282,7 +283,7 @@ module.exports = class PlaceBaseCtrl
 
   upsert: (options, {user, headers, connection}) =>
     {id, name, details, location, subType, agencySlug, regionSlug,
-      officeSlug, slug, features, prices} = options
+      officeSlug, slug, features, prices, contact} = options
 
     isUpdate = Boolean id
 
@@ -352,12 +353,16 @@ module.exports = class PlaceBaseCtrl
           {signal, count: 0}
         diff.cellSignal = _.defaults diff.cellSignal, cellSignal
 
+
+      if contact
+        diff.contact = _.defaultsDeep contact, existingPlace?.contact
+        if diff.contact.website
+          diff.contact.website = normalizeUrl diff.contact.website
+
       if prices
-        diff.prices = prices
+        diff.prices = _.defaultsDeep prices, existingPlace.prices
       # else if not isUpdate
       #   diff.prices ?= {all: {mode: 0}} # TODO
-
-      console.log 'diff', diff
 
       if id
         EmailService.queueSend {
