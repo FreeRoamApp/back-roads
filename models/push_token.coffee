@@ -38,7 +38,6 @@ class PushToken extends Base
     ]
 
   upsert: (token) =>
-    console.log 'upsert token', token
     if token.isActive
       ttl = null
     else

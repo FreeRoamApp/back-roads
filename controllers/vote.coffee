@@ -76,16 +76,22 @@ class VoteCtrl
 
         if vote is 'up'
           values = {upvotes: 1}
-          earnAction = 'reviewUpvoted'
+          if parent.type in [
+            'campgroundReview', 'amenityReview', 'overnightReview'
+          ]
+            earnAction = 'reviewUpvoted'
           if hasVotedDown
             values.downvotes = -1
         else if vote is 'down'
           values = {downvotes: 1}
-          earnAction = 'reviewDownvoted'
+          if parent.type in [
+            'campgroundReview', 'amenityReview', 'overnightReview'
+          ]
+            earnAction = 'reviewDownvoted'
           if hasVotedUp
             values.upvotes = -1
 
-        unless existingVote # TODO: handle changing votes (undo action? then do new action)
+        if not existingVote and earnAction? # TODO: handle changing votes (undo action? then do new action)
           EarnAction.completeActionByUserId(
             parentRow.userId
             earnAction

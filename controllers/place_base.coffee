@@ -39,6 +39,17 @@ module.exports = class PlaceBaseCtrl
         router.throw {status: 404, info: 'Place not found'}
     .then EmbedService.embed {embed: @defaultEmbed}
 
+  getByTypeAndSlug: ({type, slug}, {user}) =>
+    PlacesService.getByTypeAndSlug type, slug
+    .then (place) =>
+      if place
+        _.defaults {@type}, place
+      else
+        console.log 'get', slug
+        router.throw {status: 404, info: 'Place not found'}
+    .then EmbedService.embed {embed: @defaultEmbed}
+
+
   search: ({query, tripId, tripRouteId, tripAltRouteSlug, sort, limit, includeId}, {user}) =>
     (if tripId and tripRouteId
       # limit = 2000 # show them all
@@ -326,18 +337,25 @@ module.exports = class PlaceBaseCtrl
       else
         Promise.resolve null
 
+      if @Model.getScyllaTables()[0].fields.elevation
+        RoutingService.getElevation {location}
+      else
+        Promise.resolve null
+
       if not isUpdate and @Model.getScyllaTables()[0].fields.cellSignal
         CellSignalService.getEstimatesByLocation location
         .catch ->
           console.log 'cell estimation error'
     ]
-    .then ([existingPlace, slug, address, weatherStation, cellSignal]) =>
+    .then ([existingPlace, slug, address, weatherStation, elevation, cellSignal]) =>
       diff = {slug, name, details, location, address}
       if features
         diff.features = _.reduce features, (obj, feature) ->
           obj[feature] = true
           obj
         , {}
+      if elevation?
+        diff.elevation = elevation
       if weatherStation
         diff.weather = weatherStation.weather
       if subType
@@ -384,6 +402,8 @@ module.exports = class PlaceBaseCtrl
         @Model.upsert diff, {userId: user.id, isCreate: true}
       )
       .tap (place) =>
+        PlacesService.setMapImage place # don't block
+
         Promise.all _.filter [
           if @Model.getScyllaTables()[0].fields.distanceTo
             @_setNearbyAmenities place

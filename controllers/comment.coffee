@@ -7,8 +7,11 @@ Vote = require '../models/vote'
 GroupUser = require '../models/group_user'
 Group = require '../models/group'
 Ban = require '../models/ban'
+Subscription = require '../models/subscription'
+User = require '../models/user'
 CacheService = require '../services/cache'
 EmbedService = require '../services/embed'
+PushNotificationService = require '../services/push_notification'
 config = require '../config'
 
 Tops =
@@ -112,7 +115,31 @@ class CommentCtrl
           topId: topId
           parentId: parentId
           parentType: parentType
-      .then ->
+      .tap ->
+        EarnAction.completeActionsByUserId(
+          userId
+          ['socialPost', 'firstSocialPost']
+        ).catch -> null
+
+        User.getById top.userId
+        .then (otherUser) ->
+          PushNotificationService.send otherUser, {
+            type: Subscription.TYPES.SOCIAL
+            titleObj:
+              key: "#{top.type}Replied.title"
+            textObj:
+              key: "#{top.type}Replied.text"
+              replacements:
+                name: User.getDisplayName(user)
+                subject: top?.title
+            data:
+              path:
+                {
+                  key: top.type
+                  params:
+                    slug: top.slug
+                }
+          }
         prefix = CacheService.PREFIXES.COMMENTS_BY_TOP_ID_CATEGORY
         Promise.all [
           CacheService.deleteByCategory "#{prefix}:#{topId}"

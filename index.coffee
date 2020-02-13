@@ -198,10 +198,28 @@ app.get '/cleanJobFailed', (req, res) ->
     console.log 'job clean route fail'
   res.sendStatus 200
 
-# app.get '/rv', (req, res) ->
-#   sync = require './services/sync_rv.coffee'
-#   sync()
-#   res.sendStatus 200
+app.get '/mapImages', (req, res) ->
+  console.log 'goooo'
+  PlacesService = require './services/places'
+  Campground = require './models/campground'
+  go = (slug) ->
+    Campground.getAllByMinSlug slug
+    .then (campgrounds) ->
+      console.log campgrounds.length
+      Promise.each campgrounds, (campground) ->
+        campground.type = 'campground'
+        console.log 'MAP IMAGE', campground.slug
+        PlacesService.setMapImage campground
+        .catch (err) ->
+          console.log 'FAIL', err
+      .then ->
+        next = _.last(campgrounds)?.slug
+        console.log 'NEXT', next
+        if next
+          go next
+
+  go req.query.minSlug or '0'
+  res.sendStatus 200
 
 
 server = if config.DEV_USE_HTTPS \

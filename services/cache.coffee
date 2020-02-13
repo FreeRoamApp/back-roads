@@ -84,6 +84,10 @@ class CacheService
     key = config.REDIS.PREFIX + ':' + key
     RedisService.sadd key, value
 
+  tempSetRemove: (key, value) ->
+    key = config.REDIS.PREFIX + ':' + key
+    RedisService.srem key, value
+
   tempSetGetAll: (key) ->
     key = config.REDIS.PREFIX + ':' + key
     RedisService.smembers key

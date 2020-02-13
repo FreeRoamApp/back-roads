@@ -7,7 +7,6 @@ md5 = require 'md5'
 Promise = require 'bluebird'
 
 User = require '../models/user'
-Partner = require '../models/partner'
 SubscribedEmail = require '../models/subscribed_email'
 EmbedService = require '../services/embed'
 ImageService = require '../services/image'
@@ -55,20 +54,17 @@ class UserCtrl
     .then EmbedService.embed {embed: userEmbed}
     .then User.sanitizePublic(null)
 
-  # problem: partner user account may not exist before partner link can.
-  #
-  getPartner: ({}, {user}) ->
-    User.getPartnerSlugByUserId user.id
-    .then (partnerSlug) ->
-      if partnerSlug
-        Partner.getBySlug partnerSlug
-    .then (partner) ->
-      _.defaults partner, {
-        amazonAffiliateCode: config.AMAZON_AFFILIATE_CODE
-      }
+  getReferrer: ({}, {user}) ->
+    User.getReferrerUserIdByUserId user.id
+    .then (referrerUserId) ->
+      if referrerUserId
+        User.getById referrerUserId
 
-  setPartner: ({partner}, {user}) ->
-    User.setPartner user.id, partner
+  setReferrer: ({referrer}, {user}) ->
+    User.getByUsername referrer
+    .then (referrer) ->
+      if referrer and referrer.id isnt user.id
+        User.setReferrer user.id, referrer.id
 
   _uploadAvatar: (userId, file) ->
     ImageService.uploadImageByUserIdAndFile(

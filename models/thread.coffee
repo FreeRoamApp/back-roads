@@ -150,6 +150,7 @@ class ThreadModel extends Base
       .run()
       .then =>
         super thread
+        .tap @setStaleByThread
 
   getById: (id, {preferCache, omitCounter} = {}) =>
     get = =>
@@ -213,6 +214,10 @@ class ThreadModel extends Base
     key = CacheService.KEYS.STALE_THREAD_IDS
     CacheService.tempSetAdd key, "#{groupId}|#{category}|#{id}"
 
+  unsetStaleByThread: ({groupId, category, id}) ->
+    key = CacheService.KEYS.STALE_THREAD_IDS
+    CacheService.tempSetRemove key, "#{groupId}|#{category}|#{id}"
+
   getAllNewish: (limit) ->
     q = cknex().select '*'
     .from 'threads_recent'
@@ -270,20 +275,21 @@ class ThreadModel extends Base
         unless thread.id
           return
 
-        cknex.getDateFromTimeUuid thread.id
+        time = cknex.getDateFromTimeUuid thread.id
 
         # people heavily downvote, so offset it a bit...
         thread.upvotes += 1 # for the initial user vote
         rawScore = Math.abs(thread.upvotes * 1.5 - thread.downvotes)
         order = Math.log10(Math.max(Math.abs(rawScore), 1))
         sign = if rawScore > 0 then 1 else if rawScore < 0 then -1 else 0
-        postAgeHours = (Date.now() - thread.time.getTime()) / (3600 * 1000)
+        postAgeHours = (Date.now() - time.getTime()) / (3600 * 1000)
         if "#{thread.id}" in pinnedThreadIds
           postAgeHours = 1
           sign = 1
           order = Math.log10(Math.max(Math.abs(9999), 1))
         score = sign * order / Math.pow(2, postAgeHours / 12)#3.76)
         score = Math.round(score * 1000000)
+        @unsetStaleByThread thread # don't need to block
         @setScoreByThread thread, score
       , {concurrency: 50}
 

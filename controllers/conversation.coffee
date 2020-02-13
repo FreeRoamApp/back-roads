@@ -141,7 +141,7 @@ class ConversationCtrl
 
   _createWelcomeConversation: ({user}) ->
     # 0-7 go to austin, 89abcdef to rachel. ALSO in free-roam
-    devUsername = if user?.id.substr(-1) > '7' then 'rachel' else 'austin'
+    devUsername = 'austin' # if user?.id.substr(-1) > '7' then 'rachel' else 'austin'
     User.getByUsername devUsername
     .then (devUser) ->
       Conversation.getByUserIds [user.id, devUser.id]

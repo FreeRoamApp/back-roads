@@ -5,6 +5,7 @@ request = require 'request-promise'
 uuid = require 'node-uuid'
 
 User = require '../models/user'
+EarnAction = require '../models/earn_action'
 Group = require '../models/group'
 GroupUser = require '../models/group_user'
 Thread = require '../models/thread'
@@ -89,6 +90,7 @@ class ThreadCtrl
           connection.remoteAddress
 
     thread.category ?= 'general'
+    isUpdate = thread.id
 
     @checkIfBanned groupId, ip, user.id, router
     .then =>
@@ -148,7 +150,14 @@ class ThreadCtrl
                 groupId: group?.id
               }
       .tap ->
-        {category} = thread
+        {category, id} = thread
+
+        unless isUpdate
+          EarnAction.completeActionsByUserId(
+            user.id
+            ['socialPost', 'firstSocialPost']
+          ).catch -> null
+
         CacheService.deleteByCategory(
           "#{CacheService.PREFIXES.THREADS_CATEGORY}:#{groupId}:#{category}"
         )

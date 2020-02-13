@@ -7,7 +7,7 @@ cknex = require '../services/cknex'
 elasticsearch = require '../services/elasticsearch'
 config = require '../config'
 
-PARTNER_TTL_S = 3600 * 24 * 31
+REFERRER_TTL_S = 3600 * 24 * 31 # 1 month
 
 scyllaFields =
   id: 'timeuuid'
@@ -46,28 +46,26 @@ class UserModel extends Base
           partitionKey: ['email']
       }
 
-      # referrals / partners
+      # referrals / referrers
       {
-        name: 'user_partners_by_userId'
+        name: 'user_referrers_by_userId'
         keyspace: 'free_roam'
         ignoreUpsert: true
         fields:
           userId: 'timeuuid'
-          partnerSlug: 'text'
+          referrerUserId: 'timeuuid'
         primaryKey:
           partitionKey: ['userId']
       }
-      # TODO: switch to use partnerUserId once we have a system setup where every
-      # partner has a user account
       {
-        name: 'user_partners_by_partnerSlug'
+        name: 'user_referrers_by_referrerUserId'
         keyspace: 'free_roam'
         ignoreUpsert: true
         fields:
           userId: 'timeuuid'
-          partnerSlug: 'text'
+          referrerUserId: 'timeuuid'
         primaryKey:
-          partitionKey: ['partnerSlug']
+          partitionKey: ['referrerUserId']
           clusteringColumns: ['userId']
       }
     ]
@@ -115,37 +113,37 @@ class UserModel extends Base
     token = md5 "#{config.EMAIL_VERIFY_SALT}#{id}#{email}"
     "https://freeroam.app/unsubscribe-email/#{id}/#{token}"
 
-  setPartner: (userId, partnerSlug) =>
-    console.log 'set partner', userId, partnerSlug
-    @getPartnerSlugByUserId userId
-    .then (oldPartnerSlug) ->
-      if oldPartnerSlug
+  setReferrer: (userId, referrerUserId) =>
+    console.log 'set referrer', userId, referrerUserId
+    @getReferrerUserIdByUserId userId
+    .then (oldReferrerUserId) ->
+      if oldReferrerUserId
         cknex().delete()
-        .from 'user_partners_by_partnerSlug'
-        .where 'partnerSlug', '=', oldPartnerSlug
+        .from 'user_referrers_by_referrerUserId'
+        .where 'referrerUserId', '=', oldReferrerUserId
         .andWhere 'userId', '=', userId
         .run()
     .then ->
       Promise.all [
-        cknex().update 'user_partners_by_userId'
-        .set {partnerSlug}
+        cknex().update 'user_referrers_by_userId'
+        .set {referrerUserId}
         .where 'userId', '=', userId
-        .usingTTL PARTNER_TTL_S
+        .usingTTL REFERRER_TTL_S
         .run()
 
-        cknex().insert {userId, partnerSlug}
-        .into 'user_partners_by_partnerSlug'
-        .usingTTL PARTNER_TTL_S
+        cknex().insert {userId, referrerUserId}
+        .into 'user_referrers_by_referrerUserId'
+        .usingTTL REFERRER_TTL_S
         .run()
       ]
 
-  getPartnerSlugByUserId: (userId) ->
+  getReferrerUserIdByUserId: (userId) ->
     cknex().select '*'
-    .from 'user_partners_by_userId'
+    .from 'user_referrers_by_userId'
     .where 'userId', '=', userId
     .run {isSingle: true}
-    .then (partner) ->
-      partner?.partnerSlug
+    .then (referrer) ->
+      referrer?.referrerUserId
 
   getUniqueUsername: (baseUsername, appendedNumber = 0) =>
     username = "#{baseUsername}".toLowerCase()

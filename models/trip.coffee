@@ -89,6 +89,7 @@ class Trip extends Base
         # TODO: https
         url: "http://#{config.FREE_ROAM_HOST}/travel-map-screenshot/#{trip.id}"
     .then =>
+      console.log 'done', imagePrefix
       @upsertByRow trip, {
         imagePrefix
         lastUpdateTime: new Date()

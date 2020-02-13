@@ -132,7 +132,7 @@ class TripCtrl
       Promise.props _.mapValues stops, (routeStops, routeId) ->
         Promise.map routeStops, (stop) ->
           if stop.isWaypoint
-            return
+            return stop
           CheckIn.getById stop.id
           .then (checkIn) ->
             unless checkIn

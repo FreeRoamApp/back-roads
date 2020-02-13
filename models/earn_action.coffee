@@ -5,7 +5,9 @@ moment = require 'moment'
 
 config = require '../config'
 Base = require './base'
+User = require './user'
 UserKarma = require './user_karma'
+GiveawayEntry = require './giveaway_entry'
 cknex = require '../services/cknex'
 TimeService = require '../services/time'
 CacheService = require '../services/cache'
@@ -113,6 +115,15 @@ class EarnActionModel extends Base
     .run()
     .map defaultEarnTransactionLockOutput
 
+  getTransactionLockByUserIdAndAction: (userId, action) ->
+    cknex().select 'userId', 'action', 'count'
+    .ttl 'count'
+    .from 'earn_transaction_locks'
+    .where 'userId', '=', userId
+    .andWhere 'action', '=', action
+    .run {isSingle: true}
+    .then defaultEarnTransactionLockOutput
+
   getAll: (groupId) =>
     cknex().select '*'
     .from 'earn_actions'
@@ -128,30 +139,52 @@ class EarnActionModel extends Base
     .run {isSingle: true}
     .then @defaultOutput
 
+  _giveReward: (userId, reward, action) ->
+    if reward.currencyType is 'karma'
+      UserKarma.incrementByUserId(
+        userId, reward.currencyAmount
+      )
+    else if reward.currencyType is 'giveaway_entry'
+      Promise.map _.range(reward.currencyAmount), ->
+        GiveawayEntry.upsert {action: action.action, userId}
+    # else
+    #   UserItem.incrementByItemKeyAndUserId(
+    #     reward.currencyItemKey, userId, reward.currencyAmount
+    #   )
+
+  completeActionsByUserId: (userId, actions) =>
+    Promise.map actions, (action) => @completeActionByUserId userId, action
+
   completeActionByUserId: (userId, action) =>
     prefix = CacheService.PREFIXES.EARN_COMPLETE_TRANSACTION
     key = "#{prefix}:#{userId}:#{action}"
     CacheService.lock key, =>
+      console.log 'get', action
       @getByAction action
       .then (action) =>
         unless action
           throw new Error 'action not found'
 
-        @_checkIfLockedByUserIdAndAction userId, action
+        @_checkIfLockedByUserIdAndAction userId, action.action
         .then ({isLocked, ttl, count}) =>
           if isLocked
             throw new Error 'already claimed'
 
+          console.log 'action', action
+
           Promise.all _.filter [
-            Promise.map action.data.rewards, (reward) ->
-              if reward.currencyType is 'karma'
-                UserKarma.incrementByUserId(
-                  userId, reward.currencyAmount
-                )
-              # else
-              #   UserItem.incrementByItemKeyAndUserId(
-              #     reward.currencyItemKey, userId, reward.currencyAmount
-              #   )
+            Promise.map action.data.rewards, (reward) =>
+              @_giveReward userId, reward, action
+
+            if action.data.referrerRewards
+              console.log 'ref reward'
+              User.getReferrerUserIdByUserId userId
+              .then (referrerUserId) =>
+                console.log referrerUserId
+                if referrerUserId
+                  Promise.map action.data.referrerRewards, (reward) =>
+                    @_giveReward referrerUserId, reward, action
+
             if action.maxCount
               @upsertTransactionLock {
                 userId, action: action.action, count
@@ -168,9 +201,8 @@ class EarnActionModel extends Base
 
   _checkIfLockedByUserIdAndAction: (userId, action) =>
     if action.maxCount
-      @getAllTransactionLocksByUserId userId
-      .then (transactionsLocks) ->
-        existingTransaction = _.find transactionsLocks, {action: action.action}
+      @getTransactionLockByUserIdAndAction userId, action
+      .then (existingTransaction) ->
         return {
           isLocked: existingTransaction?.count >= action.maxCount
           ttl: if existingTransaction \

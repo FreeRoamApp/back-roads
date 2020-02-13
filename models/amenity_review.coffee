@@ -51,6 +51,8 @@ class AmenityReview extends ReviewBase
       # }
     ].concat super
 
+  getExtrasById: -> Promise.resolve null
+
   getElasticSearchIndices: ->
     [
       {

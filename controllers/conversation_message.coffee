@@ -6,6 +6,7 @@ Joi = require 'joi'
 
 User = require '../models/user'
 Ban = require '../models/ban'
+EarnAction = require '../models/earn_action'
 Group = require '../models/group'
 ConversationMessage = require '../models/conversation_message'
 Conversation = require '../models/conversation'
@@ -26,7 +27,7 @@ MAX_CONVERSATION_USER_IDS = 20
 URL_REGEX = /\b(https?):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[A-Z0-9+&@#/%=~_|]/gi
 IMAGE_REGEX = /\!\[(.*?)\]\((.*?)\)/gi
 CARD_BUILDER_TIMEOUT_MS = 1000
-MAX_LENGTH = 5000
+# MAX_LENGTH = 5000
 ONE_DAY_SECONDS = 3600 * 24
 
 RATE_LIMIT_CONVERSATION_MESSAGES_TEXT = 6
@@ -166,8 +167,8 @@ class ConversationMessageCtrl
     if user.flags.isChatBanned
       router.throw status: 400, info: 'unable to post'
 
-    if body?.length > MAX_LENGTH
-      router.throw status: 400, info: 'message is too long...'
+    # if body?.length > MAX_LENGTH
+    #   router.throw status: 400, info: 'message is too long...'
 
     isImage = body.match IMAGE_REGEX
     isMedia = isImage
@@ -233,6 +234,11 @@ class ConversationMessageCtrl
           lastUpdateTime: new Date()
           isRead: false
         }), {userId: user.id}
+
+        EarnAction.completeActionsByUserId(
+          user.id
+          ['socialPost', 'firstSocialPost']
+        ).catch -> null
 
         (if conversation.type is 'pm'
           Promise.resolve {userMentions: [], roleMentions: []}

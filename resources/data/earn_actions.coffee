@@ -5,8 +5,43 @@ config = require '../../config'
 
 ONE_DAY_SECONDS = 3600 * 24
 ONE_WEEK_SECONDS = 3600 * 24 * 7
+ONE_YEAR_SECONDS = 3600 * 24 * 365
 
 actions =
+  socialPost:
+    name: 'Social post'
+    data:
+      rewards: [
+        {currencyAmount: 1, currencyType: 'giveaway_entry'}
+      ]
+    maxCount: 3
+    ttl: ONE_DAY_SECONDS
+
+  # mostly just used to give referrers credit
+  firstSocialPost:
+    name: 'First social post'
+    data:
+      rewards: [
+        # {currencyAmount: 1, currencyType: 'giveaway_entry'}
+      ]
+      referrerRewards: [
+        {currencyAmount: 5, currencyType: 'giveaway_entry'}
+      ]
+    maxCount: 1
+    ttl: null # infinite
+
+  # TODO: unique / 1 per user they refer, but allow unlimited referrals
+  # don't want to do a lot of checks for every social post though...
+  # ideally just for user's first post ever
+  # referSocialite:
+  #   name: 'Referral'
+  #   data:
+  #     rewards: [
+  #       {currencyAmount: 5, currencyType: 'giveaway_entry'}
+  #     ]
+  #   maxCount: null
+  #   ttl: ONE_YEAR_SECONDS
+
   share:
     name: 'Share FreeRoam'
     data:

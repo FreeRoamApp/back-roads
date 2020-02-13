@@ -1,4 +1,5 @@
 Promise = require 'bluebird'
+request = require 'request-promise'
 _ = require 'lodash'
 
 Amenity = require '../models/amenity'
@@ -14,9 +15,11 @@ OvernightReview = require '../models/overnight_review'
 CacheService = require './cache'
 WeatherService = require './weather'
 JobCreateService = require './job_create'
+RoutingService = require './routing'
+config = require '../config'
 
 ONE_MINUTE_SECONDS = 60
-DAILY_UPDATE_PLACE_TIMEOUT = 20000
+DAILY_UPDATE_PLACE_TIMEOUT = 30000
 ONE_WEEK_S = 3600 * 24 * 7
 
 PLACE_TYPES =
@@ -99,23 +102,36 @@ class PlacesService
         }
     , {expireSeconds: ONE_WEEK_S}
 
+  setMapImage: (place) =>
+    imagePrefix = "places/#{place.type}/#{place.id}_map"
+    console.log "#{config.SCREENSHOTTER_HOST}/screenshot"
+    Promise.resolve request "#{config.SCREENSHOTTER_HOST}/screenshot",
+      json: true
+      qs:
+        imagePrefix: imagePrefix
+        clipY: 32
+        viewportHeight: 400
+        width: 600
+        height: 326
+        # TODO: https
+        url: "http://#{config.FREE_ROAM_HOST}/place-map-screenshot/#{place.type}/#{place.slug}"
+    .then =>
+      console.log imagePrefix
+      @upsertByTypeAndRow place.type, {
+        mapImagePrefix: imagePrefix
+      }
+
   updateDailyInfo: ({id, type}) =>
-    console.log 'place1', id, type
     @getByTypeAndId type, id
     .then (place) =>
       console.log 'place', place.slug
 
-      # if place.type is 'campground'
-      #   features = {}
-      #   features['30amp'] = place.has30Amp or null
-      #   features['50amp'] = place.has50Amp or null
-      #   features['sewerHookup'] = place.hasSewage or null
-      #   features['waterHookup'] = place.hasFreshWater or null
-      #
-      #   console.log 'features', features
-      #   Campground.upsertByRow place, {
-      #     features: features
-      #   }
+      # @setMapImage place
+
+      # RoutingService.getElevation {location: place.location}
+      # .then (elevation) =>
+      #   @upsertByTypeAndRow place.type, place, {elevation}
+
       Promise.all [
         WeatherService.getForecastDiff place
       ]

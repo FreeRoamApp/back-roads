@@ -149,11 +149,13 @@ class PlaceReviewService
     Model = PLACE_REVIEW_TYPES["#{parentType}Review"]
     ParentModel = PLACE_TYPES[parentType]
 
+    console.log 'getttt', id
     Promise.all _.filter [
       Model.getById id
       Model.getExtrasById? id
     ]
     .then ([review, extras]) =>
+      console.log 'gottt', review
       hasPermission ?= "#{review.userId}" is "#{user.id}" or
                         user.username is 'austin'
       unless hasPermission

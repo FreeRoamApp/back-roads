@@ -19,6 +19,7 @@ ConversationCtrl = require './controllers/conversation'
 CoordinateCtrl = require './controllers/coordinate'
 EventCtrl = require './controllers/event'
 GeocoderCtrl = require './controllers/geocoder'
+GiveawayEntryCtrl = require './controllers/giveaway_entry'
 GroupCtrl = require './controllers/group'
 GroupAuditLogCtrl = require './controllers/group_audit_log'
 GroupUserCtrl = require './controllers/group_user'
@@ -196,6 +197,9 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'geocoder.getFeaturesFromLocation',
   authed GeocoderCtrl.getFeaturesFromLocation
 
+.on 'giveawayEntries.getAll',
+  authed GiveawayEntryCtrl.getAll
+
 .on 'groups.create', authed GroupCtrl.create
 .on 'groups.updateById', authed GroupCtrl.updateById
 .on 'groups.joinById', authed GroupCtrl.joinById
@@ -275,6 +279,7 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'places.changeType', authed PlaceCtrl.changeType
 .on 'places.dedupe', authed PlaceCtrl.dedupe
 .on 'places.getSheetInfo', authed PlaceCtrl.getSheetInfo
+.on 'places.getByTypeAndSlug', authed PlaceCtrl.getByTypeAndSlug
 
 .on 'placeAttachments.getAllByUserId', authed PlaceAttachmentCtrl.getAllByUserId
 
@@ -349,8 +354,8 @@ authed AgencyCtrl.getAgencyInfoFromLocation
 .on 'users.getCountry', authed UserCtrl.getCountry
 .on 'users.search', authed UserCtrl.search
 .on 'users.setAvatarImage', authed UserCtrl.setAvatarImage
-.on 'users.setPartner', authed UserCtrl.setPartner
-.on 'users.getPartner', authed UserCtrl.getPartner
+.on 'users.setReferrer', authed UserCtrl.setReferrer
+.on 'users.getReferrer', authed UserCtrl.getReferrer
 .on 'users.upsert', authed UserCtrl.upsert
 .on 'users.unsubscribeEmail', authed UserCtrl.unsubscribeEmail
 .on 'users.verifyEmail', authed UserCtrl.verifyEmail

@@ -13,6 +13,8 @@
   "overnightReviewLiked.text": "{name} liked your review on {subject}",
   "threadLiked.title": "Thread liked",
   "threadLiked.text": "{name} liked your thread, {subject}",
+  "threadReplied.title": "New thread comment",
+  "threadReplied.text": "{name} commented on your thread, {subject}",
   "newTripFollower.title": "New trip follower",
   "newTripFollower.text": "{name} is following your trip, {tripName}"
 }

@@ -153,6 +153,8 @@ class RoutingService
             if not _.isEmpty lowClearances
               console.log 'retry'
               avoidLocations = _.map lowClearances, 'location'
+              # FIXME: work for more than 50 low clearances
+              avoidLocations = _.take avoidLocations, 50
               @_getRouteUncached {locations, avoidLocations}, _.defaults({
                 attempts: attempts + 1
               }, options)
@@ -224,7 +226,7 @@ class RoutingService
     points = _.map points, ([lon, lat]) -> [lat, lon]
     if points.length >= 2
       line = turf.lineString points
-      turfPolygon = turfBuffer line, '0.005', {units: 'miles'}
+      turfPolygon = turfBuffer line, '0.003', {units: 'miles'}
       # polygon = simplify _.flatten(turfPolygon.geometry.coordinates), 0.1
       polygon = _.flatten(turfPolygon.geometry.coordinates)
       query = {

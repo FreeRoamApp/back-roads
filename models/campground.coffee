@@ -21,6 +21,7 @@ scyllaFields =
   ratingCount: 'int'
   details: 'text' # wikipedia style info. can be stylized with markdown
   thumbnailPrefix: 'text'
+  mapImagePrefix: 'text'
   address: 'json' # json:
     # thoroughfare: 'text' # address
     # premise: 'text' # apt, suite, etc...
@@ -32,6 +33,7 @@ scyllaFields =
   # end common
 
   drivingInstructions: 'text'
+  elevation: 'int' # ft
 
   siteCount: 'json' # json: {"maxSize(var)": count}, eg {50: 5, 40: 20} means 5 spots for 40-50ft, 20 spots for 0-40 ft. use unknown for size if unknown
   distanceTo: 'json' # json {groceries: {id: '', distance: 25, time: 22}} all in miles/min
@@ -115,8 +117,10 @@ class Campground extends PlaceBase
           rating: {type: 'double'}
           ratingCount: {type: 'integer'}
           thumbnailPrefix: {type: 'keyword'}
+          mapImagePrefix: {type: 'keyword'}
           address: {type: 'object'}
           # end common
+          elevation: {type: 'integer'} # ft
           distanceTo: {type: 'object'}
           roadDifficulty: {type: 'integer'}
           crowds: {type: 'object'}
