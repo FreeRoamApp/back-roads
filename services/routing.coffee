@@ -75,6 +75,7 @@ class RoutingService
     , []
 
   getElevation: ({location}) ->
+    console.log 'req elev'
     request 'https://valhalla.freeroam.app/height',
       json: true
       qs:
@@ -87,6 +88,7 @@ class RoutingService
     .then ({height}) -> Math.round height[0] * FT_PER_METER
 
   getElevationsRanges: ({locations}) ->
+    console.log 'req elev ranges'
     request 'https://valhalla.freeroam.app/height',
       json: true
       qs:
@@ -117,6 +119,7 @@ class RoutingService
     costing = settings?.costing or 'auto'
     rigHeightInches = settings?.rigHeightInches
 
+    console.log 'req route'
     request 'https://valhalla.freeroam.app/route',
       json: true
       qs:

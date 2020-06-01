@@ -65,6 +65,7 @@ class ThreadCtrl
           src: "https://i.imgur.com/#{imgurId}.jpg"
         }
     else if streamableId = body?.match(STREAMABLE_ID_REGEX)?[1]
+      console.log 'req thread'
       return request "https://api.streamable.com/videos/#{streamableId}", {
         json: true
       }

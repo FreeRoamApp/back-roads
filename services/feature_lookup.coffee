@@ -6,6 +6,7 @@ config = require '../config'
 
 class FeatureLookupService
   getFeaturesByLocation: ({lat, lon, pick, file}) ->
+    console.log 'req feature 1'
     Promise.resolve request "#{config.FEATURE_LOOKUP_HOST}/lookup",
       json: true
       qs:
@@ -29,6 +30,7 @@ class FeatureLookupService
 
 
   resetCacheByFile: (file) ->
+    console.log 'req feature 2'
     Promise.resolve request "#{config.FEATURE_LOOKUP_HOST}/resetCacheByFile",
       json: true
       qs:

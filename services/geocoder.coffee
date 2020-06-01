@@ -7,17 +7,23 @@ config = require '../config'
 
 class GeocoderService
   reverse: ({lat, lon}) ->
-    request "#{config.PELIAS_API_URL}/reverse",
+    request "https://api.mapbox.com/geocoding/v5/mapbox.places/#{lon},#{lat}.json",
       json: true
       qs:
-        'point.lat': lat
-        'point.lon': lon
+        access_token: config.MAPBOX_ACCESS_TOKEN
     .then (response) ->
       data = response.features?[0]?.properties
       {
-        locality: data?.locality
-        administrativeArea: data?.region_a
+        locality: _.find(response.features, ({place_type}) ->
+          place_type?[0] is 'locality'
+        )?.text
+        administrativeArea: _.find(response.features, ({place_type}) ->
+          place_type?[0] is 'region'
+        )?.text
       }
+    .catch (err) ->
+      console.log 'reverse err', err
+      {}
 
   autocomplete: ({query}) ->
     matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec query
@@ -43,15 +49,21 @@ class GeocoderService
           ]
       }
 
-      request "#{config.PELIAS_API_URL}/autocomplete",
+      # request "#{config.PELIAS_API_URL}/autocomplete",
+      request("https://api.mapbox.com/geocoding/v5/mapbox.places/#{query}.json",
         json: true
         qs:
-          layers: 'venue,coarse'
-          text: query
-          'boundary.rect.min_lat': 18.91619
-          'boundary.rect.max_lat': 83.23324
-          'boundary.rect.min_lon': -171.791110603
-          'boundary.rect.max_lon': -52.6480987209
+          access_token: config.MAPBOX_ACCESS_TOKEN
+          autocomplete: true
+          bbox: '-171.791110603,18.91619,-52.6480987209,83.23324'
+          # layers: 'venue,coarse'
+          # text: query
+          # 'boundary.rect.min_lat': 18.91619
+          # 'boundary.rect.max_lat': 83.23324
+          # 'boundary.rect.min_lon': -171.791110603
+          # 'boundary.rect.max_lon': -52.6480987209
+      ).catch (err) ->
+        console.log 'autocomplete err', err
     ]
     .then ([coordinateLocation, campgrounds, response]) ->
       # TODO: prepend coordinates if query matches coordinates
@@ -61,9 +73,16 @@ class GeocoderService
           location:
             lat: location.geometry.coordinates[1]
             lon: location.geometry.coordinates[0]
-          text: location.properties.name
-          locality: location.properties.locality
-          administrativeArea: location.properties.region_a
+          # text: location.properties.name
+          text: location.text
+          # locality: location.properties.locality
+          # administrativeArea: location.properties.region_a
+          locality: _.find(location.context, ({id}) ->
+            id?.indexOf('place') is 0
+          )?.text
+          administrativeArea: _.find(location.context, ({id}) ->
+            id?.indexOf('region') is 0
+          )?.text
         }
       if coordinates
         locations.unshift {

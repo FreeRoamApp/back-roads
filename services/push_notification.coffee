@@ -19,7 +19,6 @@ x new user subscribe
 _ = require 'lodash'
 Promise = require 'bluebird'
 uuid = require 'node-uuid'
-request = require 'request-promise'
 randomSeed = require 'random-seed'
 admin = require 'firebase-admin'
 
@@ -206,6 +205,8 @@ class PushNotificationService
   # use the deviceToken. for private channels, use deviceToken
 
   sendToSubscription: (subscription, message, {language, forceDevSend} = {}) =>
+    return Promise.resolve null # FIXME
+
     topic = Subscription.getTopicFromSubscription subscription
 
     # legacy
@@ -284,6 +285,8 @@ class PushNotificationService
               @send user, message, {fromUserId, groupId, conversation}
 
   send: (user, message, {fromUserId, groupId, conversation} = {}) =>
+    return Promise.resolve null # FIXME
+
     unless message and (
       message.title or message.text or message.titleObj or message.textObj
     )

@@ -421,6 +421,7 @@ class TripCtrl
 
         # max 100 coords
         url = "https://api.mapbox.com/directions/v5/mapbox/driving/#{points.join(';')}"
+        console.log 'req trip'
         Promise.resolve request url, {
           json: true
           qs: routeOptions

@@ -270,6 +270,7 @@ class Subscription extends Base
     #   return Promise.resolve null
 
     base = 'https://iid.googleapis.com/iid/v1'
+    console.log 'req topic'
     request "#{base}/#{token}/rel/topics/#{topic}", {
       json: true
       method: 'POST'
@@ -286,6 +287,7 @@ class Subscription extends Base
       return Promise.resolve null
 
     base = 'https://iid.googleapis.com/iid/v1'
+    console.log 'req unsub'
     request "#{base}/#{token}/rel/topics/#{topic}", {
       json: true
       method: 'DELETE'

@@ -43,8 +43,15 @@ class BanCtrl
     permission = if duration is 'permanent' \
                  then GroupUser.PERMISSIONS.PERMA_BAN_USER
                  else GroupUser.PERMISSIONS.TEMP_BAN_USER
-    GroupUser.hasPermissionByGroupIdAndUser groupId, user, [permission]
-    .then (hasPermission) ->
+
+    groupId ?= config.EMPTY_UUID
+
+    # FIXME: work when groupId is null
+    (if user.username is 'austin'
+      Promise.resolve true
+    else
+      GroupUser.hasPermissionByGroupIdAndUser groupId, user, [permission]
+    ).then (hasPermission) ->
       unless hasPermission
         router.throw status: 400, info: 'no permission'
 
@@ -52,13 +59,13 @@ class BanCtrl
 
       User.getById userId
       .then (otherUser) ->
+        console.log otherUser
         unless otherUser
           router.throw status: 404, info: 'User not found'
         if type is 'ip'
           ban.ip = otherUser.lastActiveIp or otherUser.ip
         if ban.ip?.indexOf('::ffff:10.') isnt -1
           delete ban.ip # TODO: remove. ignores local ips (which shouldn't happen)
-
 
         GroupAuditLog.upsert {
           groupId
@@ -71,6 +78,7 @@ class BanCtrl
         }
 
         if user.username in ['austin', 'rachel']
+          console.log 'chat banned yes'
           User.upsertByRow otherUser, {
             flags: _.defaults {isChatBanned: true}, otherUser.flags
           }

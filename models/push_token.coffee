@@ -38,6 +38,7 @@ class PushToken extends Base
     ]
 
   upsert: (token) =>
+    # FIXME: this seems bad if we upsert that doesn't include isActive. Does that happen
     if token.isActive
       ttl = null
     else

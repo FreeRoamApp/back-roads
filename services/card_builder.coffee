@@ -8,6 +8,7 @@ class CardBuilderService
     Promise.resolve {card: {type: 'trip', sourceId: tripId}}
 
   create: ({url, callbackUrl}) =>
+    console.log 'req card'
     Promise.resolve request "#{config.DEALER_API_URL}/cards", {
       method: 'POST'
       body: {url, callbackUrl}

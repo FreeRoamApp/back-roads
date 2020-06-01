@@ -99,6 +99,7 @@ class LocalMapCtrl
 
 
   _urlToPdfBuffer: (url) =>
+    console.log 'req local'
     request url, {encoding: null}
     .catch ->
       throw {
