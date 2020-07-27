@@ -81,7 +81,7 @@
     "joi": "^6.10.0",
     "jsonwebtoken": "^5.4.1",
     "kmz-geojson": "^0.1.0",
-    "knex": "^0.13.0",
+    "knex": "^0.19.5",
     "knex-schema": "git://github.com/claydotio/knex-schema.git",
     "librsvg": "^0.7.0",
     "lodash": "^4.16.3",
