@@ -153,7 +153,7 @@ class Overnight extends PlaceBase
       hasAttachments: hasAttachments
     }, _.pick overnight, [
       'id', 'slug', 'name', 'location', 'rating', 'ratingCount',
-      'subType', 'hasAttachments'
+      'subType', 'hasAttachments', 'isAllowedScore'
     ]
 
 module.exports = new Overnight()

@@ -28,6 +28,7 @@ class AuthService
       next()
 
   exoidMiddleware: ({accessToken, userAgent}, req) =>
+    req.userAgent = userAgent
     if accessToken
       Auth.userIdFromAccessToken accessToken
       .then User.getById, {preferCache: true}

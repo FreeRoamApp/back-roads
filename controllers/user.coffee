@@ -5,6 +5,9 @@ geoip = require 'geoip-lite'
 bcrypt = require 'bcrypt-nodejs'
 md5 = require 'md5'
 Promise = require 'bluebird'
+isbot = require 'isbot-fast'
+crypto = require 'crypto'
+{ init, incrementUnique } = require '@techby/impact'
 
 User = require '../models/user'
 SubscribedEmail = require '../models/subscribed_email'
@@ -21,8 +24,13 @@ AVATAR_LARGE_IMAGE_HEIGHT = 512
 
 defaultEmbed = [EmbedService.TYPES.USER.KARMA]
 
+init { apiKey: config.TECH_BY_API_KEY }
+
 class UserCtrl
-  getMe: ({embed} = {}, {user, headers, connection}) ->
+  getMe: ({embed} = {}, {user, userAgent, headers, connection}) ->
+    if user && !isbot userAgent
+      hashedUserId = crypto.createHash('sha256').update(user.id).digest('base64')
+      incrementUnique 'active-users', hashedUserId
     userEmbed = defaultEmbed
     if embed and embed.indexOf('data') isnt -1
       userEmbed = userEmbed.concat EmbedService.TYPES.USER.DATA

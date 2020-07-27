@@ -2,6 +2,7 @@ request = require 'request-promise'
 NodeGeocoder = require 'node-geocoder'
 _ = require 'lodash'
 
+Autocomplete = require '../models/autocomplete'
 Campground = require '../models/campground'
 config = require '../config'
 
@@ -25,7 +26,7 @@ class GeocoderService
       console.log 'reverse err', err
       {}
 
-  autocomplete: ({query}) ->
+  autocomplete: ({query, includeGeocode}) ->
     matches = new RegExp(config.COORDINATE_REGEX_STR, 'g').exec query
     coordinates = if matches
       {
@@ -49,25 +50,33 @@ class GeocoderService
           ]
       }
 
+      Autocomplete.search {
+        query: 
+          prefix:
+            # TODO: text field should be type text, not keyword
+            text: _.startCase(query.toLowerCase())
+      }
+
       # request "#{config.PELIAS_API_URL}/autocomplete",
-      request("https://api.mapbox.com/geocoding/v5/mapbox.places/#{query}.json",
-        json: true
-        qs:
-          access_token: config.MAPBOX_ACCESS_TOKEN
-          autocomplete: true
-          bbox: '-171.791110603,18.91619,-52.6480987209,83.23324'
-          # layers: 'venue,coarse'
-          # text: query
-          # 'boundary.rect.min_lat': 18.91619
-          # 'boundary.rect.max_lat': 83.23324
-          # 'boundary.rect.min_lon': -171.791110603
-          # 'boundary.rect.max_lon': -52.6480987209
-      ).catch (err) ->
-        console.log 'autocomplete err', err
+      # if includeGeocode and query
+      #   request("https://api.mapbox.com/geocoding/v5/mapbox.places/#{query}.json",
+      #     json: true
+      #     qs:
+      #       access_token: config.MAPBOX_ACCESS_TOKEN
+      #       autocomplete: true
+      #       bbox: '-171.791110603,18.91619,-52.6480987209,83.23324'
+      #       # layers: 'venue,coarse'
+      #       # text: query
+      #       # 'boundary.rect.min_lat': 18.91619
+      #       # 'boundary.rect.max_lat': 83.23324
+      #       # 'boundary.rect.min_lon': -171.791110603
+      #       # 'boundary.rect.max_lon': -52.6480987209
+      #   ).catch (err) ->
+      #     console.log 'autocomplete err', err
     ]
-    .then ([coordinateLocation, campgrounds, response]) ->
+    .then ([coordinateLocation, campgrounds, autocompletes, response]) ->
       # TODO: prepend coordinates if query matches coordinates
-      locations = _.map response.features, (location) ->
+      locations = _.map response?.features, (location) ->
         {
           bbox: location.bbox
           location:
@@ -84,6 +93,10 @@ class GeocoderService
             id?.indexOf('region') is 0
           )?.text
         }
+      
+      if autocompletes
+        locations = locations.concat autocompletes
+
       if coordinates
         locations.unshift {
           bbox: null

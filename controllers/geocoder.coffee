@@ -9,8 +9,8 @@ statesAbbr = require '../resources/data/states_abbr'
 config = require '../config'
 
 class GeocoderCtrl
-  autocomplete: ({query}, {user}) ->
-    GeocoderService.autocomplete {query}
+  autocomplete: ({query, includeGeocode}, {user}) ->
+    GeocoderService.autocomplete {query, includeGeocode}
 
   getBoundingFromRegion: ({country, state, city}, {user}) ->
     if city is 'all'

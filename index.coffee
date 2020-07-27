@@ -172,6 +172,27 @@ app.post '/conversationMessage/:id/card', ConversationMessageCtrl.updateCard
 
 app.get '/ping', (req, res) -> res.send 'pong'
 
+app.get '/fixPublicRvParks', (req, res) ->
+  Campground = require './models/campground'
+  minSlug = req.query.minSlug
+  console.log 'get', minSlug
+  Campground.getAllByMinSlug minSlug, {limit: 2000}
+  .then (campgrounds) ->
+    console.log 'got all', campgrounds.length
+    console.log _.last(campgrounds).slug
+    Promise.each campgrounds, (campground, i) ->
+      if campground.name.match(/rv park|rv resort|\skoa$|\skoa\s/i) && campground.subType is 'public'
+        console.log 'got cg', campground.name
+        if req.query.setPrivate
+          console.log 'set private'
+          Campground.upsert {
+            id: campground.id
+            slug: campground.slug
+            subType: 'private'
+          }
+    .then ->
+      res.send _.last(campgrounds).slug
+
 app.get '/healthcheck', HealthCtrl.check
 
 app.get '/healthcheck/throw', HealthCtrl.checkThrow

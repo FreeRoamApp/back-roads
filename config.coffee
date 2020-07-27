@@ -44,6 +44,7 @@ config =
   BACK_ROADS_API_URL: env.BACK_ROADS_API_URL
   PELIAS_API_URL: env.PELIAS_API_URL
   HONEYPOT_ACCESS_KEY: env.HONEYPOT_ACCESS_KEY
+  TECH_BY_API_KEY: env.BACK_ROADS_TECH_BY_API_KEY
   BCRYPT_ROUNDS: 10
   COORDINATE_REGEX_STR: '(^[-+]?(?:[1-8]?\\d(?:\\.\\d+)?|90(?:\\.0+)?))\\s*,\\s*([-+]?(?:180(?:\\.0+)?|(?:(?:1[0-7]\\d)|(?:[1-9]?\\d))(?:\\.\\d+)?))$'
   YOUTUBE_ID_REGEX: ///
