@@ -92,7 +92,7 @@ module.exports = class PlaceReviewBaseCtrl
 
   upsert: (options, {user}) =>
     console.log 'upsert rev', options
-    if not options?.body and user.username isnt 'austin'
+    if not options?.body and not user.username in ['austin', 'roadpickle']
       router.throw {
         status: 400
         info:

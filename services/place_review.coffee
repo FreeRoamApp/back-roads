@@ -81,7 +81,7 @@ class PlaceReviewService
 
       if existingReview and (
         "#{existingReview.userId}" isnt "#{userId}" and
-          user.username isnt 'austin'
+          not user.username in ['austin', 'roadpickle']
       )
         router.throw status: 401, info: 'unauthorized'
 
@@ -108,7 +108,7 @@ class PlaceReviewService
           sourceType: 'youtube', sourceId: videoAttachment.prefix
         }
 
-      (if user?.username is 'austin' and not rating
+      (if user?.username in ['austin', 'roadpickle'] and not rating
         Promise.all _.filter [
           if parentUpsert.thumbnailPrefix and not preserveCounts
             ParentModel.upsertByRow parent, _.omit parentUpsert, ['rating', 'ratingCount']
@@ -157,7 +157,7 @@ class PlaceReviewService
     .then ([review, extras]) =>
       console.log 'gottt', review
       hasPermission ?= "#{review.userId}" is "#{user.id}" or
-                        user.username is 'austin'
+                        user.username in ['austin', 'roadpickle']
       unless hasPermission
         router.throw
           status: 400, info: 'You don\'t have permission to do that'
