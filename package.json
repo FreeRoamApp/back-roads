@@ -74,7 +74,7 @@
     "geoip-lite": "^1.3.5",
     "gm": "^1.23.0",
     "google-translate": "^2.0.5",
-    "googleapis": "^15.0.0",
+    "googleapis": "^39.1.0",
     "iap": "^0.9.0",
     "ioredis": "^2.5.0",
     "isbot-fast": "^1.2.0",
