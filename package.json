@@ -79,7 +79,7 @@
     "ioredis": "^2.5.0",
     "isbot-fast": "^1.2.0",
     "joi": "^6.10.0",
-    "jsonwebtoken": "^5.4.1",
+    "jsonwebtoken": "^9.0.0",
     "kmz-geojson": "^0.1.0",
     "knex": "^0.13.0",
     "knex-schema": "git://github.com/claydotio/knex-schema.git",
